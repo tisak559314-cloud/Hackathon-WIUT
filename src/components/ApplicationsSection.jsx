@@ -68,7 +68,7 @@ export default function ApplicationsSection() {
       label: 'SIGNALS & STOP VIOLATIONS',
       icon: TrafficCone,
       title: 'Intersection Control & Queue Stoppages',
-      image: 'https://www.prophesee.ai/wp-content/uploads/2021/05/06_SpatterMonitoring-copia.jpg',
+      image: '/stop-signal-violation.png',
       badge: 'Traffic Signal & Flow Compliance',
       description:
         'Monitoring compliance at intersection boundaries using calibrated stop-line geometry from camera.md, combined with stationary duration counters.',
@@ -85,7 +85,7 @@ export default function ApplicationsSection() {
       label: 'LANE & MANEUVER VIOLATIONS',
       icon: GitFork,
       title: 'Directional Trajectories & Solid Line Crossings',
-      image: 'https://www.prophesee.ai/wp-content/uploads/2024/05/Consumer-Applications.jpg',
+      image: '/lane-maneuver-violation.png',
       badge: 'Road Marking & Direction Compliance',
       description:
         'Matching vehicle trajectory vectors against allowed lane directions and designated turn lanes defined in camera.md.',
