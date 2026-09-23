@@ -102,7 +102,7 @@ export default function ApplicationsSection() {
       label: 'PEDESTRIANS & ROAD HAZARDS',
       icon: Footprints,
       title: 'Pedestrian Safety & Environmental Road Hazards',
-      image: 'https://downloads.prophesee.ai/website/2024/10/MicroMotion.png',
+      image: '/pedestrian-hazard.png',
       badge: 'Vulnerable Road Users & Hazards',
       description:
         'Protecting pedestrians on and off crossings, identifying dropped obstacles on carriageways, and detecting vehicle fire or smoke incidents.',
