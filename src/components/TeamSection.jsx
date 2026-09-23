@@ -83,96 +83,114 @@ export default function TeamSection() {
   const members = [
     {
       id: 'member-1',
-      name: 'Azam Khodzhimetov',
+      name: 'Azam Xodjimetov',
       nameRu: 'Азам Ходжиметов',
-      role: 'Team Lead & Computer Vision Architect',
-      badge: 'Perception & Model Optimization',
+      role: 'Team Lead & Technical Project Manager • AI Solutions',
+      badge: 'TPM & AI Product Builder • Uzum Tech / Inha',
       photo: '/azam-khodzhimetov.jpg',
       objectPosition: 'center 26%',
-      initials: 'AK',
-      bio: 'Architected the end-to-end perception pipeline and lead the model selection and optimization. Fine-tuned the YOLOv8 and RT-DETR detection engines to achieve real-time 25 FPS throughput on the target NVIDIA Tesla T4 benchmark while staying strictly within the 5 GB package weight limit.',
+      initials: 'AX',
+      bio: 'Results-driven Technical Project Manager and Software & ML Engineer with 1.5+ years FinTech product leadership at Uzum Tech (Uzum Business). Rigorous CS foundation at Inha University (GPA 4.1/4.5) and School 21 (ML Track). Multiple hackathon champion (1st Place Kapitalbank & Uzum, Rector\'s Cup 2025) bridging engineering, business analysis, and applied AI.',
       contributions: [
-        'Detector selection & transfer learning on open traffic datasets (DoTA & CADP)',
-        'Inference optimization & FP16 quantization for single-batch T4 GPU execution',
-        'Offline submission packaging with reproducible deterministic random seeds',
+        'Team Lead & technical delivery orchestration: end-to-end alignment of perception pipeline with hackathon evaluation benchmarks',
+        'System requirements translation, acceptance criteria validation & submission container optimization (Tesla T4, <5 GB)',
+        'Cross-functional coordination, presentation platform architecture & deterministic reproducible pipeline execution',
       ],
       proudProjects: [
-        'Autonomous Driving 3D Perception System (CVPR Challenge Top 10)',
-        'Edge-AI Real-Time Multi-Camera Traffic Flow Analyzer',
+        'Uzum Business FinTech Product Initiatives (1.5+ yrs)',
+        '1st Place – Kapitalbank & Uzum Hackathon',
+        '1st Place – Rector\'s Cup 2025 Hackathon',
+        'Kibo – AI-Powered Enterprise Onboarding Platform',
       ],
       links: {
+        telegram: 'https://t.me/azamoka',
+        email: 'agzamrich@gmail.com',
+        phone: '+998909436031',
+        phoneDisplay: '+998 90 943 60 31',
+        linkedin: 'https://linkedin.com/in/azam-xodjimetov',
         github: 'https://github.com/azamkhodzhimetov',
-        linkedin: 'https://linkedin.com/in/azamkhodzhimetov',
-        portfolio: 'https://azam.dev',
-        email: 'azam@antigradient.ai',
       },
       imageLeft: true, // 1st: Photo Left (25%), Info Right (75%)
       dossier: {
-        title: 'Team Lead • Senior Computer Vision Architect',
+        title: 'Technical Project Manager • AI & Software Solutions • AI Product Builder',
         location: 'Ташкент, Узбекистан',
-        summary: 'Руководитель команды и ведущий архитектор компьютерного зрения. Специализируюсь на низколатентном инференсе глубоких нейросетей, аппаратной оптимизации (TensorRT / ONNX Runtime) и архитектуре систем восприятия реального времени.',
+        summary: 'Technical Project Manager и Software & ML Engineer с 1.5+ годами практического опыта управления FinTech-продуктами в Uzum Tech (Uzum Business). Фундаментальная база Computer Science (Inha University, School 21 ML Track) с доказанным лидерством в создании сложных AI-решений, кросс-функциональном менеджменте и быстром прототипировании. Многократный победитель хакатонов (1-е место Kapitalbank & Uzum, 1-е место Кубок Ректора 2025), объединяющий инженерные команды (Backend, QA, DevOps) со стратегическими целями бизнеса.',
         hackathonFocus: [
-          'Выбор и адаптация архитектуры детекторов (YOLOv8 & RT-DETR) для обнаружения транспортных средств и пешеходов в сложных погодных условиях',
-          'Квантование моделей в FP16 и оптимизация под бенчмарк NVIDIA Tesla T4 с достижением 25+ FPS',
-          'Сборка автономного Docker-пакета решения строго до 5 ГБ с детерминированным воспроизведением'
+          'Руководство инженерной командой (Team Lead), сквозная синхронизация модулей детекции, трекинга и оценки рисков аварий',
+          'Трансляция регламента хакатона (Requirements 1–7) в спринты разработки, управление рисками и критериями приемки',
+          'Контроль ограничений бенчмарка: пропускная способность NVIDIA Tesla T4 (25+ FPS), лимит веса до 5 ГБ и детерминированная воспроизводимость'
         ],
         experience: [
           {
-            company: 'Antigradient AI Lab',
-            role: 'Team Lead & Lead Computer Vision Architect',
-            period: '2024 — Настоящее время',
-            location: 'Ташкент',
-            badge: 'Core Leadership',
+            company: 'Uzum Tech — Uzum Business',
+            role: 'Project Manager',
+            period: '2025 — Настоящее время (1.5+ года)',
+            location: 'Ташкент, Узбекистан',
+            badge: 'FinTech & B2B Ecosystem',
             highlights: [
-              'Руководство разработкой комплексных пайплайнов компьютерного зрения для анализа дорожного трафика и прогнозирования инцидентов.',
-              'Развертывание моделей на Edge-устройствах с аппаратным ускорением CUDA и TensorRT.',
-              'Обеспечение воспроизводимости результатов и строгого контроля качества инференса.'
-            ]
-          },
-          {
-            company: 'Autonomous Systems & Edge AI',
-            role: 'Senior CV / ML Engineer',
-            period: '2023 — 2024',
-            location: 'Ташкент',
-            badge: 'Edge Perception',
-            highlights: [
-              'Разработка 3D perception систем для автономного вождения (CVPR Challenge Top 10).',
-              'Оптимизация многопоточного декодирования видеопотоков 4K в реальном времени с минимальной задержкой.'
+              'Руководство сквозной разработкой (End-to-End Delivery) ключевых сервисов интернет-банкинга и финансовых услуг для бизнеса.',
+              'Координация кросс-функциональных команд: backend, frontend, QA, продуктовые дизайнеры, системные аналитики.',
+              'Ускорение релизных циклов за счет перевода бизнес-логики в четкие технические требования, спринт-бэклоги Jira и критерии приемки.',
+              'Проведение ежедневных agile-церемоний (daily syncs, sprint planning, backlog grooming, post-mortems), устранение блокеров между командами.',
+              'Тесное взаимодействие с системными аналитиками и техлидами по требованиям к БД, API-контрактам и зависимостям интеграций.'
             ]
           }
         ],
         education: [
           {
-            institution: 'Университет информационных технологий',
-            degree: 'Computer Science & Artificial Intelligence',
-            specialization: 'Computer Vision & Deep Learning',
-            period: '2021 — 2025',
+            institution: 'Inha University in Tashkent (IUT)',
+            degree: 'Bachelor of Science in Computer Science and Software Engineering (3rd Year)',
+            specialization: 'Cumulative GPA: 4.1 / 4.5 • Data Structures & Algorithms, OOP, Discrete Math, OS',
+            period: '2024 — Настоящее время',
+          },
+          {
+            institution: 'School 21',
+            degree: 'Machine Learning Engineer Track (1+ год)',
+            specialization: 'Прикладной C/C++, алгоритмический problem-solving, Linux, основы ML',
+            period: '2025 — Настоящее время',
           }
         ],
         achievements: [
           {
-            title: 'CVPR Challenge — Top 10',
-            desc: 'Финалист международного соревнования по 3D восприятию для автономного вождения.'
+            title: '1st Place — Kapitalbank & Uzum Hackathon',
+            desc: 'Абсолютный победитель хакатона по разработке FinTech и AI решений.'
           },
           {
-            title: 'Edge-AI Hackathon Winner',
-            desc: 'Победитель соревнований по высокопроизводительному компьютерному зрению на встраиваемых системах.'
+            title: '1st Place — Rector\'s Cup 2025 Hackathon',
+            desc: 'Победитель кубка ректора по разработке инновационных цифровых платформ.'
+          },
+          {
+            title: '3rd Place — TheBuildX Hackathon',
+            desc: 'Призовое место в соревновании по продуктовой разработке и прототипированию.'
+          },
+          {
+            title: 'Top 10% Finalist & Podium Finishes',
+            desc: 'Многократные призовые места на национальных и региональных AI-хакатонах (включая No Flame No Game AI Hackathon).'
           }
         ],
         skillCategories: [
           {
-            category: 'Computer Vision & Deep Learning',
-            items: ['PyTorch', 'TensorRT', 'ONNX Runtime', 'YOLOv8', 'RT-DETR', 'OpenCV', 'CUDA']
+            category: 'Project & Delivery Management',
+            items: ['Agile (Scrum/Kanban)', 'Sprint Planning', 'Backlog Prioritization', 'PRD / BRD Documentation', 'Risk Management', 'Cross-Functional Leadership']
           },
           {
-            category: 'Systems & Inference',
-            items: ['Docker', 'NVIDIA Triton', 'C++', 'Python', 'FastAPI', 'FFmpeg', 'Linux']
+            category: 'Languages & Core Engineering',
+            items: ['C++', 'C', 'Python', 'Java', 'SQL', 'Arduino', 'Object-Oriented Design', 'REST APIs']
+          },
+          {
+            category: 'Machine Learning, CV & AI',
+            items: ['Computer Vision (OpenCV, YOLO)', 'Machine Learning Baselines', 'Prompt Engineering & LLM Integration', 'Automated Workflows', 'NumPy', 'Matplotlib']
+          },
+          {
+            category: 'Developer Tools & Infra',
+            items: ['Git', 'GitLab', 'GitHub', 'Docker', 'Linux CLI', 'Cursor / VS Code', 'PyCharm', 'Jira', 'Confluence', 'Notion', 'Postman', 'Figma']
           }
         ],
         languages: [
-          { name: 'Русский', level: 'Свободный' },
-          { name: 'English', level: 'Professional Working' },
-          { name: 'O‘zbek', level: 'Родной' }
+          { name: 'Русский', level: 'Native / Bilingual' },
+          { name: 'O‘zbek', level: 'Native / Bilingual' },
+          { name: 'English', level: 'Professional Working Proficiency' },
+          { name: 'Chinese (中文)', level: 'B2 (Upper-Intermediate)' }
         ]
       }
     },
