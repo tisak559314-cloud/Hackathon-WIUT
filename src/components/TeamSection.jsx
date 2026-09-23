@@ -56,6 +56,14 @@ function GitlabIcon({ className = "w-4 h-4" }) {
   );
 }
 
+function KaggleIcon({ className = "w-4 h-4" }) {
+  return (
+    <svg className={className} fill="currentColor" viewBox="0 0 24 24">
+      <path d="M18.825 23.859c-.022.092-.117.141-.281.141h-3.139c-.187 0-.351-.082-.492-.246l-5.17-6.574-1.875 1.792v4.74c0 .201-.094.301-.281.301H5.113c-.188 0-.281-.1-.281-.301V.287c0-.187.094-.287.281-.287h2.474c.188 0 .281.1.281.287v15.225l6.815-7.145c.141-.164.293-.246.457-.246h3.292c.164 0 .252.062.264.188.023.094-.012.188-.105.281l-6.205 6.275 6.444 8.718c.082.117.105.211.07.281z"/>
+    </svg>
+  );
+}
+
 export default function TeamSection() {
   const [selectedMember, setSelectedMember] = useState(null);
 
@@ -218,8 +226,8 @@ export default function TeamSection() {
       links: {
         telegram: 'https://t.me/mvpxein',
         email: 'diyora.ft@gmail.com',
-        gitlab: 'https://gitlab.com',
-        linkedin: 'https://linkedin.com',
+        gitlab: 'https://gitlab.com/diyora.ft-group/diyora_bsa-projects/-/tree/develop?ref_type=heads',
+        linkedin: 'https://www.linkedin.com/in/diyora-fatakhova-638665336/',
       },
       imageLeft: false, // 2nd: Info Left (75%), Photo Right (25%) - CHESSBOARD
       dossier: {
@@ -360,6 +368,7 @@ export default function TeamSection() {
       ],
       links: {
         github: 'https://github.com/Antifragile-nnt',
+        kaggle: 'https://www.kaggle.com/asanashirov',
         telegram: 'https://t.me/Antifragile_nnt',
         email: 'asanashirov24@gmail.com',
         phone: '+998933940681',
@@ -615,6 +624,17 @@ export default function TeamSection() {
                           title="GitLab Profile"
                         >
                           <GitlabIcon className="w-4 h-4" />
+                        </a>
+                      )}
+                      {member.links.kaggle && (
+                        <a
+                          href={member.links.kaggle}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="p-2 rounded-lg bg-[#090f1a] hover:bg-[#20BEFF]/20 hover:text-[#20BEFF] text-gray-400 border border-[#1f2d45] transition"
+                          title="Kaggle Profile"
+                        >
+                          <KaggleIcon className="w-4 h-4" />
                         </a>
                       )}
                       {member.links.linkedin && (
@@ -920,6 +940,19 @@ export default function TeamSection() {
                   >
                     <GitlabIcon className="w-3.5 h-3.5 text-[#fc6d26]" />
                     <span>GitLab</span>
+                    <ExternalLink className="w-3 h-3 ml-0.5" />
+                  </a>
+                )}
+
+                {selectedMember.links.kaggle && (
+                  <a
+                    href={selectedMember.links.kaggle}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-[#182236] hover:bg-[#20BEFF]/20 border border-[#2a3a56] hover:border-[#20BEFF]/40 text-gray-200 hover:text-[#20BEFF] text-xs font-semibold transition"
+                  >
+                    <KaggleIcon className="w-3.5 h-3.5 text-[#20BEFF]" />
+                    <span>Kaggle</span>
                     <ExternalLink className="w-3 h-3 ml-0.5" />
                   </a>
                 )}
