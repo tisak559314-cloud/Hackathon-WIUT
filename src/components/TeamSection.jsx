@@ -48,6 +48,14 @@ function TelegramIcon({ className = "w-4 h-4" }) {
   );
 }
 
+function GitlabIcon({ className = "w-4 h-4" }) {
+  return (
+    <svg className={className} fill="currentColor" viewBox="0 0 24 24">
+      <path d="M22.65 14.39L20.6 8.07a.9.9 0 0 0-.34-.46.9.9 0 0 0-.58-.16.9.9 0 0 0-.54.21.9.9 0 0 0-.27.41l-1.92 5.92H6.98l-1.92-5.92a.9.9 0 0 0-.27-.41.9.9 0 0 0-.54-.21.9.9 0 0 0-.58.16.9.9 0 0 0-.34.46L1.35 14.39a.9.9 0 0 0 .32 1l10.02 7.28a.6.6 0 0 0 .66 0l10.02-7.28a.9.9 0 0 0 .28-1z"/>
+    </svg>
+  );
+}
+
 export default function TeamSection() {
   const [selectedMember, setSelectedMember] = useState(null);
 
@@ -170,79 +178,145 @@ export default function TeamSection() {
     },
     {
       id: 'member-2',
-      name: 'Teammate 2 (Placeholder)',
-      nameRu: 'Участник 2',
-      role: 'Tracking & Spatial Geometry Specialist',
-      badge: 'Multi-Object Tracking & camera.md',
+      name: 'Diyora Fatakhova',
+      nameRu: 'Диёра Фатахова',
+      role: 'Business Systems Analyst & AI Product Lead',
+      badge: 'Business Systems & AI Product • Inha / School 21',
       photo: '/teammate-2.jpg',
       objectPosition: '48% 22%',
-      initials: 'T2',
-      bio: 'Engineered the multi-object tracking pipeline using ByteTrack and calibrated spatial rule evaluation. Formulated intersection geometry rules from camera.md, associating vehicle ground-plane contact points against stop-line vectors, turn constraints, and pedestrian crossings.',
+      initials: 'DF',
+      bio: '3rd year student at INHA University in Tashkent (School of Computer & Information Engineering) and School 21 (Business Systems Analytics). Combines core IT skills (C++, SQL, business analysis) with fluent trilingual leadership (RU, EN, UZ). Founder of Talkaholics Anonymous (100+ members) and marketing & visual design coordinator at Women in Tech Uzbekistan.',
       contributions: [
-        'ByteTrack association tuning with Kalman velocity extrapolation across occlusions',
-        'camera.md virtual polygon parser for lane directions and solid line crossings',
-        'Greedy bipartite matching optimizer for temporal IoU thresholds [0.3, 0.5, 0.7]',
+        'Analysis & structuring of hackathon system requirements (Requirements 1–7) and evaluation criteria compliance',
+        'Emergency AI-camera application scenario formulation, user requirement specifications, and incident validation',
+        'Product positioning, cross-functional coordination, presentation pitch materials, and UI/UX demo platform',
       ],
       proudProjects: [
-        'Real-Time Multi-Target Multi-Camera Vehicle Tracker (AI City Challenge)',
-        'Urban Intersection Topological Map & Trajectory Synthesizer',
+        'Technovation Girls\'25 «Zira» (Emergency AI-Camera App)',
+        'Talkaholics Anonymous (Founder & Organizer, 100+ members)',
+        'INHA Mock Testing System (Product Launch Manager)',
+        'Women in Tech Uzbekistan (Marketing & Visual Communications)',
       ],
       links: {
-        github: 'https://github.com/teammate2',
-        linkedin: 'https://linkedin.com/in/teammate2',
-        portfolio: 'https://teammate2.dev',
-        email: 'member2@antigradient.ai',
+        telegram: 'https://t.me/mvpxein',
+        email: 'diyora.ft@gmail.com',
+        gitlab: 'https://gitlab.com',
+        linkedin: 'https://linkedin.com',
       },
       imageLeft: false, // 2nd: Info Left (75%), Photo Right (25%) - CHESSBOARD
       dossier: {
-        title: 'Tracking & Spatial Geometry Specialist',
+        title: 'Business Systems Analyst • Product & Launch Manager',
         location: 'Ташкент, Узбекистан',
-        summary: 'Инженер компьютерного зрения, специализирующийся на многообъектном трекинге (MOT), калибровке пространственной геометрии перекрёстков и ассоциации траекторий в условиях окклюзий.',
+        summary: 'Студентка 3-го курса INHA University in Tashkent (School of Computer and Information Engineering) и School 21 (Business Systems Analytics). Сочетаю базовые навыки в IT (C++, SQL, Excel) со свободным владением тремя языками (RU, UZ, EN) и лидерским опытом: развиваю собственный English Speaking Club (100+ участников) в School 21, занимаюсь активной деятельностью в роли дизайнера и маркетолога в сообществе Women in Tech Uzbekistan. Регулярно участвую в хакатонах, лекциях и технологических проектах. Специализируюсь на бизнес-анализе, CustDev, координации кросс-функциональных команд и запуске инновационных продуктов с интеграцией AI-камер.',
         hackathonFocus: [
-          'Калибровка ассоциации ByteTrack с экстраполяцией скоростей Калмана при перекрытиях',
-          'Парсер виртуальных полигонов camera.md для направлений полос и сплошных линий',
-          'Оптимизатор двудольного сопоставления для временных порогов IoU [0.3, 0.5, 0.7]'
+          'Анализ и структурирование системных требований хакатона (Requirements 1–7) и контроль соответствия регламенту сдачи',
+          'Разработка сценариев применения AI-камер, выявление пользовательских кейсов и функциональных требований к детектированию инцидентов',
+          'Координация кросс-функциональной работы команды, подготовка технического отчета и финального продуктового питча'
         ],
         experience: [
           {
-            company: 'Antigradient AI Lab',
-            role: 'Multi-Object Tracking Engineer',
-            period: '2024 — Настоящее время',
-            location: 'Ташкент',
-            badge: 'MOT & Geometry',
+            company: 'Talkaholics Anonymous',
+            role: 'Основатель и организатор',
+            period: 'Май 2025 — настоящее время',
+            location: 'Ташкент / School 21',
+            badge: 'Community & Leadership',
             highlights: [
-              'Построение надежных графов трекинга для десятков одновременных объектов в кадре.',
-              'Интеграция пространственных правил и векторов стоп-линий с проекцией точек контакта колес с дорожным полотном.'
+              'Event-менеджмент: с нуля создала и координирую языковое сообщество, объединяющее 100+ участников; регулярно организую внутренние интерактивные мероприятия и встречи.',
+              'Внутренние коммуникации: веду Telegram-канал клуба, пишу вовлекающие анонсы для комьюнити, развиваю англоязычный чат; привлекла новых участников и удерживала их внимание через интерактивные форматы.'
+            ]
+          },
+          {
+            company: 'Women in Tech Uzbekistan',
+            role: 'Маркетинг и графический дизайн',
+            period: 'Июнь 2025 — настоящее время',
+            location: 'Ташкент',
+            badge: 'Community & Marketing',
+            highlights: [
+              'Более года развиваю маркетинг и визуальные коммуникации сообщества Women in Tech Uzbekistan.',
+              'Координирую запуск специальных проектов и технологических инициатив в кросс-функциональной команде.',
+              'Создание айдентики, визуальных материалов и продвижение мероприятий сообщества.'
+            ]
+          },
+          {
+            company: 'Проект «Zira» (Technovation Girls\'25)',
+            role: 'Координатор команды & Product Analyst',
+            period: 'Март — Май 2025',
+            location: 'Ташкент',
+            badge: 'AI Camera Mobile App',
+            highlights: [
+              'Разработка в команде концепции и MVP мобильного приложения для экстренных ситуаций с интеграцией AI-камеры.',
+              'CustDev и требования: провела интервью с пользователями, выявила ключевые боли в экстренных ситуациях и сформировала функциональные требования к MVP приложения с AI-камерой.',
+              'Координация команды: организовала работу кросс-функциональной команды, распределяла задачи, настраивала дедлайны и фасилитировала созвоны.'
+            ]
+          },
+          {
+            company: 'Платформа IMTS (INHA Mock Testing System)',
+            role: 'Product / Launch Manager',
+            period: 'Март — Апрель 2025',
+            location: 'Ташкент',
+            badge: 'Product Launch & Pitching',
+            highlights: [
+              'Продуктовый запуск и питчинг: провела 2 масштабные презентации платформы (в Ziyo Forum и университете INHA), собрав суммарно 150+ участников (целевая аудитория — абитуриенты).',
+              'Продвижение и привлечение: успешно продвигала подкурсы через социальные сети и презентации, обеспечив стабильный поток целевой аудитории и повысив узнаваемость продукта.'
             ]
           }
         ],
         education: [
           {
-            institution: 'Университет',
-            degree: 'Applied Mathematics & Computer Science',
-            specialization: 'Robotics & Computer Vision',
-            period: '2022 — 2026',
+            institution: 'School 21',
+            degree: 'Business Systems Analytics',
+            specialization: 'Бизнес и системный анализ, архитектура процессов',
+            period: '2025 — настоящее время',
+          },
+          {
+            institution: 'INHA University in Tashkent (IUT)',
+            degree: 'Студентка 3-го курса, School of Computer and Information Engineering (SOCIE)',
+            specialization: 'Computer and Information Engineering',
+            period: '2024 — настоящее время',
+          },
+          {
+            institution: 'ALUzSWLU (Академический лицей при УзГУМЯ)',
+            degree: 'Exact Sciences (Точные науки)',
+            specialization: 'Математика и информатика',
+            period: '2022 — 2024',
           }
         ],
         achievements: [
           {
-            title: 'AI City Challenge Participant',
-            desc: 'Разработка многокамерного трекинга транспортных средств на сложных городских перекрёстках.'
+            title: 'Technovation Girls\'25 — Проект «Zira»',
+            desc: 'Разработка мобильного приложения для экстренных ситуаций с интеграцией AI-камеры и исследование болей пользователей.'
+          },
+          {
+            title: 'Основатель Talkaholics Anonymous (100+ участников)',
+            desc: 'Успешное создание и масштабирование англоязычного комьюнити в School 21.'
+          },
+          {
+            title: 'Product Launch Manager IMTS',
+            desc: 'Запуск и публичный питчинг системы тестирования INHA на 150+ участников.'
           }
         ],
         skillCategories: [
           {
-            category: 'Tracking & Geometry',
-            items: ['ByteTrack', 'DeepSORT', 'Kalman Filter', 'Shapely', 'Geometric Homography', 'OpenCV']
+            category: 'Бизнес-анализ & Продукт',
+            items: ['Business Systems Analysis', 'CustDev', 'Product Launch', 'Requirements Gathering', 'Event Management', 'Team Coordination']
           },
           {
-            category: 'Languages & Tools',
-            items: ['Python', 'NumPy', 'Scipy', 'C++', 'Git', 'Linux']
+            category: 'Инструменты & Дизайн',
+            items: ['Figma', 'Canva', 'Excel', 'PowerPoint', 'Google Docs', 'Notion']
+          },
+          {
+            category: 'Базовый IT-стек & AI',
+            items: ['SQL', 'C++', 'Gemini', 'Notion AI', 'Data Analysis']
+          },
+          {
+            category: 'Менеджмент & Контент',
+            items: ['Создание визуала и текстов (EN/RU)', 'Организация ивентов', 'Ведение Telegram-каналов', 'Фасилитация созвонов']
           }
         ],
         languages: [
-          { name: 'Русский', level: 'Свободный' },
-          { name: 'English', level: 'Professional Working' }
+          { name: 'Русский', level: 'Свободный (Native)' },
+          { name: 'English', level: 'Свободный (C1 / Founder Speaking Club)' },
+          { name: 'O‘zbek', level: 'Свободный (Native)' }
         ]
       }
     },
@@ -512,6 +586,17 @@ export default function TeamSection() {
                           title="GitHub Profile"
                         >
                           <GithubIcon className="w-4 h-4" />
+                        </a>
+                      )}
+                      {member.links.gitlab && (
+                        <a
+                          href={member.links.gitlab}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="p-2 rounded-lg bg-[#090f1a] hover:bg-[#fc6d26]/20 hover:text-[#fc6d26] text-gray-400 border border-[#1f2d45] transition"
+                          title="GitLab Profile"
+                        >
+                          <GitlabIcon className="w-4 h-4" />
                         </a>
                       )}
                       {member.links.linkedin && (
@@ -804,6 +889,19 @@ export default function TeamSection() {
                   >
                     <GithubIcon className="w-3.5 h-3.5 text-gray-300" />
                     <span>GitHub</span>
+                    <ExternalLink className="w-3 h-3 ml-0.5" />
+                  </a>
+                )}
+
+                {selectedMember.links.gitlab && (
+                  <a
+                    href={selectedMember.links.gitlab}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-[#182236] hover:bg-[#202e47] border border-[#2a3a56] text-gray-200 text-xs font-semibold transition"
+                  >
+                    <GitlabIcon className="w-3.5 h-3.5 text-[#fc6d26]" />
+                    <span>GitLab</span>
                     <ExternalLink className="w-3 h-3 ml-0.5" />
                   </a>
                 )}
