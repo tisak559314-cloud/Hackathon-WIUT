@@ -1,5 +1,28 @@
-import React from 'react';
-import { Users, Globe, Mail, Check, FolderGit2, Download, Award, ArrowUpRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import {
+  Users,
+  Globe,
+  Mail,
+  Check,
+  FolderGit2,
+  Download,
+  Award,
+  ArrowUpRight,
+  X,
+  Briefcase,
+  GraduationCap,
+  Trophy,
+  Code,
+  Languages,
+  Phone,
+  Send,
+  Calendar,
+  MapPin,
+  Sparkles,
+  ExternalLink,
+  FileText,
+  CheckCircle2,
+} from 'lucide-react';
 
 function GithubIcon({ className = "w-4 h-4" }) {
   return (
@@ -17,11 +40,43 @@ function LinkedinIcon({ className = "w-4 h-4" }) {
   );
 }
 
+function TelegramIcon({ className = "w-4 h-4" }) {
+  return (
+    <svg className={className} fill="currentColor" viewBox="0 0 24 24">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+    </svg>
+  );
+}
+
 export default function TeamSection() {
+  const [selectedMember, setSelectedMember] = useState(null);
+
+  // Prevent background scrolling when modal is open and handle Escape key
+  useEffect(() => {
+    if (selectedMember) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setSelectedMember(null);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = 'unset';
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [selectedMember]);
+
   const members = [
     {
       id: 'member-1',
       name: 'Azam Khodzhimetov',
+      nameRu: 'Азам Ходжиметов',
       role: 'Team Lead & Computer Vision Architect',
       badge: 'Perception & Model Optimization',
       photo: '/azam-khodzhimetov.jpg',
@@ -44,10 +99,79 @@ export default function TeamSection() {
         email: 'azam@antigradient.ai',
       },
       imageLeft: true, // 1st: Photo Left (25%), Info Right (75%)
+      dossier: {
+        title: 'Team Lead • Senior Computer Vision Architect',
+        location: 'Ташкент, Узбекистан',
+        summary: 'Руководитель команды и ведущий архитектор компьютерного зрения. Специализируюсь на низколатентном инференсе глубоких нейросетей, аппаратной оптимизации (TensorRT / ONNX Runtime) и архитектуре систем восприятия реального времени.',
+        hackathonFocus: [
+          'Выбор и адаптация архитектуры детекторов (YOLOv8 & RT-DETR) для обнаружения транспортных средств и пешеходов в сложных погодных условиях',
+          'Квантование моделей в FP16 и оптимизация под бенчмарк NVIDIA Tesla T4 с достижением 25+ FPS',
+          'Сборка автономного Docker-пакета решения строго до 5 ГБ с детерминированным воспроизведением'
+        ],
+        experience: [
+          {
+            company: 'Antigradient AI Lab',
+            role: 'Team Lead & Lead Computer Vision Architect',
+            period: '2024 — Настоящее время',
+            location: 'Ташкент',
+            badge: 'Core Leadership',
+            highlights: [
+              'Руководство разработкой комплексных пайплайнов компьютерного зрения для анализа дорожного трафика и прогнозирования инцидентов.',
+              'Развертывание моделей на Edge-устройствах с аппаратным ускорением CUDA и TensorRT.',
+              'Обеспечение воспроизводимости результатов и строгого контроля качества инференса.'
+            ]
+          },
+          {
+            company: 'Autonomous Systems & Edge AI',
+            role: 'Senior CV / ML Engineer',
+            period: '2023 — 2024',
+            location: 'Ташкент',
+            badge: 'Edge Perception',
+            highlights: [
+              'Разработка 3D perception систем для автономного вождения (CVPR Challenge Top 10).',
+              'Оптимизация многопоточного декодирования видеопотоков 4K в реальном времени с минимальной задержкой.'
+            ]
+          }
+        ],
+        education: [
+          {
+            institution: 'Университет информационных технологий',
+            degree: 'Computer Science & Artificial Intelligence',
+            specialization: 'Computer Vision & Deep Learning',
+            period: '2021 — 2025',
+          }
+        ],
+        achievements: [
+          {
+            title: 'CVPR Challenge — Top 10',
+            desc: 'Финалист международного соревнования по 3D восприятию для автономного вождения.'
+          },
+          {
+            title: 'Edge-AI Hackathon Winner',
+            desc: 'Победитель соревнований по высокопроизводительному компьютерному зрению на встраиваемых системах.'
+          }
+        ],
+        skillCategories: [
+          {
+            category: 'Computer Vision & Deep Learning',
+            items: ['PyTorch', 'TensorRT', 'ONNX Runtime', 'YOLOv8', 'RT-DETR', 'OpenCV', 'CUDA']
+          },
+          {
+            category: 'Systems & Inference',
+            items: ['Docker', 'NVIDIA Triton', 'C++', 'Python', 'FastAPI', 'FFmpeg', 'Linux']
+          }
+        ],
+        languages: [
+          { name: 'Русский', level: 'Свободный' },
+          { name: 'English', level: 'Professional Working' },
+          { name: 'O‘zbek', level: 'Родной' }
+        ]
+      }
     },
     {
       id: 'member-2',
       name: 'Teammate 2 (Placeholder)',
+      nameRu: 'Участник 2',
       role: 'Tracking & Spatial Geometry Specialist',
       badge: 'Multi-Object Tracking & camera.md',
       photo: '/teammate-2.jpg',
@@ -70,32 +194,208 @@ export default function TeamSection() {
         email: 'member2@antigradient.ai',
       },
       imageLeft: false, // 2nd: Info Left (75%), Photo Right (25%) - CHESSBOARD
+      dossier: {
+        title: 'Tracking & Spatial Geometry Specialist',
+        location: 'Ташкент, Узбекистан',
+        summary: 'Инженер компьютерного зрения, специализирующийся на многообъектном трекинге (MOT), калибровке пространственной геометрии перекрёстков и ассоциации траекторий в условиях окклюзий.',
+        hackathonFocus: [
+          'Калибровка ассоциации ByteTrack с экстраполяцией скоростей Калмана при перекрытиях',
+          'Парсер виртуальных полигонов camera.md для направлений полос и сплошных линий',
+          'Оптимизатор двудольного сопоставления для временных порогов IoU [0.3, 0.5, 0.7]'
+        ],
+        experience: [
+          {
+            company: 'Antigradient AI Lab',
+            role: 'Multi-Object Tracking Engineer',
+            period: '2024 — Настоящее время',
+            location: 'Ташкент',
+            badge: 'MOT & Geometry',
+            highlights: [
+              'Построение надежных графов трекинга для десятков одновременных объектов в кадре.',
+              'Интеграция пространственных правил и векторов стоп-линий с проекцией точек контакта колес с дорожным полотном.'
+            ]
+          }
+        ],
+        education: [
+          {
+            institution: 'Университет',
+            degree: 'Applied Mathematics & Computer Science',
+            specialization: 'Robotics & Computer Vision',
+            period: '2022 — 2026',
+          }
+        ],
+        achievements: [
+          {
+            title: 'AI City Challenge Participant',
+            desc: 'Разработка многокамерного трекинга транспортных средств на сложных городских перекрёстках.'
+          }
+        ],
+        skillCategories: [
+          {
+            category: 'Tracking & Geometry',
+            items: ['ByteTrack', 'DeepSORT', 'Kalman Filter', 'Shapely', 'Geometric Homography', 'OpenCV']
+          },
+          {
+            category: 'Languages & Tools',
+            items: ['Python', 'NumPy', 'Scipy', 'C++', 'Git', 'Linux']
+          }
+        ],
+        languages: [
+          { name: 'Русский', level: 'Свободный' },
+          { name: 'English', level: 'Professional Working' }
+        ]
+      }
     },
     {
       id: 'member-3',
-      name: 'Teammate 3 (Placeholder)',
-      role: 'Causal Risk Modeling & Full-Stack Systems',
-      badge: 'Part B Anticipation & Demo Platform',
+      name: 'Ashirov Asan',
+      nameRu: 'Аширов Асан',
+      role: 'ML Engineer & Computer Vision Architect',
+      badge: 'AI Vision & Deep Learning • Airi.uz / Inha',
       photo: '/teammate-3.jpg',
       objectPosition: '53% 20%',
-      initials: 'T3',
-      bio: 'Designed the causal accident anticipation architecture for Part B and built the web submission platform. Implemented the online RiskEstimator.step() causal interface, extracting Time-to-Collision (TTC) signals and deceleration anomalies across the 5.0-second prediction horizon.',
+      initials: 'AA',
+      bio: 'Machine Learning & Computer Vision engineer with proven experience building industrial CV object detection systems, 4-LGBM order forecasting ensembles, STT/TTS speech models, and RAG architectures. Top 11 in Yandex Contest (CMC) and active Kaggle/Hackathon participant.',
       contributions: [
-        'Part B causal RiskEstimator.step() with strict zero-lookahead online inference',
-        'Time-to-Collision (TTC) kinetic risk forecasting and chance-normalized AP scoring',
-        'Public team website, interactive video demo engine, and evaluation harness validation',
+        'Part B Causal Risk Estimator & TTC kinematic risk forecasting interface',
+        'YOLOv8 & RT-DETR detection adaptation and post-processing pipeline',
+        'Validation harness, ensemble evaluation, and submission packaging',
       ],
       proudProjects: [
-        'Causal Video Anomaly Detection Platform with Microsecond Stream Processing',
-        'High-Throughput Distributed Video Inference Pipeline on Kubernetes',
+        'Yandex Contest (CMC) — Top 11 ranking',
+        'LINKTRADE Smart Retail CV Detection (>95% accuracy for AVON)',
+        'airi.uz Speech (STT/TTS) & RAG Multimodal AI Models',
       ],
       links: {
-        github: 'https://github.com/teammate3',
-        linkedin: 'https://linkedin.com/in/teammate3',
-        portfolio: 'https://teammate3.dev',
-        email: 'member3@antigradient.ai',
+        github: 'https://github.com/Antifragile-nnt',
+        telegram: 'https://t.me/Antifragile_nnt',
+        email: 'asanashirov24@gmail.com',
+        phone: '+998933940681',
+        phoneDisplay: '+998 (93) 394-06-81',
       },
       imageLeft: true, // 3rd: Photo Left (25%), Info Right (75%) - CHESSBOARD
+      dossier: {
+        title: 'Data Scientist • Machine Learning Engineer • AI Engineer',
+        location: 'Ташкент, Узбекистан',
+        summary: 'Специализируюсь на прикладном машинном обучении, компьютерном зрении (CV), обработке естественного языка (NLP) и рекомендательных системах. Имею подтверждённый опыт разработки промышленных пайплайнов детекции объектов, ансамблевых моделей градиентного бустинга с высокой точностью (ROC-AUC > 0.93, lift 58x), интеграции моделей распознавания речи (STT/TTS) и создания автономных RAG-агентов.',
+        hackathonFocus: [
+          'Архитектура причинного прогнозирования рисков аварий (Part B Causal Risk Estimator) со строгим соблюдением нулевого заглядывания в будущее',
+          'Оценка кинематических аномалий и расчет метрик Time-to-Collision (TTC) на 5-секундном горизонте',
+          'Интеграция предсказаний компьютерного зрения и валидация скрипта оценки метрик AP'
+        ],
+        experience: [
+          {
+            company: 'Институт исследований цифровых технологий и искусственного интеллекта (airi.uz)',
+            role: 'ML-инженер',
+            period: 'Июль 2026 — настоящее время (3 мес.)',
+            location: 'Ташкент',
+            badge: 'Текущее место работы',
+            highlights: [
+              'Разработка и дообучение моделей распознавания и синтеза речи (STT/TTS) для узбекского языка.',
+              'Проектирование и внедрение архитектур RAG (Retrieval-Augmented Generation) для корпоративных баз знаний.',
+              'Исследование и внедрение мультимодальных AI VISION моделей для анализа визуальных данных.'
+            ]
+          },
+          {
+            company: 'LINKTRADE',
+            role: 'Data Scientist / ML Engineer',
+            period: 'Январь 2026 — Август 2026 (8 мес.)',
+            location: 'Ташкент',
+            badge: 'Computer Vision & B2B ML',
+            highlights: [
+              'Computer Vision: разработал систему распознавания и классификации товаров на полках магазинов для брендов AVON и Sardor Snacks с точностью детекции >95%, сократив ручную проверку на 70%.',
+              'B2B Прогнозирование заказов: создал ансамбль из 4 моделей LightGBM с walk-forward валидацией (ROC-AUC > 0.93, lift 58x), оптимизировав цепочку поставок и оборотный капитал.',
+              'Разработал интеллектуальных RAG-агентов (LangChain, LlamaIndex) для генерации бизнес-аналитики и автоматических отчётов.'
+            ]
+          },
+          {
+            company: 'Яндекс Крауд',
+            role: 'Специалист по сбору и анализу данных',
+            period: 'Июнь 2025 — Декабрь 2025 (7 мес.)',
+            location: 'Ташкент / Удалённо',
+            badge: 'Data Ops & QA',
+            highlights: [
+              'Сбор, структурирование и валидация геопространственных данных для сервисов Яндекс.Карты и Яндекс.Go.',
+              'Верификация и контроль качества обучающих выборок для моделей Computer Vision и NLP.',
+              'Автоматизация детекции аномалий в разметке и подготовка датасетов к обучению.'
+            ]
+          },
+          {
+            company: 'Syncall AI',
+            role: 'Data Analyst',
+            period: 'Июль 2025 — Октябрь 2025 (4 мес.)',
+            location: 'Ташкент',
+            badge: 'Voice AI Analytics',
+            highlights: [
+              'Анализ качества и валидация моделей синтеза и распознавания речи (STT/TTS) в голосовых роботах.',
+              'Построение аналитических пайплайнов на Python для мониторинга конверсий диалоговых сценариев и проведения A/B тестов.'
+            ]
+          },
+          {
+            company: 'Neuro Pulse',
+            role: 'Data Scientist / AI Engineer (Intern)',
+            period: 'Декабрь 2024 — Февраль 2025 (3 мес.)',
+            location: 'Ташкент',
+            badge: 'Deep Learning R&D',
+            highlights: [
+              'Исследование современных архитектур трансформеров и обучение baseline-моделей на PyTorch.',
+              'Инженерия признаков (Feature Engineering) и предварительная обработка табличных и текстовых данных.'
+            ]
+          }
+        ],
+        education: [
+          {
+            institution: 'Inha University in Tashkent (IUT)',
+            degree: 'Бакалавр, Компьютерные науки и инженерия (CSE)',
+            specialization: 'Software Engineering & Data Science / ML',
+            period: '2024 — 2028',
+          },
+          {
+            institution: 'Qwasar Silicon Valley',
+            degree: 'Программа специализации Data Science & ML Engineering',
+            specialization: 'Applied Deep Learning, Algorithms & Data Structures',
+            period: '2023 — 2024',
+          }
+        ],
+        achievements: [
+          {
+            title: 'Yandex Contest (CMC) — Top 11',
+            desc: 'Высокий результат среди участников в соревновании по алгоритмам анализа данных и машинному обучению.'
+          },
+          {
+            title: 'Хакатоны CBU & IT-Park — Призёр',
+            desc: 'Призовые места в соревнованиях по прикладным ML/AI задачам и разработке data-driven продуктов.'
+          },
+          {
+            title: 'Kaggle Competitions Participant',
+            desc: 'Успешные решения в задачах табличного моделирования (Tabular Data) и классификации изображений.'
+          }
+        ],
+        skillCategories: [
+          {
+            category: 'Machine Learning & Deep Learning',
+            items: ['PyTorch', 'TensorFlow', 'LightGBM', 'CatBoost', 'XGBoost', 'Scikit-learn', 'Transformers', 'Hugging Face']
+          },
+          {
+            category: 'Computer Vision & Speech / NLP',
+            items: ['OpenCV', 'YOLO', 'Object Detection', 'STT / TTS', 'RAG', 'LangChain', 'LlamaIndex']
+          },
+          {
+            category: 'Languages & Databases',
+            items: ['Python', 'SQL', 'C++', 'PostgreSQL', 'ClickHouse', 'Pandas', 'NumPy', 'SciPy']
+          },
+          {
+            category: 'Tools & Analytics',
+            items: ['Docker', 'Git', 'Linux / Bash', 'FastAPI', 'Flask', 'Tableau', 'Power BI']
+          }
+        ],
+        languages: [
+          { name: 'Русский', level: 'Родной' },
+          { name: 'English', level: 'B2 / Professional Working' },
+          { name: 'O‘zbek', level: 'C1 / Professional' },
+          { name: 'Қазақ', level: 'C1 / Professional' },
+        ]
+      }
     },
   ];
 
@@ -130,9 +430,11 @@ export default function TeamSection() {
 
             const photoBlock = (
               <div
-                className={`relative w-full h-full min-h-[380px] sm:min-h-[440px] rounded-3xl border border-[#1f2d45] hover:border-[#00e5ff]/50 overflow-hidden group col-span-1 shadow-2xl transition-all duration-300 bg-[#090f1a] flex flex-col justify-between p-5 ${
+                onClick={() => setSelectedMember(member)}
+                className={`relative w-full h-full min-h-[380px] sm:min-h-[440px] rounded-3xl border border-[#1f2d45] hover:border-[#00e5ff]/50 overflow-hidden group col-span-1 shadow-2xl transition-all duration-300 bg-[#090f1a] flex flex-col justify-between p-5 cursor-pointer ${
                   isPhotoLeft ? 'order-1' : 'order-1 md:order-2'
                 }`}
+                title="Нажмите, чтобы открыть полное резюме сотрудника"
               >
                 {/* Full-bleed Photo filling entire rectangle */}
                 <img
@@ -156,8 +458,13 @@ export default function TeamSection() {
                   </span>
                 </div>
 
-                {/* Top Spacer to push badge to bottom */}
-                <div className="relative z-10" />
+                {/* Top Quick Action on Hover */}
+                <div className="relative z-10 flex justify-end">
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#080c14]/90 backdrop-blur-md border border-[#00e5ff]/40 text-xs font-semibold text-[#00e5ff] shadow-xl">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Посмотреть досье</span>
+                  </div>
+                </div>
 
                 {/* Bottom Corner: Status / Core Index Badge */}
                 <div className="relative z-10 flex items-center justify-between">
@@ -166,6 +473,10 @@ export default function TeamSection() {
                     <span className="text-[#00e5ff] font-bold">0{idx + 1}</span>
                     <span className="text-gray-400">/ 03 Core</span>
                   </div>
+
+                  <span className="text-xs font-mono text-gray-400 group-hover:text-[#00e5ff] transition">
+                    Резюме &rarr;
+                  </span>
                 </div>
               </div>
             );
@@ -179,49 +490,75 @@ export default function TeamSection() {
                       {member.badge}
                     </div>
 
-                    {/* Socials */}
+                    {/* Socials & Contacts */}
                     <div className="flex items-center gap-2">
-                      <a
-                        href={member.links.github}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="p-2 rounded-lg bg-[#090f1a] hover:bg-[#0693e3]/20 hover:text-[#00e5ff] text-gray-400 border border-[#1f2d45] transition"
-                        title="GitHub Profile"
-                      >
-                        <GithubIcon className="w-4 h-4" />
-                      </a>
-                      <a
-                        href={member.links.linkedin}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="p-2 rounded-lg bg-[#090f1a] hover:bg-[#0693e3]/20 hover:text-[#00e5ff] text-gray-400 border border-[#1f2d45] transition"
-                        title="LinkedIn Profile"
-                      >
-                        <LinkedinIcon className="w-4 h-4" />
-                      </a>
-                      <a
-                        href={member.links.portfolio}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="p-2 rounded-lg bg-[#090f1a] hover:bg-[#0693e3]/20 hover:text-[#00e5ff] text-gray-400 border border-[#1f2d45] transition"
-                        title="Personal Portfolio"
-                      >
-                        <Globe className="w-4 h-4" />
-                      </a>
-                      <a
-                        href={`mailto:${member.links.email}`}
-                        className="p-2 rounded-lg bg-[#090f1a] hover:bg-[#0693e3]/20 hover:text-[#00e5ff] text-gray-400 border border-[#1f2d45] transition"
-                        title="Email"
-                      >
-                        <Mail className="w-4 h-4" />
-                      </a>
+                      {member.links.telegram && (
+                        <a
+                          href={member.links.telegram}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="p-2 rounded-lg bg-[#090f1a] hover:bg-[#0693e3]/20 hover:text-[#00e5ff] text-gray-400 border border-[#1f2d45] transition"
+                          title="Telegram Profile"
+                        >
+                          <TelegramIcon className="w-4 h-4" />
+                        </a>
+                      )}
+                      {member.links.github && (
+                        <a
+                          href={member.links.github}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="p-2 rounded-lg bg-[#090f1a] hover:bg-[#0693e3]/20 hover:text-[#00e5ff] text-gray-400 border border-[#1f2d45] transition"
+                          title="GitHub Profile"
+                        >
+                          <GithubIcon className="w-4 h-4" />
+                        </a>
+                      )}
+                      {member.links.linkedin && (
+                        <a
+                          href={member.links.linkedin}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="p-2 rounded-lg bg-[#090f1a] hover:bg-[#0693e3]/20 hover:text-[#00e5ff] text-gray-400 border border-[#1f2d45] transition"
+                          title="LinkedIn Profile"
+                        >
+                          <LinkedinIcon className="w-4 h-4" />
+                        </a>
+                      )}
+                      {member.links.portfolio && (
+                        <a
+                          href={member.links.portfolio}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="p-2 rounded-lg bg-[#090f1a] hover:bg-[#0693e3]/20 hover:text-[#00e5ff] text-gray-400 border border-[#1f2d45] transition"
+                          title="Personal Portfolio"
+                        >
+                          <Globe className="w-4 h-4" />
+                        </a>
+                      )}
+                      {member.links.email && (
+                        <a
+                          href={`mailto:${member.links.email}`}
+                          className="p-2 rounded-lg bg-[#090f1a] hover:bg-[#0693e3]/20 hover:text-[#00e5ff] text-gray-400 border border-[#1f2d45] transition"
+                          title={`Email: ${member.links.email}`}
+                        >
+                          <Mail className="w-4 h-4" />
+                        </a>
+                      )}
                     </div>
                   </div>
 
                   {/* Name & Role */}
-                  <h3 className="text-2xl sm:text-3xl font-extrabold text-white mb-1 group-hover:text-[#00e5ff] transition">
-                    {member.name}
-                  </h3>
+                  <div className="flex flex-wrap items-baseline gap-3 mb-1">
+                    <h3 className="text-2xl sm:text-3xl font-extrabold text-white group-hover:text-[#00e5ff] transition">
+                      {member.name}
+                    </h3>
+                    {member.nameRu && member.nameRu !== member.name && (
+                      <span className="text-base font-medium text-gray-400">
+                        ({member.nameRu})
+                      </span>
+                    )}
+                  </div>
                   <div className="text-sm font-medium text-gray-400 mb-4">
                     {member.role}
                   </div>
@@ -245,20 +582,34 @@ export default function TeamSection() {
                   </div>
 
                   {/* Previous Proud Projects (Per PDF Rubric) */}
-                  <div className="pt-4 border-t border-[#1f2d45]">
-                    <span className="text-xs font-mono uppercase tracking-wider text-gray-400 font-bold block mb-2">
-                      Featured Past Projects:
-                    </span>
-                    <div className="flex flex-wrap gap-2">
-                      {member.proudProjects.map((proj, pIdx) => (
-                        <div
-                          key={pIdx}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#090f1a] border border-[#1f2d45] text-xs text-gray-300 font-mono"
-                        >
-                          <Award className="w-3 h-3 text-[#00e5ff]" />
-                          <span>{proj}</span>
-                        </div>
-                      ))}
+                  <div className="pt-4 border-t border-[#1f2d45] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <span className="text-xs font-mono uppercase tracking-wider text-gray-400 font-bold block mb-2">
+                        Featured Past Projects:
+                      </span>
+                      <div className="flex flex-wrap gap-2">
+                        {member.proudProjects.map((proj, pIdx) => (
+                          <div
+                            key={pIdx}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#090f1a] border border-[#1f2d45] text-xs text-gray-300 font-mono"
+                          >
+                            <Award className="w-3 h-3 text-[#00e5ff]" />
+                            <span>{proj}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Pop-up Modal Trigger Button */}
+                    <div className="shrink-0 pt-2 sm:pt-0">
+                      <button
+                        onClick={() => setSelectedMember(member)}
+                        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#0693e3]/20 to-[#00e5ff]/20 hover:from-[#0693e3]/40 hover:to-[#00e5ff]/40 text-[#00e5ff] hover:text-white font-semibold text-xs border border-[#00e5ff]/30 hover:border-[#00e5ff] transition-all shadow-lg hover:shadow-[#00e5ff]/20 group/btn"
+                      >
+                        <FileText className="w-4 h-4 text-[#00e5ff] group-hover/btn:scale-110 transition-transform" />
+                        <span>Подробнее / Полное резюме</span>
+                        <ArrowUpRight className="w-3.5 h-3.5 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform" />
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -327,6 +678,376 @@ export default function TeamSection() {
           </div>
         </div>
       </div>
+
+      {/* ========================================================================= */}
+      {/* POP-UP MODAL: ПОЛНОЕ РЕЗЮМЕ И ДОСЬЕ СОТРУДНИКА                            */}
+      {/* ========================================================================= */}
+      {selectedMember && selectedMember.dossier && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
+          onClick={() => setSelectedMember(null)}
+        >
+          <div
+            className="relative w-full max-w-4xl max-h-[92vh] bg-[#0c1322] border border-[#1f2d45] rounded-3xl shadow-2xl overflow-hidden flex flex-col text-left"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="relative p-6 sm:p-8 bg-gradient-to-r from-[#121a2a] via-[#101726] to-[#0c1322] border-b border-[#1f2d45]">
+              {/* Close Button */}
+              <button
+                onClick={() => setSelectedMember(null)}
+                className="absolute top-5 right-5 p-2 rounded-full bg-[#080c14]/80 text-gray-400 hover:text-white hover:bg-[#1f2d45] border border-[#1f2d45] transition-all"
+                title="Закрыть (Esc)"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 sm:gap-6 pr-10">
+                {/* Photo Avatar */}
+                <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border-2 border-[#00e5ff]/40 shadow-xl shrink-0 bg-[#090f1a]">
+                  <img
+                    src={selectedMember.photo}
+                    alt={selectedMember.name}
+                    style={{ objectPosition: selectedMember.objectPosition || 'center 25%' }}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+
+                {/* Name & Title */}
+                <div className="space-y-1.5 flex-1">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#182236] border border-[#2a3a56] text-xs font-semibold text-[#00e5ff]">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>{selectedMember.badge}</span>
+                  </div>
+
+                  <h3 className="text-2xl sm:text-3xl font-extrabold text-white flex flex-wrap items-center gap-2">
+                    <span>{selectedMember.name}</span>
+                    {selectedMember.nameRu && selectedMember.nameRu !== selectedMember.name && (
+                      <span className="text-gray-400 text-lg font-normal">
+                        ({selectedMember.nameRu})
+                      </span>
+                    )}
+                  </h3>
+
+                  <p className="text-sm font-medium text-gray-300">
+                    {selectedMember.dossier.title || selectedMember.role}
+                  </p>
+
+                  <div className="flex flex-wrap items-center gap-3 pt-1 text-xs text-gray-400">
+                    <span className="inline-flex items-center gap-1.5">
+                      <MapPin className="w-3.5 h-3.5 text-[#00e5ff]" />
+                      <span>{selectedMember.dossier.location}</span>
+                    </span>
+
+                    {selectedMember.links.phone && (
+                      <span className="inline-flex items-center gap-1.5">
+                        <Phone className="w-3.5 h-3.5 text-[#00d084]" />
+                        <a href={`tel:${selectedMember.links.phone}`} className="hover:text-white transition">
+                          {selectedMember.links.phoneDisplay || selectedMember.links.phone}
+                        </a>
+                      </span>
+                    )}
+
+                    {selectedMember.links.telegram && (
+                      <span className="inline-flex items-center gap-1.5">
+                        <TelegramIcon className="w-3.5 h-3.5 text-[#00e5ff]" />
+                        <a href={selectedMember.links.telegram} target="_blank" rel="noreferrer" className="hover:text-white transition">
+                          {selectedMember.links.telegram.replace('https://t.me/', '@')}
+                        </a>
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Fast Direct Contacts Bar */}
+              <div className="mt-5 flex flex-wrap items-center gap-2.5 pt-4 border-t border-[#1f2d45]/70">
+                {selectedMember.links.telegram && (
+                  <a
+                    href={selectedMember.links.telegram}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-[#0088cc]/20 hover:bg-[#0088cc]/30 border border-[#0088cc]/40 text-[#00e5ff] text-xs font-semibold transition"
+                  >
+                    <TelegramIcon className="w-3.5 h-3.5" />
+                    <span>Telegram</span>
+                    <ExternalLink className="w-3 h-3 ml-0.5" />
+                  </a>
+                )}
+
+                {selectedMember.links.email && (
+                  <a
+                    href={`mailto:${selectedMember.links.email}`}
+                    className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-[#182236] hover:bg-[#202e47] border border-[#2a3a56] text-gray-200 text-xs font-semibold transition"
+                  >
+                    <Mail className="w-3.5 h-3.5 text-[#00e5ff]" />
+                    <span>{selectedMember.links.email}</span>
+                  </a>
+                )}
+
+                {selectedMember.links.phone && (
+                  <a
+                    href={`tel:${selectedMember.links.phone}`}
+                    className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-[#182236] hover:bg-[#202e47] border border-[#2a3a56] text-gray-200 text-xs font-semibold transition"
+                  >
+                    <Phone className="w-3.5 h-3.5 text-[#00d084]" />
+                    <span>Позвонить</span>
+                  </a>
+                )}
+
+                {selectedMember.links.github && (
+                  <a
+                    href={selectedMember.links.github}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-[#182236] hover:bg-[#202e47] border border-[#2a3a56] text-gray-200 text-xs font-semibold transition"
+                  >
+                    <GithubIcon className="w-3.5 h-3.5 text-gray-300" />
+                    <span>GitHub</span>
+                    <ExternalLink className="w-3 h-3 ml-0.5" />
+                  </a>
+                )}
+
+                {selectedMember.links.linkedin && (
+                  <a
+                    href={selectedMember.links.linkedin}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-[#182236] hover:bg-[#202e47] border border-[#2a3a56] text-gray-200 text-xs font-semibold transition"
+                  >
+                    <LinkedinIcon className="w-3.5 h-3.5 text-[#00e5ff]" />
+                    <span>LinkedIn</span>
+                    <ExternalLink className="w-3 h-3 ml-0.5" />
+                  </a>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Scrollable Body */}
+            <div className="overflow-y-auto p-6 sm:p-8 space-y-8 text-gray-300 max-h-[calc(92vh-200px)]">
+              {/* 1. Summary / О специалисте */}
+              <div className="p-5 rounded-2xl bg-[#121a2a]/70 border border-[#1f2d45]">
+                <h4 className="text-xs font-mono uppercase tracking-widest text-[#00e5ff] font-bold mb-2 flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  О специалисте (Executive Summary)
+                </h4>
+                <p className="text-sm text-gray-200 leading-relaxed">
+                  {selectedMember.dossier.summary}
+                </p>
+              </div>
+
+              {/* 2. Hackathon Role & Specific Impact */}
+              {selectedMember.dossier.hackathonFocus && (
+                <div className="space-y-3">
+                  <h4 className="text-xs font-mono uppercase tracking-widest text-[#00e5ff] font-bold flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-[#00e5ff]" />
+                    Ключевые задачи и вклад в решение Хакатона WIUT 2026:
+                  </h4>
+                  <div className="grid grid-cols-1 gap-2.5">
+                    {selectedMember.dossier.hackathonFocus.map((focus, fIdx) => (
+                      <div
+                        key={fIdx}
+                        className="flex items-start gap-3 p-3.5 rounded-xl bg-[#090f1a] border border-[#1f2d45] text-xs sm:text-sm text-gray-300"
+                      >
+                        <Check className="w-4 h-4 text-[#00e5ff] shrink-0 mt-0.5" />
+                        <span>{focus}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 3. Work Experience / Опыт работы */}
+              {selectedMember.dossier.experience && selectedMember.dossier.experience.length > 0 && (
+                <div className="space-y-4">
+                  <h4 className="text-xs font-mono uppercase tracking-widest text-[#00e5ff] font-bold flex items-center gap-2">
+                    <Briefcase className="w-4 h-4 text-[#00e5ff]" />
+                    Опыт работы (Work Experience):
+                  </h4>
+
+                  <div className="space-y-4 relative before:absolute before:left-3 before:top-3 before:bottom-3 before:w-0.5 before:bg-[#1f2d45]">
+                    {selectedMember.dossier.experience.map((exp, eIdx) => (
+                      <div key={eIdx} className="relative pl-8">
+                        {/* Node circle */}
+                        <div className="absolute left-[7px] top-4 w-3 h-3 rounded-full bg-[#00e5ff] shadow-[0_0_8px_#00e5ff]" />
+
+                        <div className="p-5 rounded-2xl bg-[#0e1626] border border-[#1f2d45] hover:border-[#0693e3]/40 transition space-y-3">
+                          <div className="flex flex-wrap items-start justify-between gap-2">
+                            <div>
+                              <h5 className="text-base font-bold text-white">
+                                {exp.role}
+                              </h5>
+                              <div className="text-sm font-semibold text-[#00e5ff]">
+                                {exp.company}
+                              </div>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-2 text-xs">
+                              {exp.badge && (
+                                <span className="px-2.5 py-0.5 rounded-full bg-[#182236] border border-[#2a3a56] text-[#00d084] font-medium">
+                                  {exp.badge}
+                                </span>
+                              )}
+                              <span className="inline-flex items-center gap-1 text-gray-400 font-mono">
+                                <Calendar className="w-3 h-3" />
+                                {exp.period}
+                              </span>
+                            </div>
+                          </div>
+
+                          {exp.highlights && exp.highlights.length > 0 && (
+                            <ul className="space-y-2 pt-1 text-xs sm:text-sm text-gray-300">
+                              {exp.highlights.map((item, hIdx) => (
+                                <li key={hIdx} className="flex items-start gap-2">
+                                  <span className="text-[#00e5ff] font-bold leading-none mt-1">•</span>
+                                  <span>{item}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 4. Education & Competitions Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Education */}
+                {selectedMember.dossier.education && (
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-mono uppercase tracking-widest text-[#00e5ff] font-bold flex items-center gap-2">
+                      <GraduationCap className="w-4 h-4 text-[#00e5ff]" />
+                      Образование (Education):
+                    </h4>
+                    <div className="space-y-3">
+                      {selectedMember.dossier.education.map((edu, edIdx) => (
+                        <div key={edIdx} className="p-4 rounded-xl bg-[#0e1626] border border-[#1f2d45] space-y-1">
+                          <div className="text-sm font-bold text-white">
+                            {edu.institution}
+                          </div>
+                          <div className="text-xs text-[#00e5ff] font-medium">
+                            {edu.degree}
+                          </div>
+                          {edu.specialization && (
+                            <div className="text-xs text-gray-400">
+                              {edu.specialization}
+                            </div>
+                          )}
+                          <div className="text-[11px] font-mono text-gray-500 pt-1">
+                            {edu.period}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Achievements & Competitions */}
+                {selectedMember.dossier.achievements && (
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-mono uppercase tracking-widest text-[#00e5ff] font-bold flex items-center gap-2">
+                      <Trophy className="w-4 h-4 text-[#00d084]" />
+                      Достижения & Соревнования:
+                    </h4>
+                    <div className="space-y-3">
+                      {selectedMember.dossier.achievements.map((ach, acIdx) => (
+                        <div key={acIdx} className="p-4 rounded-xl bg-[#0e1626] border border-[#1f2d45] space-y-1">
+                          <div className="text-sm font-bold text-white flex items-center gap-1.5">
+                            <Award className="w-3.5 h-3.5 text-[#00e5ff]" />
+                            <span>{ach.title}</span>
+                          </div>
+                          <div className="text-xs text-gray-400 leading-relaxed">
+                            {ach.desc}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* 5. Tech Stack & Skills */}
+              {selectedMember.dossier.skillCategories && (
+                <div className="space-y-3">
+                  <h4 className="text-xs font-mono uppercase tracking-widest text-[#00e5ff] font-bold flex items-center gap-2">
+                    <Code className="w-4 h-4 text-[#00e5ff]" />
+                    Стек технологий & Навыки (Skills & Technologies):
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {selectedMember.dossier.skillCategories.map((cat, cIdx) => (
+                      <div key={cIdx} className="p-4 rounded-xl bg-[#0e1626] border border-[#1f2d45] space-y-2">
+                        <div className="text-xs font-semibold text-gray-300">
+                          {cat.category}
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {cat.items.map((skill, sIdx) => (
+                            <span
+                              key={sIdx}
+                              className="px-2.5 py-1 rounded-md bg-[#182236] border border-[#2a3a56] text-xs font-mono text-gray-200"
+                            >
+                              {skill}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 6. Spoken Languages */}
+              {selectedMember.dossier.languages && (
+                <div className="space-y-3">
+                  <h4 className="text-xs font-mono uppercase tracking-widest text-[#00e5ff] font-bold flex items-center gap-2">
+                    <Languages className="w-4 h-4 text-[#00e5ff]" />
+                    Владение языками:
+                  </h4>
+                  <div className="flex flex-wrap gap-3">
+                    {selectedMember.dossier.languages.map((lang, lIdx) => (
+                      <div
+                        key={lIdx}
+                        className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-[#0e1626] border border-[#1f2d45] text-xs"
+                      >
+                        <span className="font-bold text-white">{lang.name}</span>
+                        <span className="text-gray-400">({lang.level})</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 sm:p-6 bg-[#080c14] border-t border-[#1f2d45] flex flex-wrap items-center justify-between gap-3">
+              <div className="text-xs text-gray-400">
+                Team Antigradient • WIUT Hackathon 2026 Core Dossier
+              </div>
+
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                {selectedMember.links.telegram && (
+                  <a
+                    href={selectedMember.links.telegram}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-[#0088cc] hover:bg-[#0077b5] text-white font-bold text-xs uppercase tracking-wider transition shadow-lg"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    <span>Написать в Telegram</span>
+                  </a>
+                )}
+                <button
+                  onClick={() => setSelectedMember(null)}
+                  className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-[#182236] hover:bg-[#202e47] text-gray-300 font-bold text-xs uppercase tracking-wider border border-[#2a3a56] transition"
+                >
+                  Закрыть
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
