@@ -233,7 +233,7 @@ export default function Navbar() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search products, applications, publications, docs..."
+                placeholder="Search classes, architecture, live demo, report, team..."
                 className="w-full bg-transparent text-sm text-white placeholder-gray-500 focus:outline-none"
                 autoFocus
               />
@@ -242,36 +242,52 @@ export default function Navbar() {
             <div className="space-y-2 max-h-60 overflow-y-auto text-xs text-gray-300">
               <div className="text-[11px] uppercase tracking-wider text-gray-500 font-semibold mb-1">Quick Links</div>
               <a
-                href="#mantara"
+                href="#technology"
                 onClick={() => setSearchOpen(false)}
                 className="flex items-center justify-between p-2 rounded-lg hover:bg-[#182236] transition"
               >
-                <span>Mantara® Drone Detection System</span>
-                <span className="text-[#00e5ff]">Defense</span>
+                <span>Live CCTV Demo &amp; Video Upload</span>
+                <span className="text-[#00e5ff]">Demo (30%)</span>
+              </a>
+              <a
+                href="#stories"
+                onClick={() => setSearchOpen(false)}
+                className="flex items-center justify-between p-2 rounded-lg hover:bg-[#182236] transition"
+              >
+                <span>1-Page Engineering Report &amp; Ablations</span>
+                <span className="text-[#00e5ff]">Report (10%)</span>
               </a>
               <a
                 href="#applications"
                 onClick={() => setSearchOpen(false)}
                 className="flex items-center justify-between p-2 rounded-lg hover:bg-[#182236] transition"
               >
-                <span>Industrial High-Speed Monitoring</span>
-                <span className="text-[#00e5ff]">Applications</span>
+                <span>14 Spatiotemporal Traffic Event Classes</span>
+                <span className="text-[#00e5ff]">Classes</span>
               </a>
               <a
                 href="#platform"
                 onClick={() => setSearchOpen(false)}
                 className="flex items-center justify-between p-2 rounded-lg hover:bg-[#182236] transition"
               >
-                <span>GenX320 Neuromorphic Vision Sensor</span>
-                <span className="text-[#00e5ff]">Sensors</span>
+                <span>4-Layer Edge Architecture &amp; ByteTrack</span>
+                <span className="text-[#00e5ff]">Approach</span>
               </a>
               <a
                 href="#academic"
                 onClick={() => setSearchOpen(false)}
                 className="flex items-center justify-between p-2 rounded-lg hover:bg-[#182236] transition"
               >
-                <span>300+ Academic Research Publications</span>
-                <span className="text-[#00e5ff]">Research</span>
+                <span>EDA &amp; camera.md Homography Calibration</span>
+                <span className="text-[#00e5ff]">Analysis</span>
+              </a>
+              <a
+                href="#team"
+                onClick={() => setSearchOpen(false)}
+                className="flex items-center justify-between p-2 rounded-lg hover:bg-[#182236] transition"
+              >
+                <span>Team Antigradient (Azam, Diyora, Asan)</span>
+                <span className="text-[#00e5ff]">Team (15%)</span>
               </a>
             </div>
           </div>
