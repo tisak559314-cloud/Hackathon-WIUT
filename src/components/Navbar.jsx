@@ -74,8 +74,15 @@ export default function Navbar() {
       >
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
           {/* Logo */}
-          <a href="#" className="flex items-center gap-2.5 group shrink-0">
-            <span className="font-extrabold text-xl md:text-2xl tracking-[0.16em] text-white">
+          <a href="#" className="flex items-center gap-3 group shrink-0">
+            <div className="w-8 h-8 md:w-9 md:h-9 rounded-xl overflow-hidden bg-white/10 p-0.5 border border-[#00e5ff]/30 shadow-md shadow-[#00e5ff]/20 group-hover:border-[#00e5ff] group-hover:scale-105 transition duration-200 shrink-0">
+              <img
+                src="/logo.png"
+                alt="Antigradient Logo"
+                className="w-full h-full object-contain rounded-lg"
+              />
+            </div>
+            <span className="font-extrabold text-xl md:text-2xl tracking-[0.16em] text-white group-hover:text-[#00e5ff] transition-colors">
               ANTIGRADIENT
             </span>
           </a>
