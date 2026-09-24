@@ -811,21 +811,22 @@ export default function TeamSection() {
           onClick={() => setSelectedMember(null)}
         >
           <div
-            className="relative w-full max-w-4xl max-h-[92vh] bg-[#0c1322] border border-[#1f2d45] rounded-3xl shadow-2xl overflow-hidden flex flex-col text-left"
+            className="relative w-full max-w-4xl max-h-[92vh] bg-[#0c1322] border border-[#1f2d45] rounded-3xl shadow-2xl overflow-y-auto text-left"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Header */}
-            <div className="relative p-6 sm:p-8 bg-gradient-to-r from-[#121a2a] via-[#101726] to-[#0c1322] border-b border-[#1f2d45]">
-              {/* Close Button */}
-              <button
-                onClick={() => setSelectedMember(null)}
-                className="absolute top-5 right-5 p-2 rounded-full bg-[#080c14]/80 text-gray-400 hover:text-white hover:bg-[#1f2d45] border border-[#1f2d45] transition-all"
-                title="Закрыть (Esc)"
-              >
-                <X className="w-5 h-5" />
-              </button>
+            {/* Close Button - Sticky at top right of modal so it's always accessible while scrolling */}
+            <button
+              onClick={() => setSelectedMember(null)}
+              className="sticky top-4 right-4 float-right z-30 p-2 sm:p-2.5 rounded-full bg-[#080c14]/90 text-gray-300 hover:text-white hover:bg-[#1f2d45] border border-[#1f2d45] shadow-xl backdrop-blur-md transition-all mr-4 mt-4 -mb-12"
+              title="Закрыть (Esc)"
+              aria-label="Закрыть"
+            >
+              <X className="w-5 h-5" />
+            </button>
 
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 sm:gap-6 pr-10">
+            {/* Modal Header - now scrolls away when user scrolls down */}
+            <div className="relative p-6 sm:p-8 bg-gradient-to-r from-[#121a2a] via-[#101726] to-[#0c1322] border-b border-[#1f2d45] pr-14">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 sm:gap-6">
                 {/* Photo Avatar */}
                 <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border-2 border-[#00e5ff]/40 shadow-xl shrink-0 bg-[#090f1a]">
                   <img
@@ -972,8 +973,8 @@ export default function TeamSection() {
               </div>
             </div>
 
-            {/* Modal Scrollable Body */}
-            <div className="overflow-y-auto p-6 sm:p-8 space-y-8 text-gray-300 max-h-[calc(92vh-200px)]">
+            {/* Modal Body */}
+            <div className="p-6 sm:p-8 space-y-8 text-gray-300">
               {/* 1. Summary / О специалисте */}
               <div className="p-5 rounded-2xl bg-[#121a2a]/70 border border-[#1f2d45]">
                 <h4 className="text-xs font-mono uppercase tracking-widest text-[#00e5ff] font-bold mb-2 flex items-center gap-2">
