@@ -93,14 +93,7 @@ export default function RecognitionFooter() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
             {/* Mission Statement & Address */}
             <div className="lg:col-span-6 space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-xl overflow-hidden bg-white/10 p-0.5 border border-[#00e5ff]/30 shadow-md shadow-[#00e5ff]/20 shrink-0">
-                  <img
-                    src="/logo.png"
-                    alt="Antigradient Logo"
-                    className="w-full h-full object-contain rounded-lg"
-                  />
-                </div>
+              <div className="flex items-center gap-2">
                 <span className="font-extrabold text-2xl tracking-[0.18em] text-white">ANTIGRADIENT</span>
                 <span className="w-2 h-2 rounded-full bg-[#0693e3]" />
                 <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-[#0693e3]/20 border border-[#0693e3]/40 text-[#00e5ff]">
