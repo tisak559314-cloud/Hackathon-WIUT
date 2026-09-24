@@ -583,7 +583,13 @@ export default function TeamSection() {
             );
 
             const infoBlock = (
-              <div className={`w-full flex flex-col justify-between p-6 sm:p-8 bg-[#121a2a] rounded-3xl border border-[#1f2d45] hover:border-[#0693e3]/40 transition-all shadow-xl group col-span-1 md:col-span-3 ${isPhotoLeft ? 'order-2' : 'order-2 md:order-1'}`}>
+              <div
+                onClick={() => setSelectedMember(member)}
+                className={`w-full flex flex-col justify-between p-6 sm:p-8 bg-[#121a2a] rounded-3xl border border-[#1f2d45] hover:border-[#00e5ff]/50 transition-all shadow-xl group col-span-1 md:col-span-3 cursor-pointer ${
+                  isPhotoLeft ? 'order-2' : 'order-2 md:order-1'
+                }`}
+                title="Нажмите, чтобы открыть полное резюме сотрудника"
+              >
                 <div>
                   {/* Top Bar: Role badge & Social Links */}
                   <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
@@ -591,8 +597,8 @@ export default function TeamSection() {
                       {member.badge}
                     </div>
 
-                    {/* Socials & Contacts */}
-                    <div className="flex items-center gap-2">
+                    {/* Socials & Contacts - stop propagation so external links don't trigger modal */}
+                    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                       {member.links.telegram && (
                         <a
                           href={member.links.telegram}
