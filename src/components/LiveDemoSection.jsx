@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Play,
   Pause,
@@ -57,13 +57,40 @@ export default function LiveDemoSection() {
 
   const togglePlay = () => {
     if (!videoRef.current) return;
-    if (isPlaying) {
+    if (videoRef.current.paused) {
+      videoRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
+    } else {
       videoRef.current.pause();
       setIsPlaying(false);
-    } else {
-      videoRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
     }
   };
+
+  // Keyboard shortcut listener: Spacebar toggles playback
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Don't intercept if user is typing into input, textarea, or contenteditable
+      const target = e.target;
+      const tag = target?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || target?.isContentEditable) {
+        return;
+      }
+
+      // Check if modal dialog is open
+      if (document.body.style.overflow === 'hidden') {
+        return;
+      }
+
+      if (e.code === 'Space' || e.key === ' ' || e.keyCode === 32) {
+        e.preventDefault();
+        togglePlay();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
   const seekTo = (seconds) => {
     if (videoRef.current) {
@@ -121,6 +148,8 @@ export default function LiveDemoSection() {
               loop
               onTimeUpdate={handleTimeUpdate}
               onLoadedMetadata={handleLoadedMetadata}
+              onPlay={() => setIsPlaying(true)}
+              onPause={() => setIsPlaying(false)}
               onClick={togglePlay}
             />
 
@@ -166,7 +195,10 @@ export default function LiveDemoSection() {
             {!isPlaying && (
               <div className="absolute inset-0 bg-black/45 backdrop-blur-[2px] flex flex-col items-center justify-center gap-3.5 z-20 transition-all duration-300">
                 <button
-                  onClick={togglePlay}
+                  onClick={(e) => {
+                    e.currentTarget.blur();
+                    togglePlay();
+                  }}
                   className="group inline-flex items-center gap-3 px-8 py-3.5 rounded-2xl bg-gradient-to-r from-[#00e5ff] to-[#0693e3] hover:from-[#00cce6] hover:to-[#0582ca] text-[#080c14] font-black text-sm uppercase tracking-wider shadow-2xl shadow-[#00e5ff]/40 hover:shadow-[#00e5ff]/60 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
                   aria-label="Resume playback"
                 >
@@ -176,7 +208,7 @@ export default function LiveDemoSection() {
                   <span className="text-sm tracking-widest font-black text-[#080c14]">RESUME</span>
                 </button>
                 <p className="text-xs text-gray-300 font-mono tracking-wide px-3 py-1 rounded bg-black/70 border border-white/10 backdrop-blur-sm">
-                  Click &ldquo;Resume&rdquo; to start video playback
+                  Press <kbd className="px-1.5 py-0.5 mx-1 rounded bg-white/20 text-[#00e5ff] font-bold">Space</kbd> or click &ldquo;Resume&rdquo; to start video playback
                 </p>
               </div>
             )}
@@ -218,21 +250,30 @@ export default function LiveDemoSection() {
               <div className="flex items-center justify-between text-xs text-white">
                 <div className="flex items-center gap-3">
                   <button
-                    onClick={togglePlay}
+                    onClick={(e) => {
+                      e.currentTarget.blur();
+                      togglePlay();
+                    }}
                     className="p-1 hover:text-[#00e5ff] transition"
                     aria-label={isPlaying ? 'Pause' : 'Play'}
                   >
                     {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                   </button>
                   <button
-                    onClick={restartVideo}
+                    onClick={(e) => {
+                      e.currentTarget.blur();
+                      restartVideo();
+                    }}
                     className="p-1 hover:text-[#00e5ff] transition"
                     aria-label="Restart"
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
                   </button>
                   <button
-                    onClick={() => setIsMuted(!isMuted)}
+                    onClick={(e) => {
+                      e.currentTarget.blur();
+                      setIsMuted(!isMuted);
+                    }}
                     className="p-1 hover:text-[#00e5ff] transition"
                     aria-label={isMuted ? 'Unmute' : 'Mute'}
                   >
@@ -248,7 +289,8 @@ export default function LiveDemoSection() {
                     FPS: 25.0 | LATENCY: 28.4ms
                   </span>
                   <button
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.currentTarget.blur();
                       if (videoRef.current?.requestFullscreen) {
                         videoRef.current.requestFullscreen();
                       }
