@@ -1,0 +1,25 @@
+{
+ "speed_threshold_px_per_s_4k": 60.0,
+ "videos": {
+  "C3896": {
+   "moving_vehicle_samples": 44578,
+   "pedestrian_samples": 80912,
+   "person_track_samples_dropped_as_occupants": 5122
+  },
+  "C3897": {
+   "moving_vehicle_samples": 37869,
+   "pedestrian_samples": 90549,
+   "person_track_samples_dropped_as_occupants": 1837
+  },
+  "C3902": {
+   "moving_vehicle_samples": 46311,
+   "pedestrian_samples": 112448,
+   "person_track_samples_dropped_as_occupants": 2525
+  },
+  "C3905": {
+   "moving_vehicle_samples": 19376,
+   "pedestrian_samples": 40179,
+   "person_track_samples_dropped_as_occupants": 1281
+  }
+ }
+}

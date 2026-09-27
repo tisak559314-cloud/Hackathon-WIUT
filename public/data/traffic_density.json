@@ -1,0 +1,238 @@
+{
+ "notes": {
+  "new_vehicle_tracks_per_min": "motor-vehicle tracks (car/bus/truck/motorcycle) lasting >= 1 s and moving >= 150 px (4K) in total, counted in the minute they are first seen; a partial last minute is scaled to a per-minute rate",
+  "mean_vehicles_visible": "car+bus+truck+motorcycle detections (conf >= 0.3) per processed frame, 30 s bins"
+ },
+ "videos": {
+  "C3896": {
+   "minute_start": [
+    0.0,
+    1.0,
+    2.0,
+    3.0,
+    4.0,
+    5.0
+   ],
+   "minute_len_s": [
+    60.0,
+    60.0,
+    60.0,
+    60.0,
+    60.0,
+    40.3
+   ],
+   "new_vehicle_tracks": [
+    78,
+    69,
+    57,
+    71,
+    66,
+    45
+   ],
+   "new_vehicle_tracks_per_min": [
+    78.0,
+    69.0,
+    57.0,
+    71.0,
+    66.0,
+    66.9
+   ],
+   "total_new_vehicle_tracks": 386,
+   "mean_rate_per_min": 68.0,
+   "visible_bin_start_s": [
+    0.0,
+    30.0,
+    60.0,
+    90.0,
+    120.0,
+    150.0,
+    180.0,
+    210.0,
+    240.0,
+    270.0,
+    300.0,
+    330.0
+   ],
+   "mean_vehicles_visible": [
+    35.44,
+    33.61,
+    28.38,
+    35.92,
+    28.8,
+    21.74,
+    27.78,
+    24.88,
+    24.96,
+    33.3,
+    31.04,
+    32.3
+   ],
+   "mean_vehicles_visible_overall": 29.7
+  },
+  "C3897": {
+   "minute_start": [
+    0.0,
+    1.0,
+    2.0,
+    3.0,
+    4.0,
+    5.0
+   ],
+   "minute_len_s": [
+    60.0,
+    60.0,
+    60.0,
+    60.0,
+    60.0,
+    17.8
+   ],
+   "new_vehicle_tracks": [
+    93,
+    79,
+    44,
+    70,
+    56,
+    21
+   ],
+   "new_vehicle_tracks_per_min": [
+    93.0,
+    79.0,
+    44.0,
+    70.0,
+    56.0,
+    70.7
+   ],
+   "total_new_vehicle_tracks": 363,
+   "mean_rate_per_min": 68.5,
+   "visible_bin_start_s": [
+    0.0,
+    30.0,
+    60.0,
+    90.0,
+    120.0,
+    150.0,
+    180.0,
+    210.0,
+    240.0,
+    270.0,
+    300.0
+   ],
+   "mean_vehicles_visible": [
+    31.27,
+    32.02,
+    23.38,
+    32.89,
+    26.88,
+    23.13,
+    16.8,
+    23.17,
+    28.54,
+    17.42,
+    25.08
+   ],
+   "mean_vehicles_visible_overall": 25.52
+  },
+  "C3902": {
+   "minute_start": [
+    0.0,
+    1.0,
+    2.0,
+    3.0,
+    4.0,
+    5.0
+   ],
+   "minute_len_s": [
+    60.0,
+    60.0,
+    60.0,
+    60.0,
+    60.0,
+    17.8
+   ],
+   "new_vehicle_tracks": [
+    80,
+    80,
+    93,
+    83,
+    86,
+    15
+   ],
+   "new_vehicle_tracks_per_min": [
+    80.0,
+    80.0,
+    93.0,
+    83.0,
+    86.0,
+    50.5
+   ],
+   "total_new_vehicle_tracks": 437,
+   "mean_rate_per_min": 82.5,
+   "visible_bin_start_s": [
+    0.0,
+    30.0,
+    60.0,
+    90.0,
+    120.0,
+    150.0,
+    180.0,
+    210.0,
+    240.0,
+    270.0,
+    300.0
+   ],
+   "mean_vehicles_visible": [
+    25.06,
+    28.49,
+    31.27,
+    34.51,
+    28.8,
+    25.15,
+    35.27,
+    28.93,
+    23.37,
+    35.7,
+    29.97
+   ],
+   "mean_vehicles_visible_overall": 29.67
+  },
+  "C3905": {
+   "minute_start": [
+    0.0,
+    1.0,
+    2.0
+   ],
+   "minute_len_s": [
+    60.0,
+    60.0,
+    7.6
+   ],
+   "new_vehicle_tracks": [
+    103,
+    61,
+    11
+   ],
+   "new_vehicle_tracks_per_min": [
+    103.0,
+    61.0,
+    86.5
+   ],
+   "total_new_vehicle_tracks": 175,
+   "mean_rate_per_min": 82.3,
+   "visible_bin_start_s": [
+    0.0,
+    30.0,
+    60.0,
+    90.0,
+    120.0
+   ],
+   "mean_vehicles_visible": [
+    25.23,
+    36.56,
+    31.93,
+    28.91,
+    32.47
+   ],
+   "mean_vehicles_visible_overall": 30.76
+  }
+ }
+}

@@ -3,10 +3,10 @@ import { MapPin, ExternalLink } from 'lucide-react';
 
 export default function RecognitionFooter() {
   const awards = [
-    { name: 'Benchmark Hardware', subtitle: 'NVIDIA Tesla T4 GPU', text: '25+ FPS' },
+    { name: '4K CCTV Stream', subtitle: '3840×2160 H.264 4:2:2 10-bit', text: '29.97 FPS' },
     { name: 'Package Weight Budget', subtitle: 'Strict Hackathon Limit', text: '< 5.0 GB' },
     { name: 'Anticipation Horizon', subtitle: 'Part B Causal Window', text: '5.0 SEC' },
-    { name: 'Mandatory Classes', subtitle: 'Part A Spatial-Temporal', text: '14 CLASSES' },
+    { name: 'Official Event Classes', subtitle: '7 Emitted on Benchmark', text: '14 CLASSES' },
   ];
 
   const footerLinks = {
@@ -22,22 +22,22 @@ export default function RecognitionFooter() {
       { label: '14 Traffic Event Classes', href: '#applications' },
       { label: 'Temporal IoU [0.3, 0.5, 0.7]', href: '#applications' },
       { label: 'ByteTrack Multi-Object Tracking', href: '#platform' },
-      { label: 'camera.md Spatial Calibration', href: '#academic' },
+      { label: 'SIFT+RANSAC Spatial Alignment', href: '#academic' },
       { label: 'Ground-Contact Box Projection', href: '#academic' },
     ],
     'Part B: Anticipation': [
       { label: '5.0-Second Causal Window', href: '#mantara' },
       { label: 'Online RiskEstimator.step()', href: '#mantara' },
-      { label: 'Time-to-Collision (TTC) Kinematics', href: '#platform' },
+      { label: 'Oriented Box Axis Kinematics', href: '#platform' },
       { label: 'Chance-Normalized Average Precision', href: '#academic' },
       { label: 'Zero-Lookahead Temporal Constraints', href: '#mantara' },
     ],
     'Submission Artifacts': [
-      { label: 'GitHub Source Repository', href: 'https://github.com/tisak559314-cloud/Hackathon-WIUT', external: true },
-      { label: 'Model Weights (< 5 GB)', href: 'https://github.com/tisak559314-cloud/Hackathon-WIUT/releases', external: true },
-      { label: 'predictions_samples.json', href: 'https://github.com/tisak559314-cloud/Hackathon-WIUT', external: true },
-      { label: 'Self-Contained Runner Script', href: '#submission' },
-      { label: 'Verification & Reproduction Guide', href: '#stories' },
+      { label: 'GitHub Repository: WestCV', href: 'https://github.com/AsanAshirov/WestCV', external: true },
+      { label: 'Release Tag v1.0.0 & Weights', href: 'https://github.com/AsanAshirov/WestCV/releases/tag/v1.0.0', external: true },
+      { label: 'Hand-Off Guide PDF (5.3 MB)', href: '/ANTIGRADIENT_website_guide.pdf', external: true },
+      { label: 'predictions_samples.json', href: 'https://github.com/AsanAshirov/WestCV', external: true },
+      { label: 'Ablations & Dev Score A', href: '#stories' },
     ],
   };
 
@@ -106,20 +106,21 @@ export default function RecognitionFooter() {
             {/* Quick Repository Action Links */}
             <div className="flex flex-wrap items-center gap-3 shrink-0 w-full sm:w-auto">
               <a
-                href="https://github.com/tisak559314-cloud/Hackathon-WIUT"
+                href="https://github.com/AsanAshirov/WestCV"
                 target="_blank"
                 rel="noreferrer"
                 className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#0693e3] hover:bg-[#0582ca] text-white font-bold text-xs uppercase tracking-wider transition shadow-lg shadow-[#0693e3]/25 border border-[#2ea3f2]/40"
               >
-                <span>GitHub Repository</span>
+                <span>GitHub: WestCV (v1.0.0)</span>
                 <ExternalLink className="w-3.5 h-3.5" />
               </a>
 
               <a
-                href="#submission"
-                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#121a2a] hover:bg-[#182236] text-gray-200 hover:text-white font-bold text-xs uppercase tracking-wider transition border border-[#1f2d45]"
+                href="/ANTIGRADIENT_website_guide.pdf"
+                download
+                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#121a2a] hover:bg-[#182236] text-[#00e5ff] hover:text-white font-bold text-xs uppercase tracking-wider transition border border-[#1f2d45] hover:border-[#00e5ff]/50"
               >
-                <span>Weights &amp; Artifacts</span>
+                <span>Hand-Off Guide (5.3 MB PDF)</span>
               </a>
             </div>
           </div>

@@ -1,0 +1,138 @@
+[
+ {
+  "start_sec": 0.0,
+  "end_sec": 40.0,
+  "label": "congestion",
+  "desc": "Many vehicles standing still on the carriageway at once",
+  "desc_ru": "Много машин одновременно стоят на проезжей части",
+  "type": "warning"
+ },
+ {
+  "start_sec": 0.07,
+  "end_sec": 317.82,
+  "label": "stopped_vehicle",
+  "desc": "Vehicle standing on the carriageway for 10 s or more, not in a signal queue",
+  "desc_ru": "Машина стоит на проезжей части 10 с и дольше, не в очереди на светофоре",
+  "type": "warning"
+ },
+ {
+  "start_sec": 4.2,
+  "end_sec": 14.5,
+  "label": "jaywalking",
+  "desc": "Pedestrian on the carriageway outside a zebra crossing",
+  "desc_ru": "Пешеход на проезжей части вне пешеходного перехода",
+  "type": "danger"
+ },
+ {
+  "start_sec": 20.5,
+  "end_sec": 42.4,
+  "label": "jaywalking",
+  "desc": "Pedestrian on the carriageway outside a zebra crossing",
+  "desc_ru": "Пешеход на проезжей части вне пешеходного перехода",
+  "type": "danger"
+ },
+ {
+  "start_sec": 24.49,
+  "end_sec": 26.99,
+  "label": "failure_to_yield",
+  "desc": "Vehicle drives through a zebra while a pedestrian is crossing on it",
+  "desc_ru": "Машина проезжает зебру, когда по ней идёт пешеход",
+  "type": "critical"
+ },
+ {
+  "start_sec": 43.1,
+  "end_sec": 47.0,
+  "label": "jaywalking",
+  "desc": "Pedestrian on the carriageway outside a zebra crossing",
+  "desc_ru": "Пешеход на проезжей части вне пешеходного перехода",
+  "type": "danger"
+ },
+ {
+  "start_sec": 47.9,
+  "end_sec": 54.8,
+  "label": "jaywalking",
+  "desc": "Pedestrian on the carriageway outside a zebra crossing",
+  "desc_ru": "Пешеход на проезжей части вне пешеходного перехода",
+  "type": "danger"
+ },
+ {
+  "start_sec": 60.9,
+  "end_sec": 201.0,
+  "label": "jaywalking",
+  "desc": "Pedestrian on the carriageway outside a zebra crossing",
+  "desc_ru": "Пешеход на проезжей части вне пешеходного перехода",
+  "type": "danger"
+ },
+ {
+  "start_sec": 62.93,
+  "end_sec": 69.94,
+  "label": "solid_line_crossing",
+  "desc": "Vehicle crosses the solid divider line from one side to the other",
+  "desc_ru": "Машина пересекает сплошную линию с одной стороны на другую",
+  "type": "warning"
+ },
+ {
+  "start_sec": 75.0,
+  "end_sec": 122.0,
+  "label": "congestion",
+  "desc": "Many vehicles standing still on the carriageway at once",
+  "desc_ru": "Много машин одновременно стоят на проезжей части",
+  "type": "warning"
+ },
+ {
+  "start_sec": 79.05,
+  "end_sec": 117.18,
+  "label": "stop_line",
+  "desc": "Vehicle stopped past stop line 4 while its signal is red",
+  "desc_ru": "Машина остановилась за стоп-линией 4 на красный",
+  "type": "danger"
+ },
+ {
+  "start_sec": 167.0,
+  "end_sec": 202.0,
+  "label": "congestion",
+  "desc": "Many vehicles standing still on the carriageway at once",
+  "desc_ru": "Много машин одновременно стоят на проезжей части",
+  "type": "warning"
+ },
+ {
+  "start_sec": 193.46,
+  "end_sec": 193.86,
+  "label": "failure_to_yield",
+  "desc": "Vehicle drives through a zebra while a pedestrian is crossing on it",
+  "desc_ru": "Машина проезжает зебру, когда по ней идёт пешеход",
+  "type": "critical"
+ },
+ {
+  "start_sec": 201.7,
+  "end_sec": 302.0,
+  "label": "jaywalking",
+  "desc": "Pedestrian on the carriageway outside a zebra crossing",
+  "desc_ru": "Пешеход на проезжей части вне пешеходного перехода",
+  "type": "danger"
+ },
+ {
+  "start_sec": 211.48,
+  "end_sec": 215.38,
+  "label": "solid_line_crossing",
+  "desc": "Vehicle crosses the solid divider line from one side to the other",
+  "desc_ru": "Машина пересекает сплошную линию с одной стороны на другую",
+  "type": "warning"
+ },
+ {
+  "start_sec": 270.04,
+  "end_sec": 270.84,
+  "label": "failure_to_yield",
+  "desc": "Vehicle drives through a zebra while a pedestrian is crossing on it",
+  "desc_ru": "Машина проезжает зебру, когда по ней идёт пешеход",
+  "type": "critical"
+ },
+ {
+  "start_sec": 302.6,
+  "end_sec": 317.82,
+  "label": "jaywalking",
+  "desc": "Pedestrian on the carriageway outside a zebra crossing",
+  "desc_ru": "Пешеход на проезжей части вне пешеходного перехода",
+  "type": "danger"
+ }
+]

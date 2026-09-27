@@ -1,0 +1,66 @@
+{
+ "C3896": {
+  "duration_sec": 340.34,
+  "events": 22,
+  "events_per_class": {
+   "congestion": 4,
+   "stopped_vehicle": 1,
+   "jaywalking": 9,
+   "stop_line": 2,
+   "red_light": 1,
+   "solid_line_crossing": 4,
+   "failure_to_yield": 1
+  },
+  "risk_alarms": 27,
+  "runtime_sec": 1267.3,
+  "budget_sec": 3403.4,
+  "runtime_x_duration": 3.72
+ },
+ "C3897": {
+  "duration_sec": 317.82,
+  "events": 25,
+  "events_per_class": {
+   "jaywalking": 12,
+   "stopped_vehicle": 1,
+   "stop_line": 3,
+   "solid_line_crossing": 2,
+   "congestion": 2,
+   "failure_to_yield": 5
+  },
+  "risk_alarms": 39,
+  "runtime_sec": 967.1,
+  "budget_sec": 3178.2,
+  "runtime_x_duration": 3.04
+ },
+ "C3902": {
+  "duration_sec": 317.82,
+  "events": 17,
+  "events_per_class": {
+   "congestion": 3,
+   "stopped_vehicle": 1,
+   "jaywalking": 7,
+   "failure_to_yield": 3,
+   "solid_line_crossing": 2,
+   "stop_line": 1
+  },
+  "risk_alarms": 28,
+  "runtime_sec": 934.5,
+  "budget_sec": 3178.2,
+  "runtime_x_duration": 2.94
+ },
+ "C3905": {
+  "duration_sec": 127.63,
+  "events": 14,
+  "events_per_class": {
+   "jaywalking": 4,
+   "stopped_vehicle": 1,
+   "failure_to_yield": 7,
+   "congestion": 1,
+   "stop_line": 1
+  },
+  "risk_alarms": 15,
+  "runtime_sec": 381.6,
+  "budget_sec": 1276.3,
+  "runtime_x_duration": 2.99
+ }
+}

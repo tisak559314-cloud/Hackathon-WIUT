@@ -1,0 +1,155 @@
+{
+ "note": "Official evaluate.py matching (greedy one-to-one by tIoU), TP/FP/FN pooled over the 4 sample videos C3896, C3897, C3902, C3905; labels = labels/dev/sources.json 'file' per video (team labels, all classes). Model events = cache/dev_pred.json (submission pipeline output).",
+ "per_class": {
+  "jaywalking": {
+   "f1_0.3": 0.6667,
+   "f1_0.5": 0.4444,
+   "f1_0.7": 0.2857,
+   "f1_mean": 0.4656,
+   "tp_0.5": 14,
+   "fp_0.5": 18,
+   "fn_0.5": 17,
+   "videos": [
+    "C3896",
+    "C3897",
+    "C3902",
+    "C3905"
+   ]
+  },
+  "failure_to_yield": {
+   "f1_0.3": 0.32,
+   "f1_0.5": 0.32,
+   "f1_0.7": 0.24,
+   "f1_mean": 0.2933,
+   "tp_0.5": 4,
+   "fp_0.5": 12,
+   "fn_0.5": 5,
+   "videos": [
+    "C3896",
+    "C3897",
+    "C3902",
+    "C3905"
+   ]
+  },
+  "stop_line": {
+   "f1_0.3": 0.5455,
+   "f1_0.5": 0.5455,
+   "f1_0.7": 0.3636,
+   "f1_mean": 0.4848,
+   "tp_0.5": 3,
+   "fp_0.5": 4,
+   "fn_0.5": 1,
+   "videos": [
+    "C3896",
+    "C3897",
+    "C3902",
+    "C3905"
+   ]
+  },
+  "red_light": {
+   "f1_0.3": 0.6667,
+   "f1_0.5": 0.6667,
+   "f1_0.7": 0.0,
+   "f1_mean": 0.4444,
+   "tp_0.5": 1,
+   "fp_0.5": 0,
+   "fn_0.5": 1,
+   "videos": [
+    "C3896",
+    "C3897",
+    "C3902",
+    "C3905"
+   ]
+  },
+  "stopped_vehicle": {
+   "f1_0.3": 0.8889,
+   "f1_0.5": 0.8889,
+   "f1_0.7": 0.6667,
+   "f1_mean": 0.8148,
+   "tp_0.5": 4,
+   "fp_0.5": 0,
+   "fn_0.5": 1,
+   "videos": [
+    "C3896",
+    "C3897",
+    "C3902",
+    "C3905"
+   ]
+  },
+  "congestion": {
+   "f1_0.3": 0.4211,
+   "f1_0.5": 0.4211,
+   "f1_0.7": 0.3158,
+   "f1_mean": 0.386,
+   "tp_0.5": 4,
+   "fp_0.5": 6,
+   "fn_0.5": 5,
+   "videos": [
+    "C3896",
+    "C3897",
+    "C3902",
+    "C3905"
+   ]
+  },
+  "solid_line_crossing": {
+   "f1_0.3": 0.2222,
+   "f1_0.5": 0.1111,
+   "f1_0.7": 0.1111,
+   "f1_mean": 0.1481,
+   "tp_0.5": 1,
+   "fp_0.5": 7,
+   "fn_0.5": 9,
+   "videos": [
+    "C3896",
+    "C3897",
+    "C3902",
+    "C3905"
+   ]
+  }
+ },
+ "labelled_but_not_emitted": {
+  "illegal_turn": {
+   "f1_0.3": 0.0,
+   "f1_0.5": 0.0,
+   "f1_0.7": 0.0,
+   "f1_mean": 0.0,
+   "tp_0.5": 0,
+   "fp_0.5": 0,
+   "fn_0.5": 4,
+   "videos": [
+    "C3896",
+    "C3897",
+    "C3902",
+    "C3905"
+   ]
+  },
+  "illegal_u_turn": {
+   "f1_0.3": 0.0,
+   "f1_0.5": 0.0,
+   "f1_0.7": 0.0,
+   "f1_mean": 0.0,
+   "tp_0.5": 0,
+   "fp_0.5": 0,
+   "fn_0.5": 1,
+   "videos": [
+    "C3896",
+    "C3897",
+    "C3902",
+    "C3905"
+   ]
+  }
+ },
+ "score_a_emitted_classes": 0.4339,
+ "score_a_official_all_classes": 0.3375,
+ "classes_in_official_mean": [
+  "congestion",
+  "failure_to_yield",
+  "illegal_turn",
+  "illegal_u_turn",
+  "jaywalking",
+  "red_light",
+  "solid_line_crossing",
+  "stop_line",
+  "stopped_vehicle"
+ ]
+}

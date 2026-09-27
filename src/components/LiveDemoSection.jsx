@@ -23,38 +23,13 @@ import {
   Clock,
   Sparkles,
 } from 'lucide-react';
-
-const benchmarkVideo = {
-  id: 'sample1',
-  title: 'Cam #01: Official C3905 Full Model Inference',
-  location: 'WestCV Intersection C3905 (1080p @ 25 FPS)',
-  src: '/ft.mp4',
-  badge: 'Official Elimination Demo',
-  badgeColor: 'text-[#00e5ff] bg-[#00e5ff]/10 border-[#00e5ff]/30',
-  description: 'Full end-to-end model pipeline inference on the official benchmark video C3905. Shows burned-in multi-class tracking, road geometry violations (stop-line, crosswalk), traffic signal states, and timeline.',
-  events: [
-    { start_sec: 1.0, end_sec: 12.4, label: 'stopped_vehicle', track: 'White Car #08', conf: 0.98, desc: 'Stationary on carriageway > 10s outside signal queue', type: 'warning' },
-    { start_sec: 6.0, end_sec: 11.2, label: 'jaywalking', track: 'Pedestrian #04', conf: 0.95, desc: 'Pedestrian stepped on carriageway outside crosswalk', type: 'danger' },
-    { start_sec: 14.5, end_sec: 19.8, label: 'stop_line', track: 'White Sedan #22', conf: 0.97, desc: 'Vehicle stopped past stop line on red signal', type: 'danger' },
-    { start_sec: 31.0, end_sec: 36.5, label: 'failure_to_yield', track: 'Minivan #09', conf: 0.92, desc: 'Vehicle passing through crosswalk with active pedestrian', type: 'critical' },
-    { start_sec: 48.0, end_sec: 53.2, label: 'solid_line', track: 'Car #17', conf: 0.94, desc: 'Vehicle crossed continuous solid line before stop bar', type: 'warning' },
-    { start_sec: 72.0, end_sec: 78.4, label: 'red_light', track: 'Taxi #31', conf: 0.99, desc: 'Breached stop-line and crossed intersection on RED signal', type: 'critical' },
-    { start_sec: 85.0, end_sec: 104.0, label: 'congestion', track: 'Approach 1 Lanes', conf: 0.93, desc: 'Dense queue stationary > 20s across direction', type: 'warning' },
-  ],
-  getRisk: (t) => {
-    if (t < 25.0) return 0.20 + (t / 25.0) * 0.15;
-    if (t < 40.0) return 0.35 + ((t - 25.0) / 15.0) * 0.45;
-    if (t < 75.0) return 0.30 + ((t - 40.0) / 35.0) * 0.55;
-    return 0.35;
-  },
-  boundingBoxes: null, // Burned into /ft.mp4
-};
+import { SAMPLE_VIDEOS, DEFAULT_C3905_EVENTS } from '../data/samplesConfig';
 
 const defaultUploadEvents = [
-  { start_sec: 1.5, end_sec: 6.0, label: 'following_too_close', track: 'Vehicle #04', conf: 0.91, desc: 'Temporal headway gap < 0.6s at 54 km/h', type: 'warning' },
-  { start_sec: 5.8, end_sec: 9.4, label: 'solid_line', track: 'Vehicle #04', conf: 0.95, desc: 'Vehicle crossed continuous white dividing line into lane 1', type: 'danger' },
-  { start_sec: 7.4, end_sec: 11.2, label: 'near_miss', track: 'Vehicle #04 x Van #11', conf: 0.94, desc: 'Emergency deceleration -6.2 m/s², TTC = 0.8s', type: 'critical' },
-  { start_sec: 12.0, end_sec: 18.5, label: 'stopped_vehicle', track: 'Van #11', conf: 0.89, desc: 'Vehicle came to a complete halt on lane shoulder', type: 'warning' },
+  { start_sec: 1.5, end_sec: 6.0, label: 'stopped_vehicle', desc: 'Vehicle stationary on carriageway', desc_ru: 'Остановка на проезжей части вне очереди', type: 'warning' },
+  { start_sec: 5.8, end_sec: 9.4, label: 'solid_line_crossing', desc: 'Vehicle crossed white dividing line', desc_ru: 'Пересечение сплошной линии разметки', type: 'warning' },
+  { start_sec: 7.4, end_sec: 11.2, label: 'failure_to_yield', desc: 'Vehicle through zebra during active pedestrian cross', desc_ru: 'Непропуск пешехода на пешеходном переходе', type: 'critical' },
+  { start_sec: 12.0, end_sec: 18.5, label: 'stop_line', desc: 'Vehicle past stop line on red signal', desc_ru: 'Заезд за стоп-линию на красный сигнал', type: 'danger' },
 ];
 
 const defaultUploadBoxes = [
@@ -63,8 +38,31 @@ const defaultUploadBoxes = [
   { start: 2, end: 11, x: 22, y: 58, w: 12, h: 26, label: 'Pedestrian #09', speed: '4 km/h', color: '#ff3366' },
 ];
 
+const getInterpolatedRisk = (points, t) => {
+  if (!points || points.length === 0) return 0.25;
+  if (t <= points[0][0]) return points[0][1];
+  if (t >= points[points.length - 1][0]) return points[points.length - 1][1];
+  let low = 0;
+  let high = points.length - 1;
+  while (low <= high) {
+    const mid = (low + high) >> 1;
+    if (points[mid][0] === t) return points[mid][1];
+    if (points[mid][0] < t) low = mid + 1;
+    else high = mid - 1;
+  }
+  const idx = Math.max(0, high);
+  const p1 = points[idx];
+  const p2 = points[Math.min(points.length - 1, idx + 1)];
+  if (p2[0] === p1[0]) return p1[1];
+  const alpha = (t - p1[0]) / (p2[0] - p1[0]);
+  return p1[1] + alpha * (p2[1] - p1[1]);
+};
+
 export default function LiveDemoSection() {
   const [activeSource, setActiveSource] = useState('benchmark'); // 'benchmark' | 'upload'
+  const [selectedSampleId, setSelectedSampleId] = useState('C3905');
+  const [sampleEventsMap, setSampleEventsMap] = useState({ C3905: DEFAULT_C3905_EVENTS });
+  const [sampleRiskMap, setSampleRiskMap] = useState({});
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -86,6 +84,40 @@ export default function LiveDemoSection() {
   const playerContainerRef = useRef(null);
   const fileInputRef = useRef(null);
 
+  // Lazy-load events and risk curve data for selected sample
+  useEffect(() => {
+    const current = SAMPLE_VIDEOS.find(s => s.id === selectedSampleId);
+    if (!current) return;
+
+    if (!sampleEventsMap[selectedSampleId] && current.eventsSrc) {
+      fetch(current.eventsSrc)
+        .then((res) => res.json())
+        .then((data) => {
+          setSampleEventsMap((prev) => ({ ...prev, [selectedSampleId]: data }));
+        })
+        .catch(() => {});
+    }
+
+    if (!sampleRiskMap[selectedSampleId] && current.riskSrc) {
+      fetch(current.riskSrc)
+        .then((res) => res.json())
+        .then((data) => {
+          setSampleRiskMap((prev) => ({ ...prev, [selectedSampleId]: data }));
+        })
+        .catch(() => {});
+    }
+  }, [selectedSampleId]);
+
+  // Initial fetch for C3905 risk curve
+  useEffect(() => {
+    fetch('/data/risk_C3905.json')
+      .then((res) => res.json())
+      .then((data) => {
+        setSampleRiskMap((prev) => ({ ...prev, C3905: data }));
+      })
+      .catch(() => {});
+  }, []);
+
   // Active video configuration
   const currentSample = useMemo(() => {
     if (activeSource === 'upload' && uploadedVideoUrl) {
@@ -106,8 +138,24 @@ export default function LiveDemoSection() {
         boundingBoxes: defaultUploadBoxes,
       };
     }
-    return benchmarkVideo;
-  }, [activeSource, uploadedVideoUrl, uploadedFileName, uploadedEvents]);
+
+    const sampleDef = SAMPLE_VIDEOS.find((s) => s.id === selectedSampleId) || SAMPLE_VIDEOS[0];
+    const events = sampleEventsMap[selectedSampleId] || (selectedSampleId === 'C3905' ? DEFAULT_C3905_EVENTS : []);
+    const riskPoints = sampleRiskMap[selectedSampleId] || null;
+
+    return {
+      ...sampleDef,
+      src: sampleDef.videoSrc,
+      events,
+      getRisk: (t) => {
+        if (riskPoints) {
+          return getInterpolatedRisk(riskPoints, t);
+        }
+        return 0.25;
+      },
+      boundingBoxes: null,
+    };
+  }, [activeSource, uploadedVideoUrl, uploadedFileName, uploadedEvents, selectedSampleId, sampleEventsMap, sampleRiskMap]);
 
   const handleTimeUpdate = () => {
     if (videoRef.current) {
@@ -380,22 +428,37 @@ export default function LiveDemoSection() {
           </p>
         </div>
 
-        {/* Top Action Bar: Source Switcher & Upload CTA */}
+        {/* Top Action Bar: Real 4-Sample Switcher & Upload CTA */}
         <div className="max-w-5xl mx-auto mb-6 flex flex-wrap items-center justify-between gap-4 p-3 rounded-2xl bg-[#0f1726]/90 border border-[#1f2d45] backdrop-blur-md shadow-lg">
-          <div className="flex items-center gap-3">
-            <div className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 border transition ${
-              activeSource === 'benchmark'
-                ? 'bg-[#00e5ff]/15 text-[#00e5ff] border-[#00e5ff]/40 shadow-[0_0_15px_rgba(0,229,255,0.2)]'
-                : 'bg-white/5 text-gray-400 border-white/5'
-            }`}>
-              <span className={`w-2 h-2 rounded-full ${activeSource === 'benchmark' ? 'bg-[#00e5ff] animate-pulse' : 'bg-gray-500'}`} />
-              Official Benchmark (C3905)
-            </div>
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-full">
+            {SAMPLE_VIDEOS.map((s) => {
+              const isSelected = activeSource === 'benchmark' && selectedSampleId === s.id;
+              return (
+                <button
+                  key={s.id}
+                  onClick={() => {
+                    setActiveSource('benchmark');
+                    setSelectedSampleId(s.id);
+                    setCurrentTime(0);
+                    setIsPlaying(false);
+                  }}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold tracking-wider flex items-center gap-2 border transition cursor-pointer whitespace-nowrap ${
+                    isSelected
+                      ? 'bg-[#00e5ff]/20 text-[#00e5ff] border-[#00e5ff]/50 shadow-[0_0_15px_rgba(0,229,255,0.25)]'
+                      : 'bg-white/5 text-gray-400 border-white/5 hover:bg-white/10 hover:text-white'
+                  }`}
+                >
+                  <span className={`w-2 h-2 rounded-full ${isSelected ? 'bg-[#00e5ff] animate-pulse' : 'bg-gray-500'}`} />
+                  <span>{s.id}</span>
+                  <span className="text-[10px] text-gray-500 hidden sm:inline">({s.duration.toFixed(0)}s)</span>
+                </button>
+              );
+            })}
 
             {activeSource === 'upload' && (
               <div className="px-3 py-1.5 rounded-xl text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 bg-[#9b51e0]/15 text-[#c084fc] border border-[#9b51e0]/40 shadow-[0_0_15px_rgba(155,81,224,0.2)]">
                 <FileVideo className="w-3.5 h-3.5" />
-                Custom: {uploadedFileName.slice(0, 18)}...
+                <span>Custom: {uploadedFileName.slice(0, 14)}...</span>
               </div>
             )}
           </div>
@@ -407,7 +470,7 @@ export default function LiveDemoSection() {
                 className="px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold uppercase tracking-wider text-gray-300 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 transition flex items-center gap-1.5 cursor-pointer"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
-                <span>Reset to Benchmark</span>
+                <span>Reset</span>
               </button>
             )}
 
@@ -524,13 +587,13 @@ export default function LiveDemoSection() {
                   <div className="flex items-center gap-2 bg-[#080c14]/85 backdrop-blur-md px-3 py-1 rounded-lg border border-white/15 text-xs font-mono shadow-lg">
                     <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
                     <span className="font-bold text-white tracking-wide">
-                      {activeSource === 'upload' ? 'USER CCTV' : 'CCTV C3905'}
+                      {activeSource === 'upload' ? 'USER CCTV' : `CCTV ${currentSample.id}`}
                     </span>
                     <span className="text-gray-500">|</span>
                     <span className="text-[#00e5ff] font-semibold">{currentSample.location}</span>
                   </div>
                   <div className="text-[10px] font-mono text-gray-400 bg-black/70 backdrop-blur px-2.5 py-0.5 rounded-md border border-white/5 w-max">
-                    HOMOGRAPHY: camera.md (CALIBRATED)
+                    REGISTRATION: SIFT + RANSAC (CALIBRATED TO REF FRAME)
                   </div>
                 </div>
 
@@ -911,10 +974,10 @@ export default function LiveDemoSection() {
                         </div>
 
                         <div className="text-xs font-mono text-gray-400">
-                          Target: <span className="text-gray-200 font-semibold">{ev.track}</span> &bull; Conf: <span className="text-emerald-400 font-bold">{(ev.conf * 100).toFixed(0)}%</span>
+                          Duration: <span className="text-gray-200 font-semibold">{((ev.end_sec - ev.start_sec)).toFixed(1)}s</span> &bull; Output: <span className="text-[#00e5ff] font-bold">[start, end, label]</span>
                         </div>
 
-                        <p className="text-xs text-gray-300 leading-snug">{ev.desc}</p>
+                        <p className="text-xs text-gray-300 leading-snug">{ev.desc_ru || ev.desc}</p>
                       </div>
 
                       <button
@@ -937,19 +1000,19 @@ export default function LiveDemoSection() {
             {activeResultsTab === 'metrics' && (
               <div className="pt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div className="p-4 rounded-2xl bg-[#080c14] border border-[#1f2d45]">
-                  <div className="text-xs font-mono text-gray-400 mb-1">INFERENCE LATENCY</div>
-                  <div className="text-2xl font-black font-mono text-[#00e5ff]">12.4 ms</div>
-                  <div className="text-[11px] text-emerald-400 font-mono mt-1">80.6 FPS Throughput</div>
+                  <div className="text-xs font-mono text-gray-400 mb-1">T4 RUNTIME RATIO</div>
+                  <div className="text-2xl font-black font-mono text-[#00e5ff]">2.6x – 2.7x</div>
+                  <div className="text-[11px] text-emerald-400 font-mono mt-1">&lt; 3.0x Limit Guaranteed</div>
                 </div>
                 <div className="p-4 rounded-2xl bg-[#080c14] border border-[#1f2d45]">
-                  <div className="text-xs font-mono text-gray-400 mb-1">GPU MEMORY (T4)</div>
-                  <div className="text-2xl font-black font-mono text-white">3.8 GB</div>
-                  <div className="text-[11px] text-gray-400 font-mono mt-1">&lt; 5.0 GB Limit Verified</div>
+                  <div className="text-xs font-mono text-gray-400 mb-1">DECODING (CPU PyAV)</div>
+                  <div className="text-2xl font-black font-mono text-white">10.0 FPS</div>
+                  <div className="text-[11px] text-gray-400 font-mono mt-1">NONREF Reference Frames</div>
                 </div>
                 <div className="p-4 rounded-2xl bg-[#080c14] border border-[#1f2d45]">
-                  <div className="text-xs font-mono text-gray-400 mb-1">RULE EVALUATORS</div>
-                  <div className="text-2xl font-black font-mono text-[#0693e3]">14 Classes</div>
-                  <div className="text-[11px] text-gray-400 font-mono mt-1">Part A Spatiotemporal</div>
+                  <div className="text-xs font-mono text-gray-400 mb-1">DEV SCORE A (F1)</div>
+                  <div className="text-2xl font-black font-mono text-[#0693e3]">0.338 / 0.434</div>
+                  <div className="text-[11px] text-gray-400 font-mono mt-1">9 Rubric / 7 Emitted Classes</div>
                 </div>
                 <div className="p-4 rounded-2xl bg-[#080c14] border border-[#1f2d45]">
                   <div className="text-xs font-mono text-gray-400 mb-1">CAUSAL HORIZON</div>

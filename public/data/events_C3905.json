@@ -1,0 +1,114 @@
+[
+ {
+  "start_sec": 0.0,
+  "end_sec": 5.0,
+  "label": "jaywalking",
+  "desc": "Pedestrian on the carriageway outside a zebra crossing",
+  "desc_ru": "Пешеход на проезжей части вне пешеходного перехода",
+  "type": "danger"
+ },
+ {
+  "start_sec": 0.07,
+  "end_sec": 127.63,
+  "label": "stopped_vehicle",
+  "desc": "Vehicle standing on the carriageway for 10 s or more, not in a signal queue",
+  "desc_ru": "Машина стоит на проезжей части 10 с и дольше, не в очереди на светофоре",
+  "type": "warning"
+ },
+ {
+  "start_sec": 5.7,
+  "end_sec": 27.4,
+  "label": "jaywalking",
+  "desc": "Pedestrian on the carriageway outside a zebra crossing",
+  "desc_ru": "Пешеход на проезжей части вне пешеходного перехода",
+  "type": "danger"
+ },
+ {
+  "start_sec": 18.39,
+  "end_sec": 18.89,
+  "label": "failure_to_yield",
+  "desc": "Vehicle drives through a zebra while a pedestrian is crossing on it",
+  "desc_ru": "Машина проезжает зебру, когда по ней идёт пешеход",
+  "type": "critical"
+ },
+ {
+  "start_sec": 28.9,
+  "end_sec": 29.3,
+  "label": "failure_to_yield",
+  "desc": "Vehicle drives through a zebra while a pedestrian is crossing on it",
+  "desc_ru": "Машина проезжает зебру, когда по ней идёт пешеход",
+  "type": "critical"
+ },
+ {
+  "start_sec": 39.11,
+  "end_sec": 40.41,
+  "label": "failure_to_yield",
+  "desc": "Vehicle drives through a zebra while a pedestrian is crossing on it",
+  "desc_ru": "Машина проезжает зебру, когда по ней идёт пешеход",
+  "type": "critical"
+ },
+ {
+  "start_sec": 60.13,
+  "end_sec": 61.93,
+  "label": "failure_to_yield",
+  "desc": "Vehicle drives through a zebra while a pedestrian is crossing on it",
+  "desc_ru": "Машина проезжает зебру, когда по ней идёт пешеход",
+  "type": "critical"
+ },
+ {
+  "start_sec": 66.1,
+  "end_sec": 78.1,
+  "label": "jaywalking",
+  "desc": "Pedestrian on the carriageway outside a zebra crossing",
+  "desc_ru": "Пешеход на проезжей части вне пешеходного перехода",
+  "type": "danger"
+ },
+ {
+  "start_sec": 75.0,
+  "end_sec": 116.0,
+  "label": "congestion",
+  "desc": "Many vehicles standing still on the carriageway at once",
+  "desc_ru": "Много машин одновременно стоят на проезжей части",
+  "type": "warning"
+ },
+ {
+  "start_sec": 75.64,
+  "end_sec": 114.48,
+  "label": "stop_line",
+  "desc": "Vehicle stopped past stop line 4 while its signal is red",
+  "desc_ru": "Машина остановилась за стоп-линией 4 на красный",
+  "type": "danger"
+ },
+ {
+  "start_sec": 78.7,
+  "end_sec": 114.7,
+  "label": "jaywalking",
+  "desc": "Pedestrian on the carriageway outside a zebra crossing",
+  "desc_ru": "Пешеход на проезжей части вне пешеходного перехода",
+  "type": "danger"
+ },
+ {
+  "start_sec": 81.25,
+  "end_sec": 84.15,
+  "label": "failure_to_yield",
+  "desc": "Vehicle drives through a zebra while a pedestrian is crossing on it",
+  "desc_ru": "Машина проезжает зебру, когда по ней идёт пешеход",
+  "type": "critical"
+ },
+ {
+  "start_sec": 107.87,
+  "end_sec": 108.98,
+  "label": "failure_to_yield",
+  "desc": "Vehicle drives through a zebra while a pedestrian is crossing on it",
+  "desc_ru": "Машина проезжает зебру, когда по ней идёт пешеход",
+  "type": "critical"
+ },
+ {
+  "start_sec": 110.28,
+  "end_sec": 111.28,
+  "label": "failure_to_yield",
+  "desc": "Vehicle drives through a zebra while a pedestrian is crossing on it",
+  "desc_ru": "Машина проезжает зебру, когда по ней идёт пешеход",
+  "type": "critical"
+ }
+]

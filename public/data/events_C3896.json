@@ -1,0 +1,178 @@
+[
+ {
+  "start_sec": 0.0,
+  "end_sec": 35.0,
+  "label": "congestion",
+  "desc": "Many vehicles standing still on the carriageway at once",
+  "desc_ru": "Много машин одновременно стоят на проезжей части",
+  "type": "warning"
+ },
+ {
+  "start_sec": 0.07,
+  "end_sec": 340.01,
+  "label": "stopped_vehicle",
+  "desc": "Vehicle standing on the carriageway for 10 s or more, not in a signal queue",
+  "desc_ru": "Машина стоит на проезжей части 10 с и дольше, не в очереди на светофоре",
+  "type": "warning"
+ },
+ {
+  "start_sec": 15.7,
+  "end_sec": 19.0,
+  "label": "jaywalking",
+  "desc": "Pedestrian on the carriageway outside a zebra crossing",
+  "desc_ru": "Пешеход на проезжей части вне пешеходного перехода",
+  "type": "danger"
+ },
+ {
+  "start_sec": 56.0,
+  "end_sec": 106.0,
+  "label": "congestion",
+  "desc": "Many vehicles standing still on the carriageway at once",
+  "desc_ru": "Много машин одновременно стоят на проезжей части",
+  "type": "warning"
+ },
+ {
+  "start_sec": 59.2,
+  "end_sec": 72.3,
+  "label": "jaywalking",
+  "desc": "Pedestrian on the carriageway outside a zebra crossing",
+  "desc_ru": "Пешеход на проезжей части вне пешеходного перехода",
+  "type": "danger"
+ },
+ {
+  "start_sec": 66.23,
+  "end_sec": 102.07,
+  "label": "stop_line",
+  "desc": "Vehicle stopped past stop line 4 while its signal is red",
+  "desc_ru": "Машина остановилась за стоп-линией 4 на красный",
+  "type": "danger"
+ },
+ {
+  "start_sec": 74.4,
+  "end_sec": 77.9,
+  "label": "jaywalking",
+  "desc": "Pedestrian on the carriageway outside a zebra crossing",
+  "desc_ru": "Пешеход на проезжей части вне пешеходного перехода",
+  "type": "danger"
+ },
+ {
+  "start_sec": 78.88,
+  "end_sec": 80.05,
+  "label": "red_light",
+  "desc": "Vehicle crosses stop line 4 on red",
+  "desc_ru": "Машина пересекает стоп-линию 4 на красный",
+  "type": "danger"
+ },
+ {
+  "start_sec": 82.1,
+  "end_sec": 86.8,
+  "label": "jaywalking",
+  "desc": "Pedestrian on the carriageway outside a zebra crossing",
+  "desc_ru": "Пешеход на проезжей части вне пешеходного перехода",
+  "type": "danger"
+ },
+ {
+  "start_sec": 88.5,
+  "end_sec": 98.4,
+  "label": "jaywalking",
+  "desc": "Pedestrian on the carriageway outside a zebra crossing",
+  "desc_ru": "Пешеход на проезжей части вне пешеходного перехода",
+  "type": "danger"
+ },
+ {
+  "start_sec": 104.2,
+  "end_sec": 203.9,
+  "label": "jaywalking",
+  "desc": "Pedestrian on the carriageway outside a zebra crossing",
+  "desc_ru": "Пешеход на проезжей части вне пешеходного перехода",
+  "type": "danger"
+ },
+ {
+  "start_sec": 129.9,
+  "end_sec": 132.0,
+  "label": "solid_line_crossing",
+  "desc": "Vehicle crosses the solid divider line from one side to the other",
+  "desc_ru": "Машина пересекает сплошную линию с одной стороны на другую",
+  "type": "warning"
+ },
+ {
+  "start_sec": 139.0,
+  "end_sec": 181.0,
+  "label": "congestion",
+  "desc": "Many vehicles standing still on the carriageway at once",
+  "desc_ru": "Много машин одновременно стоят на проезжей части",
+  "type": "warning"
+ },
+ {
+  "start_sec": 179.75,
+  "end_sec": 180.35,
+  "label": "failure_to_yield",
+  "desc": "Vehicle drives through a zebra while a pedestrian is crossing on it",
+  "desc_ru": "Машина проезжает зебру, когда по ней идёт пешеход",
+  "type": "critical"
+ },
+ {
+  "start_sec": 209.6,
+  "end_sec": 214.3,
+  "label": "jaywalking",
+  "desc": "Pedestrian on the carriageway outside a zebra crossing",
+  "desc_ru": "Пешеход на проезжей части вне пешеходного перехода",
+  "type": "danger"
+ },
+ {
+  "start_sec": 219.8,
+  "end_sec": 223.9,
+  "label": "jaywalking",
+  "desc": "Pedestrian on the carriageway outside a zebra crossing",
+  "desc_ru": "Пешеход на проезжей части вне пешеходного перехода",
+  "type": "danger"
+ },
+ {
+  "start_sec": 231.3,
+  "end_sec": 263.0,
+  "label": "jaywalking",
+  "desc": "Pedestrian on the carriageway outside a zebra crossing",
+  "desc_ru": "Пешеход на проезжей части вне пешеходного перехода",
+  "type": "danger"
+ },
+ {
+  "start_sec": 259.33,
+  "end_sec": 261.93,
+  "label": "solid_line_crossing",
+  "desc": "Vehicle crosses the solid divider line from one side to the other",
+  "desc_ru": "Машина пересекает сплошную линию с одной стороны на другую",
+  "type": "warning"
+ },
+ {
+  "start_sec": 269.24,
+  "end_sec": 274.64,
+  "label": "solid_line_crossing",
+  "desc": "Vehicle crosses the solid divider line from one side to the other",
+  "desc_ru": "Машина пересекает сплошную линию с одной стороны на другую",
+  "type": "warning"
+ },
+ {
+  "start_sec": 272.0,
+  "end_sec": 333.0,
+  "label": "congestion",
+  "desc": "Many vehicles standing still on the carriageway at once",
+  "desc_ru": "Много машин одновременно стоят на проезжей части",
+  "type": "warning"
+ },
+ {
+  "start_sec": 291.46,
+  "end_sec": 327.29,
+  "label": "stop_line",
+  "desc": "Vehicle stopped past stop line 4 while its signal is red",
+  "desc_ru": "Машина остановилась за стоп-линией 4 на красный",
+  "type": "danger"
+ },
+ {
+  "start_sec": 338.2,
+  "end_sec": 340.34,
+  "label": "solid_line_crossing",
+  "desc": "Vehicle crosses the solid divider line from one side to the other",
+  "desc_ru": "Машина пересекает сплошную линию с одной стороны на другую",
+  "type": "warning"
+ }
+]

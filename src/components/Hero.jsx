@@ -28,12 +28,12 @@ export default function Hero() {
       setCounts({
         classes: Math.round(14 * factor),
         horizon: (5.0 * factor).toFixed(1),
-        fps: Math.round(25 * factor),
+        fps: (29.97 * factor).toFixed(1),
       });
 
       if (currentStep >= steps) {
         clearInterval(timer);
-        setCounts({ classes: 14, horizon: '5.0', fps: 25 });
+        setCounts({ classes: 14, horizon: '5.0', fps: '29.97' });
       }
     }, stepTime);
 
