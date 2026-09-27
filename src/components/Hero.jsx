@@ -28,12 +28,12 @@ export default function Hero() {
       setCounts({
         classes: Math.round(14 * factor),
         horizon: (5.0 * factor).toFixed(1),
-        fps: (29.97 * factor).toFixed(1),
+        fps: Math.round(30 * factor),
       });
 
       if (currentStep >= steps) {
         clearInterval(timer);
-        setCounts({ classes: 14, horizon: '5.0', fps: '29.97' });
+        setCounts({ classes: 14, horizon: '5.0', fps: 30 });
       }
     }, stepTime);
 
@@ -91,9 +91,9 @@ export default function Hero() {
           </p>
 
           {/* Live Metrics / Counters */}
-          <div className="grid grid-cols-3 gap-6 sm:gap-10 pt-4 pb-2 border-t border-b border-[#1f2d45]/80 w-full max-w-xl">
+          <div className="grid grid-cols-3 gap-4 sm:gap-8 pt-4 pb-2 border-t border-b border-[#1f2d45]/80 w-full max-w-xl">
             <div className="flex flex-col">
-              <span className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+              <span className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight whitespace-nowrap">
                 {counts.classes}
               </span>
               <span className="text-xs sm:text-sm text-[#00e5ff] uppercase tracking-wider font-semibold mt-1">
@@ -101,7 +101,7 @@ export default function Hero() {
               </span>
             </div>
             <div className="flex flex-col">
-              <span className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+              <span className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight whitespace-nowrap">
                 {counts.horizon}s
               </span>
               <span className="text-xs sm:text-sm text-[#00e5ff] uppercase tracking-wider font-semibold mt-1">
@@ -109,10 +109,10 @@ export default function Hero() {
               </span>
             </div>
             <div className="flex flex-col">
-              <span className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+              <span className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight whitespace-nowrap">
                 {counts.fps} FPS
               </span>
-              <span className="text-xs sm:text-sm text-[#00e5ff] uppercase tracking-wider font-semibold mt-1">
+              <span className="text-xs sm:text-sm text-[#00e5ff] uppercase tracking-wider font-semibold mt-1 whitespace-nowrap">
                 Real-Time Stream
               </span>
             </div>
