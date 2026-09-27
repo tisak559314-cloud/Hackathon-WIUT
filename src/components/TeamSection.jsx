@@ -115,7 +115,7 @@ export default function TeamSection() {
         phone: '+998909436031',
         phoneDisplay: '+998 90 943 60 31',
         linkedin: 'https://linkedin.com/in/azam-xodjimetov',
-        github: 'https://github.com/azamkhodzhimetov',
+        github: 'https://github.com/tisak559314-cloud',
       },
       imageLeft: true, // 1st: Photo Left (25%), Info Right (75%)
       dossier: {
@@ -364,7 +364,7 @@ export default function TeamSection() {
         'airi.uz Speech (STT/TTS) & RAG Multimodal AI Models',
       ],
       links: {
-        github: 'https://github.com/Antifragile-nnt',
+        github: 'https://github.com/AsanAshirov',
         kaggle: 'https://www.kaggle.com/asanashirov',
         telegram: 'https://t.me/Antifragile_nnt',
         email: 'asanashirov24@gmail.com',
@@ -766,7 +766,7 @@ export default function TeamSection() {
 
             <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
               <a
-                href="https://github.com/tisak559314-cloud/Hackathon-WIUT"
+                href="https://github.com/AsanAshirov/WestCV"
                 target="_blank"
                 rel="noreferrer"
                 className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#0693e3] hover:bg-[#0582ca] text-white font-bold text-xs uppercase tracking-wider transition shadow-lg shadow-[#0693e3]/20"
@@ -777,7 +777,7 @@ export default function TeamSection() {
               </a>
 
               <a
-                href="https://github.com/tisak559314-cloud/Hackathon-WIUT/releases"
+                href="https://github.com/AsanAshirov/WestCV/tree/main/weights"
                 target="_blank"
                 rel="noreferrer"
                 className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#182236] hover:bg-[#202e47] text-white font-bold text-xs uppercase tracking-wider border border-[#2a3a56] transition"
@@ -787,7 +787,7 @@ export default function TeamSection() {
               </a>
 
               <a
-                href="https://github.com/tisak559314-cloud/Hackathon-WIUT/blob/main/predictions_samples.json"
+                href="https://github.com/AsanAshirov/WestCV/blob/main/predictions_samples.json"
                 target="_blank"
                 rel="noreferrer"
                 className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#182236] hover:bg-[#202e47] text-white font-bold text-xs uppercase tracking-wider border border-[#2a3a56] transition"
