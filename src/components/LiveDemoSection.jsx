@@ -335,9 +335,9 @@ export default function LiveDemoSection() {
       return;
     }
 
-    // 2. Validate file size: maximum 50 MB (Hackathon jury requirement)
-    if (file.size > 50 * 1024 * 1024) {
-      setUploadError(`File size (${(file.size / (1024 * 1024)).toFixed(1)} MB) exceeds 50 MB limit. Please select a clip ≤ 50 MB (duration ≤ 2 min).`);
+    // 2. Validate file size: maximum 120 MB
+    if (file.size > 120 * 1024 * 1024) {
+      setUploadError(`File size (${(file.size / (1024 * 1024)).toFixed(1)} MB) exceeds 120 MB limit. Please select a clip ≤ 120 MB (duration ≤ 2 min).`);
       return;
     }
 
@@ -1059,7 +1059,7 @@ export default function LiveDemoSection() {
                 <span>⏱️ Duration Limit: up to 2 min (Hackathon Rules)</span>
               </div>
               <div className="px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-[11px] font-mono text-gray-300 flex items-center gap-1.5">
-                <span>📦 Size Limit: up to 50 MB (.mp4, .mov)</span>
+                <span>📦 Size Limit: up to 120 MB (.mp4, .mov)</span>
               </div>
             </div>
 
@@ -1079,7 +1079,7 @@ export default function LiveDemoSection() {
                 <FileVideo className="w-6 h-6" />
               </div>
               <p className="text-sm font-bold text-white mb-1">Click to select or drag &amp; drop video (.mp4, .mov)</p>
-              <p className="text-xs text-gray-500 font-mono">Format: MP4 or MOV &bull; Size: up to 50 MB</p>
+              <p className="text-xs text-gray-500 font-mono">Format: MP4 or MOV &bull; Size: up to 120 MB</p>
             </div>
 
             {/* Pre-Loaded Sample Quick Button (Guarantees zero-failure jury testing) */}
