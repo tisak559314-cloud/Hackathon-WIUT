@@ -336,7 +336,7 @@ export default function PlatformStack() {
                 Why Hybrid Modular Beats End-to-End Blackbox Models
               </h3>
               <p className="text-xs sm:text-sm text-gray-300 leading-relaxed">
-                WIUT hackathon evaluation tests deterministic temporal intervals $[t_{start}, t_{end}, label]$ on fixed CCTV streams with an 18.4 min sample size. End-to-end video action recognition architectures (Video Swin, SlowFast) suffer severe pitfalls in this regime:
+                WIUT hackathon evaluation tests deterministic temporal intervals [start_sec, end_sec, label] on fixed CCTV streams with an 18.4 min sample size. End-to-end video action recognition architectures (Video Swin, SlowFast) suffer severe pitfalls in this regime:
               </p>
             </div>
 
