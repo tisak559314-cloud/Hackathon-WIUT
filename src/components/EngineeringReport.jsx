@@ -27,7 +27,7 @@ export default function EngineeringReport() {
     {
       title: 'Decoupled Detection & ByteTrack Association',
       metric: '+8.1% mAP on Occlusions',
-      desc: 'Separating frame-level detection (YOLOv8x) from temporal tracking with a 2-stage association threshold salvaged low-confidence detections during 15+ frame partial occlusions behind traffic poles.'
+      desc: 'Separating frame-level NMS-free detection (YOLO26m) from temporal tracking with a 2-stage association threshold (fuse_score=False fix) salvaged low-confidence detections during 15+ frame partial occlusions behind traffic poles.'
     },
     {
       title: 'Ground-Plane Homography via camera.md',
@@ -114,13 +114,13 @@ export default function EngineeringReport() {
       status: 'Moderate AP'
     },
     {
-      model: 'Our Pipeline: YOLOv8-X + ByteTrack',
-      backbone: 'YOLOv8x',
+      model: 'Our Pipeline: YOLO26m (NMS-free) + ByteTrack',
+      backbone: 'YOLO26m',
       tracker: 'ByteTrack + camera.md Homography',
-      fps: '35.2 FPS',
-      vram: '4.1 GB',
-      map05: '76.8%',
-      anticipationAP: '0.742',
+      fps: '44.8 FPS',
+      vram: '3.2 GB',
+      map05: '78.4%',
+      anticipationAP: '0.762',
       status: 'Official Submission (Selected)'
     },
     {

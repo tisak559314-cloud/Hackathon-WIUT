@@ -128,7 +128,7 @@ export default function LiveDemoSection() {
         src: uploadedVideoUrl,
         badge: 'Custom Inference',
         badgeColor: 'text-[#00e5ff] bg-[#00e5ff]/10 border-[#00e5ff]/30',
-        description: 'Edge model processed 1080p frames using YOLOv8x + ByteTrack with camera.md homography matrix.',
+        description: 'Edge model processed 1080p frames using YOLO26m (NMS-free) + ByteTrack with camera.md homography matrix.',
         events: [
           { time: 1.2, label: 'tracking_active', track: 'ByteTrack', conf: 0.98, desc: 'Kalman filtering established for 11 tracks', type: 'info' },
           { time: 3.5, label: 'solid_line', track: 'Vehicle #07', conf: 0.92, desc: 'Boundary crossing detected', type: 'warning' },
@@ -204,7 +204,7 @@ export default function LiveDemoSection() {
     // Simulate multi-stage pipeline inference on Tesla T4
     const stages = [
       'Calibrating homography matrix from camera.md...',
-      'Running YOLOv8x + ByteTrack spatial association...',
+      'Running YOLO26m (NMS-free) + ByteTrack spatial association...',
       'Evaluating 14 spatiotemporal event rules...',
       'Synthesizing causal Risk Score R(t) curve (H=5.0s)...',
       'Inference complete. Rendering overlay stream...'
@@ -352,7 +352,7 @@ export default function LiveDemoSection() {
             </span>
           </div>
           <div className="flex items-center gap-4 text-[11px] font-mono text-gray-400">
-            <span>BACKBONE: YOLOv8x</span>
+            <span>BACKBONE: YOLO26m (NMS-free)</span>
             <span>TRACKER: ByteTrack</span>
             <span>DEVICE: Tesla T4 (28.4ms)</span>
           </div>
