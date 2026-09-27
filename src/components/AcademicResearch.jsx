@@ -26,7 +26,7 @@ import {
   CheckCircle2,
   ExternalLink,
 } from 'lucide-react';
-import { EDA_FINDINGS_RU } from '../data/samplesConfig';
+import { EDA_FINDINGS } from '../data/samplesConfig';
 
 export default function AcademicResearch() {
   // Class Distribution Interactive State
@@ -688,7 +688,7 @@ CANONICAL_ZONES = {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {EDA_FINDINGS_RU.map((finding, idx) => (
+            {EDA_FINDINGS.map((finding, idx) => (
               <div
                 key={idx}
                 className="p-6 rounded-2xl bg-[#0c121e] border border-[#1f2d45] hover:border-[#00e5ff]/50 transition-all duration-300 shadow-lg flex flex-col justify-between group"

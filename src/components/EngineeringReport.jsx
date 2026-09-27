@@ -487,9 +487,6 @@ export default function EngineeringReport() {
                           </span>
                         </div>
                         <p className="text-xs text-gray-300 font-sans leading-snug">
-                          {item.caption_ru}
-                        </p>
-                        <p className="text-[11px] text-gray-500 font-sans leading-tight">
                           {item.caption_en}
                         </p>
                       </div>
@@ -548,10 +545,7 @@ export default function EngineeringReport() {
 
             <div className="mt-4 p-4 rounded-xl bg-[#080c14] border border-[#1f2d45] space-y-2">
               <p className="text-xs text-white leading-relaxed">
-                <strong>Диагностика:</strong> {selectedFailureModal.caption_ru}
-              </p>
-              <p className="text-xs text-gray-400 leading-relaxed">
-                <strong>Diagnosis (EN):</strong> {selectedFailureModal.caption_en}
+                <strong>Diagnostic Analysis:</strong> {selectedFailureModal.caption_en}
               </p>
             </div>
           </div>

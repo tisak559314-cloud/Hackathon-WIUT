@@ -977,7 +977,7 @@ export default function LiveDemoSection() {
                           Duration: <span className="text-gray-200 font-semibold">{((ev.end_sec - ev.start_sec)).toFixed(1)}s</span> &bull; Output: <span className="text-[#00e5ff] font-bold">[start, end, label]</span>
                         </div>
 
-                        <p className="text-xs text-gray-300 leading-snug">{ev.desc_ru || ev.desc}</p>
+                        <p className="text-xs text-gray-300 leading-snug">{ev.desc || ev.desc_ru}</p>
                       </div>
 
                       <button
@@ -1055,10 +1055,10 @@ export default function LiveDemoSection() {
             {/* Validation Badges (Required by Step 3 guidelines) */}
             <div className="flex flex-wrap items-center gap-2 mb-4">
               <div className="px-3 py-1 rounded-lg bg-[#00e5ff]/10 border border-[#00e5ff]/30 text-[11px] font-mono font-bold text-[#00e5ff] flex items-center gap-1.5">
-                <span>⏱️ Лимит длины: до 2 минут (регламент хакатона)</span>
+                <span>⏱️ Duration Limit: up to 2 min (Hackathon Rules)</span>
               </div>
               <div className="px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-[11px] font-mono text-gray-300 flex items-center gap-1.5">
-                <span>📦 Лимит размера: до 50 МБ (.mp4)</span>
+                <span>📦 Size Limit: up to 50 MB (.mp4)</span>
               </div>
             </div>
 
@@ -1102,8 +1102,7 @@ export default function LiveDemoSection() {
         </div>
       )}
 
-      {/* Processing Pipeline Modal with Execution Stepper:
-          «Загрузка видео... → Детекция событий... → Формирование таймлайна» */}
+      {/* Processing Pipeline Modal with Execution Stepper */}
       {isProcessing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
           <div className="w-full max-w-md p-6 rounded-3xl bg-[#0c121e] border border-[#00e5ff]/50 shadow-[0_0_50px_rgba(0,229,255,0.3)]">
@@ -1142,7 +1141,7 @@ export default function LiveDemoSection() {
                 }`}>
                   {processingStep > 1 ? '✓' : '1'}
                 </div>
-                <span className="font-semibold">Загрузка видео... (Uploading video)</span>
+                <span className="font-semibold">Uploading video...</span>
               </div>
 
               {/* Step 2 */}
@@ -1162,7 +1161,7 @@ export default function LiveDemoSection() {
                 }`}>
                   {processingStep > 2 ? '✓' : '2'}
                 </div>
-                <span className="font-semibold">Детекция событий... (YOLO26m + ByteTrack)</span>
+                <span className="font-semibold">Event detection... (YOLO26m + ByteTrack)</span>
               </div>
 
               {/* Step 3 */}
@@ -1182,7 +1181,7 @@ export default function LiveDemoSection() {
                 }`}>
                   {processingProgress >= 100 ? '✓' : '3'}
                 </div>
-                <span className="font-semibold">Формирование таймлайна и кривой риска R(t)...</span>
+                <span className="font-semibold">Generating timeline &amp; risk curve R(t)...</span>
               </div>
             </div>
           </div>

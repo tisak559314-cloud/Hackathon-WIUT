@@ -274,32 +274,34 @@ export const REAL_PER_CLASS_METRICS = [
   { class: 'solid_line_crossing', f1_03: 0.222, f1_05: 0.111, f1_07: 0.111, f1_mean: 0.148, tp: 1, fp: 7, fn: 9 }
 ];
 
-export const EDA_FINDINGS_RU = [
+export const EDA_FINDINGS = [
   {
-    title: '4K H.264 4:2:2 10-bit декодирование',
-    desc: 'Файлы сняты в 3840×2160 при 29.97 fps (в PDF регламента ошибочно указано 25), битрейт ~140 Мбит/с. NVDEC на Tesla T4 не поддерживает 10-бит 4:2:2 аппаратно, поэтому декодирование выполняется на CPU. Использование PyAV с флагом NONREF позволило декодировать только опорные кадры GOP IBBP (каждый 3-й кадр, ~10 FPS) почти в 2 раза дешевле.'
+    title: '4K H.264 4:2:2 10-bit Decoding Bottleneck',
+    desc: 'Footage is encoded in 3840×2160 @ 29.97 FPS (task PDF erroneously stated 25 FPS) at ~140 Mbit/s. Turing NVDEC on Tesla T4 lacks hardware decoding for 4:2:2 10-bit color profile, requiring CPU decoding. PyAV with the NONREF flag decodes only reference frames of GOP IBBP (~10 FPS), cutting compute overhead by 2×.'
   },
   {
-    title: 'Разрешение 1280 px против 1920 px',
-    desc: 'При масштабировании кадра до 1280 px полнота обнаружения людей (person recall) составляет ~97%, а совпадение с детекциями на 1920 px по jaywalking достигает 0.973 при вдвое меньшей вычислительной нагрузке.'
+    title: 'Resolution Sweet Spot: 1280 px vs 1920 px',
+    desc: 'Downscaling frames to 1280 px achieves ~97% pedestrian recall, matching 1920 px inference with a 0.973 agreement on jaywalking while cutting inference cost in half.'
   },
   {
-    title: 'Фильтрация водителей внутри автомобилей',
-    desc: 'От 2.2% до 5.6% детекций класса person приходятся на водителей и пассажиров, видимых сквозь ветровые стекла автомобилей. Перед применением правил для пешеходов внедрен пространственный фильтр, отсекающий людей внутри габаритов движущегося транспорта.'
+    title: 'In-Cabin Driver & Passenger Filtering',
+    desc: '2.2% to 5.6% of person detections correspond to drivers and passengers visible through windshields. A spatial filter suppressing pedestrian detections inside moving vehicle boundaries eliminated these false alarms.'
   },
   {
-    title: 'Плотность объектов в кадре',
-    desc: 'На кадр приходится 20–31 человек, 24–27 легковых автомобилей, 1.9–4.5 автобусов и грузовиков, и не более 0.7 двухколесных ТС. Вечером поток плотнее: 82 новых автомобильных трека в минуту против 68 днем.'
+    title: 'Intersection Road User Density',
+    desc: 'Average load per frame: 20–31 pedestrians, 24–27 passenger cars, 1.9–4.5 buses/trucks, and <0.7 two-wheelers. Traffic is denser at dusk: 82 new vehicle tracks per minute compared to 68 at midday.'
   },
   {
-    title: 'Светофорные циклы и синхронизация (75с vs 80с)',
-    desc: 'Светофорный цикл фиксирован: 75.0 секунд днем (36с зеленый, 3с желтый, 36с красный) и 80.0 секунд вечером (38с зеленый, 3с желтый, 39с красный). Пешеходная зеленая фаза стартует строго синхронно с транспортной (±0.1с). Состояние ламп надежно считывается из пикселей светофорной головки.'
+    title: 'Traffic Signal Periodicity (75s Day vs 80s Evening)',
+    desc: 'Fixed signal cycle duration: 75.0s during daytime (36s green, 3s yellow, 36s red) and 80.0s at evening dusk (38s green, 3s yellow, 39s red). Pedestrian green phase starts synchronously (±0.1s) with the vehicular phase. Lamp states are reliably read from traffic head pixel ROIs.'
   },
   {
-    title: 'Компенсация смещения камеры (SIFT + RANSAC)',
-    desc: 'Между утренними и вечерними записями камеру сдвигали на 50–100 px. Вечером число SIFT-инлаеров падает в 10 раз (338–380 против 4133 днем). Регистрация каждого видео на единый опорный вид сцены обязательна для точной работы полигонов стоп-линий и зебр.'
+    title: 'Camera Drift Compensation (SIFT + RANSAC)',
+    desc: 'The physical CCTV camera swayed and shifted by 50–100 px between morning and evening. SIFT inliers dropped 10× at dusk (338 vs 4,133 at noon). Registering every video to a canonical reference view was essential for stop line and crosswalk polygon accuracy.'
   }
 ];
+
+export const EDA_FINDINGS_RU = EDA_FINDINGS;
 
 export const REAL_EXAMPLES_AND_FAILURES = [
   {
