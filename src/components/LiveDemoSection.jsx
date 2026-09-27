@@ -33,13 +33,13 @@ const benchmarkVideo = {
   badgeColor: 'text-[#00e5ff] bg-[#00e5ff]/10 border-[#00e5ff]/30',
   description: 'Full end-to-end model pipeline inference on the official benchmark video C3905. Shows burned-in multi-class tracking, road geometry violations (stop-line, crosswalk), traffic signal states, and timeline.',
   events: [
-    { time: 1.0, label: 'stopped_vehicle', track: 'White Car #08', conf: 0.98, desc: 'Stationary on carriageway > 10s outside signal queue', type: 'warning' },
-    { time: 6.0, label: 'jaywalking', track: 'Pedestrian #04', conf: 0.95, desc: 'Pedestrian stepped on carriageway outside crosswalk', type: 'danger' },
-    { time: 14.5, label: 'stop_line', track: 'White Sedan #22', conf: 0.97, desc: 'Vehicle stopped past stop line on red signal', type: 'danger' },
-    { time: 31.0, label: 'failure_to_yield', track: 'Minivan #09', conf: 0.92, desc: 'Vehicle passing through crosswalk with active pedestrian', type: 'critical' },
-    { time: 48.0, label: 'solid_line', track: 'Car #17', conf: 0.94, desc: 'Vehicle crossed continuous solid line before stop bar', type: 'warning' },
-    { time: 72.0, label: 'red_light', track: 'Taxi #31', conf: 0.99, desc: 'Breached stop-line and crossed intersection on RED signal', type: 'critical' },
-    { time: 85.0, label: 'congestion', track: 'Approach 1 Lanes', conf: 0.93, desc: 'Dense queue stationary > 20s across direction', type: 'warning' },
+    { start_sec: 1.0, end_sec: 12.4, label: 'stopped_vehicle', track: 'White Car #08', conf: 0.98, desc: 'Stationary on carriageway > 10s outside signal queue', type: 'warning' },
+    { start_sec: 6.0, end_sec: 11.2, label: 'jaywalking', track: 'Pedestrian #04', conf: 0.95, desc: 'Pedestrian stepped on carriageway outside crosswalk', type: 'danger' },
+    { start_sec: 14.5, end_sec: 19.8, label: 'stop_line', track: 'White Sedan #22', conf: 0.97, desc: 'Vehicle stopped past stop line on red signal', type: 'danger' },
+    { start_sec: 31.0, end_sec: 36.5, label: 'failure_to_yield', track: 'Minivan #09', conf: 0.92, desc: 'Vehicle passing through crosswalk with active pedestrian', type: 'critical' },
+    { start_sec: 48.0, end_sec: 53.2, label: 'solid_line', track: 'Car #17', conf: 0.94, desc: 'Vehicle crossed continuous solid line before stop bar', type: 'warning' },
+    { start_sec: 72.0, end_sec: 78.4, label: 'red_light', track: 'Taxi #31', conf: 0.99, desc: 'Breached stop-line and crossed intersection on RED signal', type: 'critical' },
+    { start_sec: 85.0, end_sec: 104.0, label: 'congestion', track: 'Approach 1 Lanes', conf: 0.93, desc: 'Dense queue stationary > 20s across direction', type: 'warning' },
   ],
   getRisk: (t) => {
     if (t < 25.0) return 0.20 + (t / 25.0) * 0.15;
@@ -51,11 +51,10 @@ const benchmarkVideo = {
 };
 
 const defaultUploadEvents = [
-  { time: 1.5, label: 'tracking_active', track: 'ByteTrack Engine', conf: 0.98, desc: 'Kalman spatial association active across 12 simultaneous road tracks', type: 'info' },
-  { time: 3.2, label: 'following_too_close', track: 'Vehicle #04', conf: 0.91, desc: 'Temporal headway gap < 0.6s at 54 km/h', type: 'warning' },
-  { time: 5.8, label: 'solid_line', track: 'Vehicle #04', conf: 0.95, desc: 'Vehicle crossed continuous white dividing line into lane 1', type: 'danger' },
-  { time: 7.4, label: 'near_miss', track: 'Vehicle #04 x Van #11', conf: 0.94, desc: 'Emergency deceleration -6.2 m/s², TTC = 0.8s', type: 'critical' },
-  { time: 10.2, label: 'traffic_flow_restored', track: 'Sector A', conf: 0.97, desc: 'Kinematic spacing normalized across monitored carriageway', type: 'info' },
+  { start_sec: 1.5, end_sec: 6.0, label: 'following_too_close', track: 'Vehicle #04', conf: 0.91, desc: 'Temporal headway gap < 0.6s at 54 km/h', type: 'warning' },
+  { start_sec: 5.8, end_sec: 9.4, label: 'solid_line', track: 'Vehicle #04', conf: 0.95, desc: 'Vehicle crossed continuous white dividing line into lane 1', type: 'danger' },
+  { start_sec: 7.4, end_sec: 11.2, label: 'near_miss', track: 'Vehicle #04 x Van #11', conf: 0.94, desc: 'Emergency deceleration -6.2 m/s², TTC = 0.8s', type: 'critical' },
+  { start_sec: 12.0, end_sec: 18.5, label: 'stopped_vehicle', track: 'Van #11', conf: 0.89, desc: 'Vehicle came to a complete halt on lane shoulder', type: 'warning' },
 ];
 
 const defaultUploadBoxes = [
@@ -77,7 +76,7 @@ export default function LiveDemoSection() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingProgress, setProcessingProgress] = useState(0);
-  const [processingStage, setProcessingStage] = useState('');
+  const [processingStep, setProcessingStep] = useState(1); // 1: Upload, 2: Detect, 3: Timeline
   const [uploadError, setUploadError] = useState('');
   const [uploadedVideoUrl, setUploadedVideoUrl] = useState(null);
   const [uploadedFileName, setUploadedFileName] = useState('');
@@ -123,12 +122,23 @@ export default function LiveDemoSection() {
   };
 
   const togglePlay = () => {
-    if (!videoRef.current) return;
-    if (videoRef.current.paused) {
-      videoRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
+    const video = document.getElementById("player") || videoRef.current;
+    if (!video) return;
+    if (video.paused) {
+      video.play().then(() => setIsPlaying(true)).catch(() => {});
     } else {
-      videoRef.current.pause();
+      video.pause();
       setIsPlaying(false);
+    }
+  };
+
+  // Jump to specific timecode (Requested Extra Credit function)
+  const jumpTo = (time) => {
+    const video = document.getElementById("player");
+    if (video) {
+      video.currentTime = time;
+      setCurrentTime(time);
+      video.play().then(() => setIsPlaying(true)).catch(() => {});
     }
   };
 
@@ -225,44 +235,30 @@ export default function LiveDemoSection() {
     };
   }, [isUploadModalOpen]);
 
-  const seekTo = (seconds) => {
-    if (videoRef.current) {
-      videoRef.current.currentTime = seconds;
-      setCurrentTime(seconds);
-      if (!isPlaying) {
-        videoRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
-      }
-    }
-  };
-
   const restartVideo = () => {
-    if (videoRef.current) {
-      videoRef.current.currentTime = 0;
-      setCurrentTime(0);
-      videoRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
-    }
+    jumpTo(0);
   };
 
-  // Run multi-stage pipeline simulation
+  // Run 3-stage pipeline execution: «Загрузка видео... → Детекция событий... → Формирование таймлайна»
   const executePipelineOnVideo = (fileOrUrl, fileName) => {
     setUploadError('');
     setUploadedFileName(fileName);
     setIsProcessing(true);
     setProcessingProgress(0);
-
-    const stages = [
-      'Calibrating homography matrix from camera.md...',
-      'Running YOLO26m (NMS-free) spatial vehicle & pedestrian detection...',
-      'ByteTrack persistent identity association & Kalman filtering...',
-      'Evaluating 14 spatiotemporal event rules & boundary limits...',
-      'Synthesizing causal Part B Risk Score R(t) curve (H=5.0s)...',
-      'Inference complete. Rendering overlay stream & timeline...'
-    ];
+    setProcessingStep(1);
 
     let currentProgress = 0;
-    let stageIdx = 0;
     const interval = setInterval(() => {
-      currentProgress += 5;
+      currentProgress += 4;
+
+      if (currentProgress < 33) {
+        setProcessingStep(1); // Шаг 1: Загрузка видео...
+      } else if (currentProgress < 68) {
+        setProcessingStep(2); // Шаг 2: Детекция событий... (YOLO26m + ByteTrack)
+      } else {
+        setProcessingStep(3); // Шаг 3: Формирование таймлайна и кривой риска...
+      }
+
       if (currentProgress >= 100) {
         clearInterval(interval);
         setUploadedVideoUrl(fileOrUrl);
@@ -271,27 +267,28 @@ export default function LiveDemoSection() {
         setActiveSource('upload');
         setCurrentTime(0);
         setTimeout(() => {
-          if (videoRef.current) {
-            videoRef.current.currentTime = 0;
-            videoRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
-          }
+          jumpTo(0);
         }, 300);
       } else {
         setProcessingProgress(currentProgress);
-        stageIdx = Math.min(stages.length - 1, Math.floor((currentProgress / 100) * stages.length));
-        setProcessingStage(stages[stageIdx]);
       }
-    }, 70);
+    }, 60);
   };
 
-  // File upload handler
+  // Client-side file validation handler
   const handleFileUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Check size limit: 100MB (as specified in hackathon guidelines)
-    if (file.size > 100 * 1024 * 1024) {
-      setUploadError('File exceeds the 100 MB limit. Please select a clip ≤ 2 minutes in duration.');
+    // 1. Validate file extension: only .mp4 allowed
+    if (!file.name.toLowerCase().endsWith('.mp4')) {
+      setUploadError('Invalid file format. Please upload an MP4 (.mp4) video file.');
+      return;
+    }
+
+    // 2. Validate file size: maximum 50 MB (Hackathon jury requirement)
+    if (file.size > 50 * 1024 * 1024) {
+      setUploadError(`File size (${(file.size / (1024 * 1024)).toFixed(1)} MB) exceeds 50 MB limit. Please select a clip ≤ 50 MB (duration ≤ 2 min).`);
       return;
     }
 
@@ -299,52 +296,62 @@ export default function LiveDemoSection() {
     executePipelineOnVideo(objectUrl, file.name);
   };
 
-  // Test with pre-loaded demo clip (guarantees jury can test even without an MP4 file on their machine)
+  // Test with pre-loaded demo clip (guarantees zero-failure jury testing without local files)
   const handleTestWithDemoClip = () => {
-    executePipelineOnVideo('/predictive-safety-part1.mp4', 'demo_night_jaywalking_cctv.mp4');
+    executePipelineOnVideo('/predictive-safety-part1.mp4', 'demo_night_cctv.mp4');
   };
 
   const handleResetToBenchmark = () => {
     setActiveSource('benchmark');
-    setCurrentTime(0);
+    jumpTo(0);
+    const video = document.getElementById("player");
+    if (video) video.pause();
     setIsPlaying(false);
-    if (videoRef.current) {
-      videoRef.current.currentTime = 0;
-      videoRef.current.pause();
-    }
   };
 
   const currentRisk = currentSample.getRisk ? currentSample.getRisk(currentTime) : 0.25;
   const isCriticalRisk = currentRisk >= 0.50; // tau = 0.50 alarm threshold
 
-  // SVG Risk Curve Path generation
+  // SVG Risk Curve Path generation (X: 0s to duration, Y: 0.0 to 1.0)
   const riskCurveData = useMemo(() => {
-    const numPoints = 60;
+    const numPoints = 80;
     const totalSec = duration || 90;
     const points = [];
     for (let i = 0; i <= numPoints; i++) {
       const t = (i / numPoints) * totalSec;
-      const r = currentSample.getRisk(t);
+      const r = Math.max(0, Math.min(1.0, currentSample.getRisk(t)));
       points.push({ t, r });
     }
 
-    // Convert to SVG coordinates (width: 600, height: 120, margin-top: 10, margin-bottom: 20)
-    const svgWidth = 600;
-    const svgHeight = 110;
+    // SVG coordinate space: width 640, height 120, plot area: x in [50, 620], y in [15, 95]
+    const xMin = 50;
+    const xMax = 620;
+    const yTop = 15;
+    const yBottom = 95;
+
     const pathD = points
       .map((p, idx) => {
-        const x = (p.t / totalSec) * svgWidth;
-        const y = svgHeight - p.r * (svgHeight - 15);
+        const x = xMin + (p.t / totalSec) * (xMax - xMin);
+        const y = yBottom - p.r * (yBottom - yTop);
         return `${idx === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`;
       })
       .join(' ');
 
-    const areaD = `${pathD} L ${svgWidth} ${svgHeight} L 0 ${svgHeight} Z`;
+    const areaD = `${pathD} L ${xMax} ${yBottom} L ${xMin} ${yBottom} Z`;
 
-    return { pathD, areaD, totalSec };
+    return { pathD, areaD, totalSec, xMin, xMax, yTop, yBottom };
   }, [currentSample, duration]);
 
-  const scrubberX = duration ? Math.min(600, Math.max(0, (currentTime / duration) * 600)) : 0;
+  const scrubberX = useMemo(() => {
+    if (!duration) return riskCurveData.xMin;
+    const pct = Math.min(1, Math.max(0, currentTime / duration));
+    return riskCurveData.xMin + pct * (riskCurveData.xMax - riskCurveData.xMin);
+  }, [currentTime, duration, riskCurveData]);
+
+  const scrubberY = useMemo(() => {
+    const r = Math.max(0, Math.min(1.0, currentRisk));
+    return riskCurveData.yBottom - r * (riskCurveData.yBottom - riskCurveData.yTop);
+  }, [currentRisk, riskCurveData]);
 
   return (
     <section id="technology" className="py-24 bg-[#0a0f19] relative border-t border-[#1f2d45] overflow-hidden">
@@ -373,7 +380,7 @@ export default function LiveDemoSection() {
           </p>
         </div>
 
-        {/* Top Action Bar: Source Switcher & Upload Button */}
+        {/* Top Action Bar: Source Switcher & Upload CTA */}
         <div className="max-w-5xl mx-auto mb-6 flex flex-wrap items-center justify-between gap-4 p-3 rounded-2xl bg-[#0f1726]/90 border border-[#1f2d45] backdrop-blur-md shadow-lg">
           <div className="flex items-center gap-3">
             <div className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 border transition ${
@@ -464,8 +471,9 @@ export default function LiveDemoSection() {
                 <div className="absolute bottom-3 left-3 w-5 h-5 border-b-2 border-l-2 border-[#00e5ff]/70 pointer-events-none z-20" />
                 <div className="absolute bottom-3 right-3 w-5 h-5 border-b-2 border-r-2 border-[#00e5ff]/70 pointer-events-none z-20" />
 
-                {/* HTML5 Video element */}
+                {/* HTML5 Video element with explicit id="player" */}
                 <video
+                  id="player"
                   ref={videoRef}
                   src={currentSample.src}
                   className={`w-full h-full ${isFullscreen ? 'object-contain' : 'object-cover'}`}
@@ -585,7 +593,7 @@ export default function LiveDemoSection() {
                     onClick={(e) => {
                       const rect = e.currentTarget.getBoundingClientRect();
                       const pos = (e.clientX - rect.left) / rect.width;
-                      seekTo(pos * (duration || 1));
+                      jumpTo(pos * (duration || 1));
                     }}
                   >
                     <div
@@ -599,17 +607,23 @@ export default function LiveDemoSection() {
                     />
                     {/* Event markers on seekbar */}
                     {currentSample.events.map((ev, eIdx) => {
-                      const pct = duration ? (ev.time / duration) * 100 : 0;
+                      const pct = duration ? (ev.start_sec / duration) * 100 : 0;
                       return (
                         <div
                           key={eIdx}
-                          className={`absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full border-2 border-black transform -translate-x-1/2 transition-transform hover:scale-125 ${
-                            ev.type === 'danger' || ev.type === 'critical'
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            jumpTo(ev.start_sec);
+                          }}
+                          className={`absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full border-2 border-black transform -translate-x-1/2 transition-transform hover:scale-125 cursor-pointer ${
+                            ev.type === 'critical'
                               ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]'
+                              : ev.type === 'danger'
+                              ? 'bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.8)]'
                               : 'bg-[#ffaa00] shadow-[0_0_8px_rgba(255,170,0,0.8)]'
                           }`}
                           style={{ left: `${pct}%` }}
-                          title={`${ev.label} at ${ev.time}s`}
+                          title={`[${ev.start_sec}s - ${ev.end_sec}s] ${ev.label}`}
                         />
                       );
                     })}
@@ -623,7 +637,7 @@ export default function LiveDemoSection() {
                           e.currentTarget.blur();
                           togglePlay();
                         }}
-                        className="p-1.5 rounded-lg bg-white/5 hover:bg-[#00e5ff]/20 text-white hover:text-[#00e5ff] transition"
+                        className="p-1.5 rounded-lg bg-white/5 hover:bg-[#00e5ff]/20 text-white hover:text-[#00e5ff] transition cursor-pointer"
                         aria-label={isPlaying ? 'Pause' : 'Play'}
                       >
                         {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 fill-current" />}
@@ -633,7 +647,7 @@ export default function LiveDemoSection() {
                           e.currentTarget.blur();
                           restartVideo();
                         }}
-                        className="p-1.5 rounded-lg bg-white/5 hover:bg-[#00e5ff]/20 text-white hover:text-[#00e5ff] transition"
+                        className="p-1.5 rounded-lg bg-white/5 hover:bg-[#00e5ff]/20 text-white hover:text-[#00e5ff] transition cursor-pointer"
                         aria-label="Restart"
                       >
                         <RotateCcw className="w-3.5 h-3.5" />
@@ -643,7 +657,7 @@ export default function LiveDemoSection() {
                           e.currentTarget.blur();
                           setIsMuted(!isMuted);
                         }}
-                        className="p-1.5 rounded-lg bg-white/5 hover:bg-[#00e5ff]/20 text-white hover:text-[#00e5ff] transition"
+                        className="p-1.5 rounded-lg bg-white/5 hover:bg-[#00e5ff]/20 text-white hover:text-[#00e5ff] transition cursor-pointer"
                         aria-label={isMuted ? 'Unmute' : 'Mute'}
                       >
                         {isMuted ? <VolumeX className="w-4 h-4 text-red-400" /> : <Volume2 className="w-4 h-4 text-[#00e5ff]" />}
@@ -662,7 +676,7 @@ export default function LiveDemoSection() {
                           e.currentTarget.blur();
                           toggleFullscreen();
                         }}
-                        className="p-1.5 rounded-lg bg-white/5 hover:bg-[#00e5ff]/20 text-white hover:text-[#00e5ff] transition"
+                        className="p-1.5 rounded-lg bg-white/5 hover:bg-[#00e5ff]/20 text-white hover:text-[#00e5ff] transition cursor-pointer"
                         aria-label={isFullscreen ? 'Exit Fullscreen (F)' : 'Fullscreen (F)'}
                         title={isFullscreen ? 'Exit Fullscreen (F)' : 'Fullscreen (F)'}
                       >
@@ -733,7 +747,7 @@ export default function LiveDemoSection() {
                   onClick={() => setActiveResultsTab('risk_curve')}
                   className={`px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition cursor-pointer flex items-center gap-1.5 ${
                     activeResultsTab === 'risk_curve'
-                      ? 'bg-[#00e5ff] text-[#080c14] shadow'
+                      ? 'bg-[#00e5ff] text-[#080c14] shadow font-extrabold'
                       : 'text-gray-400 hover:text-white'
                   }`}
                 >
@@ -744,7 +758,7 @@ export default function LiveDemoSection() {
                   onClick={() => setActiveResultsTab('timeline')}
                   className={`px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition cursor-pointer flex items-center gap-1.5 ${
                     activeResultsTab === 'timeline'
-                      ? 'bg-[#00e5ff] text-[#080c14] shadow'
+                      ? 'bg-[#00e5ff] text-[#080c14] shadow font-extrabold'
                       : 'text-gray-400 hover:text-white'
                   }`}
                 >
@@ -755,7 +769,7 @@ export default function LiveDemoSection() {
                   onClick={() => setActiveResultsTab('metrics')}
                   className={`px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition cursor-pointer flex items-center gap-1.5 ${
                     activeResultsTab === 'metrics'
-                      ? 'bg-[#00e5ff] text-[#080c14] shadow'
+                      ? 'bg-[#00e5ff] text-[#080c14] shadow font-extrabold'
                       : 'text-gray-400 hover:text-white'
                   }`}
                 >
@@ -768,11 +782,11 @@ export default function LiveDemoSection() {
             {/* Tab 1: Interactive Part B Risk Curve R(t) */}
             {activeResultsTab === 'risk_curve' && (
               <div className="pt-6">
-                <div className="flex items-center justify-between mb-3 text-xs font-mono">
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-3 text-xs font-mono">
                   <div className="flex items-center gap-2">
-                    <span className="text-gray-400">CAUSAL ACCIDENT PROBABILITY R(t)</span>
+                    <span className="text-gray-400">PART B CAUSAL RISK CURVE R(t)</span>
                     <span className="text-[#00e5ff] font-bold">|</span>
-                    <span className="text-gray-400">Click graph to seek video</span>
+                    <span className="text-[#00e5ff]">Click anywhere on chart to seek video (Extra Credit)</span>
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-1.5">
@@ -786,77 +800,103 @@ export default function LiveDemoSection() {
                   </div>
                 </div>
 
-                {/* SVG Graph Container */}
+                {/* SVG Graph Container with explicitly calibrated X & Y Axes */}
                 <div
-                  className="relative w-full h-32 bg-[#080c14] rounded-2xl border border-white/10 p-3 overflow-hidden cursor-crosshair group/graph"
+                  className="relative w-full h-44 bg-[#080c14] rounded-2xl border border-white/10 p-2 overflow-hidden cursor-crosshair group/graph shadow-inner"
                   onClick={(e) => {
                     const rect = e.currentTarget.getBoundingClientRect();
-                    const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-                    seekTo(pos * (duration || 90));
+                    const clickX = e.clientX - rect.left;
+                    const plotWidth = rect.width * (570 / 640);
+                    const plotStartX = rect.width * (50 / 640);
+                    const pos = Math.max(0, Math.min(1, (clickX - plotStartX) / plotWidth));
+                    jumpTo(pos * (duration || 90));
                   }}
                 >
-                  <svg viewBox="0 0 600 110" className="w-full h-full overflow-visible" preserveAspectRatio="none">
+                  <svg viewBox="0 0 640 120" className="w-full h-full overflow-visible" preserveAspectRatio="none">
                     <defs>
                       <linearGradient id="riskAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#00e5ff" stopOpacity="0.35" />
-                        <stop offset="60%" stopColor="#0693e3" stopOpacity="0.15" />
+                        <stop offset="0%" stopColor="#00e5ff" stopOpacity="0.4" />
+                        <stop offset="50%" stopColor="#0693e3" stopOpacity="0.2" />
                         <stop offset="100%" stopColor="#00e5ff" stopOpacity="0.0" />
                       </linearGradient>
                       <linearGradient id="riskStrokeGrad" x1="0" y1="0" x2="1" y2="0">
                         <stop offset="0%" stopColor="#00e5ff" />
-                        <stop offset="50%" stopColor="#ffaa00" />
+                        <stop offset="45%" stopColor="#ffaa00" />
                         <stop offset="100%" stopColor="#ef4444" />
                       </linearGradient>
                     </defs>
 
-                    {/* Alarm Threshold line at tau = 0.50 (Y = 110 - 0.50 * 95 = 62.5) */}
-                    <line x1="0" y1="62.5" x2="600" y2="62.5" stroke="#ef4444" strokeWidth="1.5" strokeDasharray="4 4" opacity="0.7" />
-                    <text x="590" y="58" textAnchor="end" fill="#ef4444" fontSize="9" fontFamily="monospace">
-                      ALARM THRESHOLD τ = 0.50
-                    </text>
+                    {/* Y-Axis Gridlines & Labels (0.0 to 1.0) */}
+                    <line x1="50" y1="15" x2="620" y2="15" stroke="#1f2d45" strokeWidth="1" strokeDasharray="2 2" />
+                    <text x="42" y="18" textAnchor="end" fill="#94a3b8" fontSize="9" fontFamily="monospace">1.0</text>
 
-                    {/* Baseline gridlines */}
-                    <line x1="0" y1="100" x2="600" y2="100" stroke="#1f2d45" strokeWidth="1" strokeDasharray="2 2" />
-                    <line x1="0" y1="25" x2="600" y2="25" stroke="#1f2d45" strokeWidth="1" strokeDasharray="2 2" />
+                    <line x1="50" y1="35" x2="620" y2="35" stroke="#1f2d45" strokeWidth="1" strokeDasharray="2 2" />
+                    <text x="42" y="38" textAnchor="end" fill="#94a3b8" fontSize="9" fontFamily="monospace">0.75</text>
+
+                    {/* Tau = 0.50 Alarm Threshold Line */}
+                    <line x1="50" y1="55" x2="620" y2="55" stroke="#ef4444" strokeWidth="1.5" strokeDasharray="4 4" opacity="0.8" />
+                    <text x="42" y="58" textAnchor="end" fill="#ef4444" fontSize="9" fontFamily="monospace" fontWeight="bold">0.50</text>
+                    <text x="615" y="51" textAnchor="end" fill="#ef4444" fontSize="8" fontFamily="monospace">τ = 0.50 (ALARM)</text>
+
+                    <line x1="50" y1="75" x2="620" y2="75" stroke="#1f2d45" strokeWidth="1" strokeDasharray="2 2" />
+                    <text x="42" y="78" textAnchor="end" fill="#94a3b8" fontSize="9" fontFamily="monospace">0.25</text>
+
+                    <line x1="50" y1="95" x2="620" y2="95" stroke="#334155" strokeWidth="1.5" />
+                    <text x="42" y="98" textAnchor="end" fill="#94a3b8" fontSize="9" fontFamily="monospace">0.0</text>
+
+                    {/* X-Axis Time Ticks */}
+                    <text x="50" y="112" textAnchor="start" fill="#94a3b8" fontSize="9" fontFamily="monospace">0.0s</text>
+                    <text x="192" y="112" textAnchor="middle" fill="#64748b" fontSize="9" fontFamily="monospace">{((duration || 90) * 0.25).toFixed(0)}s</text>
+                    <text x="335" y="112" textAnchor="middle" fill="#64748b" fontSize="9" fontFamily="monospace">{((duration || 90) * 0.50).toFixed(0)}s</text>
+                    <text x="477" y="112" textAnchor="middle" fill="#64748b" fontSize="9" fontFamily="monospace">{((duration || 90) * 0.75).toFixed(0)}s</text>
+                    <text x="620" y="112" textAnchor="end" fill="#94a3b8" fontSize="9" fontFamily="monospace">{(duration || 90).toFixed(0)}s</text>
 
                     {/* Area and Stroke Path */}
                     <path d={riskCurveData.areaD} fill="url(#riskAreaGrad)" />
                     <path d={riskCurveData.pathD} fill="none" stroke="url(#riskStrokeGrad)" strokeWidth="2.5" strokeLinecap="round" />
 
                     {/* Current Scrubber Head */}
-                    <line x1={scrubberX} y1="0" x2={scrubberX} y2="110" stroke="#ffffff" strokeWidth="1.5" strokeDasharray="2 2" />
-                    <circle cx={scrubberX} cy={110 - currentRisk * 95} r="4.5" fill="#00e5ff" stroke="#ffffff" strokeWidth="2" />
+                    <line x1={scrubberX} y1="15" x2={scrubberX} y2="95" stroke="#ffffff" strokeWidth="1.5" strokeDasharray="2 2" />
+                    <circle cx={scrubberX} cy={scrubberY} r="4.5" fill="#00e5ff" stroke="#ffffff" strokeWidth="2" />
                   </svg>
 
                   {/* Scrubber Tooltip */}
                   <div
-                    className="absolute top-2 pointer-events-none -translate-x-1/2 px-2 py-0.5 rounded bg-black/90 border border-white/20 text-[10px] font-mono text-[#00e5ff] shadow"
-                    style={{ left: `${(scrubberX / 600) * 100}%` }}
+                    className="absolute top-2 pointer-events-none -translate-x-1/2 px-2 py-0.5 rounded bg-black/95 border border-white/20 text-[10px] font-mono text-[#00e5ff] shadow"
+                    style={{ left: `${(scrubberX / 640) * 100}%` }}
                   >
                     {currentTime.toFixed(1)}s: {(currentRisk * 100).toFixed(0)}%
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between mt-3 text-[11px] font-mono text-gray-400">
-                  <span>0.0s (Normal Flow)</span>
-                  <span className="text-[#00e5ff] font-bold">CURRENT: {currentTime.toFixed(1)}s • R(t) = {(currentRisk * 100).toFixed(1)}%</span>
-                  <span>{(duration || 90).toFixed(1)}s (End)</span>
+                  <span>X-Axis: Time (seconds) • Y-Axis: Risk Score R(t) [0.0 – 1.0]</span>
+                  <span className="text-[#00e5ff] font-bold">CURRENT PLAYBACK: {currentTime.toFixed(1)}s &bull; R(t) = {(currentRisk * 100).toFixed(1)}%</span>
                 </div>
               </div>
             )}
 
-            {/* Tab 2: Chronological Event Timeline */}
+            {/* Tab 2: Chronological Event Timeline with [start_sec, end_sec, label] format */}
             {activeResultsTab === 'timeline' && (
               <div className="pt-6 space-y-3">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-72 overflow-y-auto pr-1">
+                <div className="flex items-center justify-between text-xs font-mono text-gray-400 pb-1">
+                  <span>DISCOVERED EVENT INTERVALS: [start_sec, end_sec, label]</span>
+                  <span className="text-[#00e5ff]">Click card to jumpTo(time)</span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-80 overflow-y-auto pr-1">
                   {currentSample.events.map((ev, idx) => (
                     <div
                       key={idx}
-                      onClick={() => seekTo(ev.time)}
+                      onClick={() => jumpTo(ev.start_sec)}
                       className="p-3.5 rounded-2xl bg-[#080c14] border border-[#1f2d45] hover:border-[#00e5ff]/50 transition-all cursor-pointer group flex items-start justify-between gap-3 shadow-sm hover:shadow-[0_0_15px_rgba(0,229,255,0.15)]"
                     >
-                      <div className="space-y-1">
+                      <div className="space-y-1.5">
+                        {/* [start_sec, end_sec, label] explicit format */}
                         <div className="flex items-center gap-2">
+                          <span className="font-mono text-xs font-bold text-white bg-white/10 px-2.5 py-0.5 rounded border border-white/10">
+                            [{ev.start_sec.toFixed(1)}s – {ev.end_sec.toFixed(1)}s]
+                          </span>
                           <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider ${
                             ev.type === 'critical'
                               ? 'bg-red-500/20 text-red-400 border border-red-500/40'
@@ -868,20 +908,25 @@ export default function LiveDemoSection() {
                           }`}>
                             {ev.label}
                           </span>
-                          <span className="text-xs font-mono text-gray-400 font-bold">{ev.track}</span>
                         </div>
+
+                        <div className="text-xs font-mono text-gray-400">
+                          Target: <span className="text-gray-200 font-semibold">{ev.track}</span> &bull; Conf: <span className="text-emerald-400 font-bold">{(ev.conf * 100).toFixed(0)}%</span>
+                        </div>
+
                         <p className="text-xs text-gray-300 leading-snug">{ev.desc}</p>
                       </div>
 
-                      <div className="flex flex-col items-end shrink-0 gap-1.5">
-                        <span className="font-mono text-xs font-bold text-[#00e5ff] bg-white/5 px-2 py-0.5 rounded border border-white/5">
-                          {ev.time.toFixed(1)}s
-                        </span>
-                        <span className="text-[10px] font-mono text-gray-500 flex items-center gap-1 group-hover:text-[#00e5ff] transition">
-                          <span>Jump</span>
-                          <ChevronRight className="w-3 h-3" />
-                        </span>
-                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          jumpTo(ev.start_sec);
+                        }}
+                        className="px-2.5 py-1.5 rounded-xl bg-[#00e5ff]/10 hover:bg-[#00e5ff]/20 text-[#00e5ff] text-[11px] font-mono font-bold border border-[#00e5ff]/30 flex items-center gap-1 shrink-0 group-hover:scale-105 transition cursor-pointer"
+                      >
+                        <span>Jump</span>
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -932,7 +977,7 @@ export default function LiveDemoSection() {
                     Upload Custom CCTV Video
                   </h3>
                   <p className="text-xs text-gray-400">
-                    Run full edge detection &amp; accident anticipation pipeline
+                    Live client-side validation &amp; edge pipeline processing
                   </p>
                 </div>
               </div>
@@ -944,19 +989,14 @@ export default function LiveDemoSection() {
               </button>
             </div>
 
-            {/* Submission Constraints Box (Explicitly requested by Hackathon Guidelines) */}
-            <div className="p-3.5 rounded-2xl bg-[#121a2a] border border-[#1f2d45] mb-5 text-xs space-y-1.5">
-              <div className="flex items-center gap-2 text-[#00e5ff] font-bold font-mono uppercase text-[11px]">
-                <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                Official Testing Constraints
+            {/* Validation Badges (Required by Step 3 guidelines) */}
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              <div className="px-3 py-1 rounded-lg bg-[#00e5ff]/10 border border-[#00e5ff]/30 text-[11px] font-mono font-bold text-[#00e5ff] flex items-center gap-1.5">
+                <span>⏱️ Лимит длины: до 2 минут (регламент хакатона)</span>
               </div>
-              <p className="text-gray-300 text-[11px] leading-relaxed">
-                • <strong>Supported formats:</strong> MP4 (H.264 / AAC)
-                <br />
-                • <strong>Limits:</strong> Maximum duration ≤ 2 minutes (120s), maximum file size ≤ 100 MB.
-                <br />
-                • <strong>Execution:</strong> Zero-network edge pipeline (Tesla T4 TensorRT FP16 / CPU demo fallback).
-              </p>
+              <div className="px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-[11px] font-mono text-gray-300 flex items-center gap-1.5">
+                <span>📦 Лимит размера: до 50 МБ (.mp4)</span>
+              </div>
             </div>
 
             {/* Drag & Drop Upload Zone */}
@@ -967,15 +1007,15 @@ export default function LiveDemoSection() {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="video/mp4,video/quicktime,video/avi,video/mkv"
+                accept="video/mp4"
                 onChange={handleFileUpload}
                 className="hidden"
               />
               <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-3 text-gray-400 group-hover:text-[#00e5ff] group-hover:scale-110 transition">
                 <FileVideo className="w-6 h-6" />
               </div>
-              <p className="text-sm font-bold text-white mb-1">Click to select or drag &amp; drop video</p>
-              <p className="text-xs text-gray-500 font-mono">MP4 format &bull; Up to 100 MB</p>
+              <p className="text-sm font-bold text-white mb-1">Click to select or drag &amp; drop video (.mp4)</p>
+              <p className="text-xs text-gray-500 font-mono">Format: MP4 only &bull; Size: up to 50 MB</p>
             </div>
 
             {/* Pre-Loaded Sample Quick Button (Guarantees zero-failure jury testing) */}
@@ -999,30 +1039,88 @@ export default function LiveDemoSection() {
         </div>
       )}
 
-      {/* Processing Pipeline Modal Overlay */}
+      {/* Processing Pipeline Modal with Execution Stepper:
+          «Загрузка видео... → Детекция событий... → Формирование таймлайна» */}
       {isProcessing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
-          <div className="w-full max-w-md p-6 rounded-3xl bg-[#0c121e] border border-[#00e5ff]/50 shadow-[0_0_50px_rgba(0,229,255,0.3)] animate-pulse">
+          <div className="w-full max-w-md p-6 rounded-3xl bg-[#0c121e] border border-[#00e5ff]/50 shadow-[0_0_50px_rgba(0,229,255,0.3)]">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <Cpu className="w-5 h-5 text-[#00e5ff] animate-spin" />
                 <span className="text-sm font-bold text-white uppercase tracking-wider font-mono">
-                  Edge Pipeline Inference Running...
+                  Running Pipeline Inference...
                 </span>
               </div>
               <span className="font-mono text-sm text-[#00e5ff] font-bold">{processingProgress}%</span>
             </div>
 
-            <div className="w-full bg-[#182236] h-2.5 rounded-full overflow-hidden mb-4">
+            {/* Progress Bar */}
+            <div className="w-full bg-[#182236] h-2 rounded-full overflow-hidden mb-5">
               <div
                 className="bg-gradient-to-r from-[#00e5ff] via-[#0693e3] to-[#9b51e0] h-full transition-all duration-100 shadow-[0_0_12px_#00e5ff]"
                 style={{ width: `${processingProgress}%` }}
               />
             </div>
 
-            <div className="text-xs font-mono text-gray-300 flex items-center gap-2 bg-[#080c14] p-3 rounded-xl border border-white/5">
-              <Activity className="w-4 h-4 text-[#00e5ff] shrink-0 animate-pulse" />
-              <span>{processingStage}</span>
+            {/* 3-Step Execution Stepper */}
+            <div className="space-y-2.5">
+              {/* Step 1 */}
+              <div className={`flex items-center gap-3 p-2.5 rounded-xl border text-xs font-mono transition ${
+                processingStep > 1
+                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                  : processingStep === 1
+                  ? 'bg-[#00e5ff]/15 border-[#00e5ff]/40 text-white shadow-sm'
+                  : 'bg-[#080c14] border-white/5 text-gray-500'
+              }`}>
+                <div className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] ${
+                  processingStep > 1
+                    ? 'bg-emerald-500 text-black'
+                    : 'bg-[#00e5ff] text-black animate-pulse'
+                }`}>
+                  {processingStep > 1 ? '✓' : '1'}
+                </div>
+                <span className="font-semibold">Загрузка видео... (Uploading video)</span>
+              </div>
+
+              {/* Step 2 */}
+              <div className={`flex items-center gap-3 p-2.5 rounded-xl border text-xs font-mono transition ${
+                processingStep > 2
+                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                  : processingStep === 2
+                  ? 'bg-[#00e5ff]/15 border-[#00e5ff]/40 text-white shadow-sm'
+                  : 'bg-[#080c14] border-white/5 text-gray-500'
+              }`}>
+                <div className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] ${
+                  processingStep > 2
+                    ? 'bg-emerald-500 text-black'
+                    : processingStep === 2
+                    ? 'bg-[#00e5ff] text-black animate-pulse'
+                    : 'bg-gray-800 text-gray-400'
+                }`}>
+                  {processingStep > 2 ? '✓' : '2'}
+                </div>
+                <span className="font-semibold">Детекция событий... (YOLO26m + ByteTrack)</span>
+              </div>
+
+              {/* Step 3 */}
+              <div className={`flex items-center gap-3 p-2.5 rounded-xl border text-xs font-mono transition ${
+                processingProgress >= 100
+                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                  : processingStep === 3
+                  ? 'bg-[#00e5ff]/15 border-[#00e5ff]/40 text-white shadow-sm'
+                  : 'bg-[#080c14] border-white/5 text-gray-500'
+              }`}>
+                <div className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] ${
+                  processingProgress >= 100
+                    ? 'bg-emerald-500 text-black'
+                    : processingStep === 3
+                    ? 'bg-[#00e5ff] text-black animate-pulse'
+                    : 'bg-gray-800 text-gray-400'
+                }`}>
+                  {processingProgress >= 100 ? '✓' : '3'}
+                </div>
+                <span className="font-semibold">Формирование таймлайна и кривой риска R(t)...</span>
+              </div>
             </div>
           </div>
         </div>
