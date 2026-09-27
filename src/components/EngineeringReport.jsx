@@ -15,6 +15,13 @@ import {
   ExternalLink,
   ShieldCheck,
   RotateCcw,
+  Terminal,
+  Copy,
+  CheckCheck,
+  Play,
+  Zap,
+  HardDrive,
+  Sparkles,
 } from 'lucide-react';
 import {
   REAL_ABLATION_EXPERIMENTS,
@@ -33,6 +40,54 @@ function GithubIcon({ className = "w-4 h-4" }) {
 export default function EngineeringReport() {
   const [activeTab, setActiveTab] = useState('summary'); // 'summary' | 'ablations' | 'metrics' | 'failures'
   const [selectedFailureModal, setSelectedFailureModal] = useState(null);
+  const [activeCliTab, setActiveCliTab] = useState('docker');
+  const [copiedCli, setCopiedCli] = useState(false);
+
+  const cliCommands = {
+    docker: {
+      id: 'docker',
+      label: 'Docker One-Liner (100% Offline)',
+      badge: 'Zero Network • Self-Contained',
+      badgeColor: 'text-[#00e5ff] bg-[#00e5ff]/10 border-[#00e5ff]/30',
+      cmd: `docker run --gpus all --rm \\
+  -v $(pwd)/input:/app/input:ro \\
+  -v $(pwd)/output:/app/output:rw \\
+  ghcr.io/asanashirov/westcv:v1.0.0 \\
+  --task all --camera camera.md --output_dir /app/output`,
+      note: 'Pre-packages PyAV, TensorRT/PyTorch, YOLO26m weights and SIFT reference view. Generates submission_A.json and submission_B.json in ./output.',
+    },
+    python: {
+      id: 'python',
+      label: 'Native Python CLI (PyAV)',
+      badge: 'Local Environment',
+      badgeColor: 'text-amber-400 bg-amber-400/10 border-amber-400/30',
+      cmd: `python run_offline.py \\
+  --video input/C3905.mp4 \\
+  --camera camera.md \\
+  --task_a output/submission_A.json \\
+  --task_b output/submission_B.json \\
+  --device cuda:0`,
+      note: 'Decodes reference frames only (PyAV NONREF flag) at 10 FPS, bypassing Turing NVDEC 4:2:2 bottleneck to guarantee <3.0x runtime.',
+    },
+    eval: {
+      id: 'eval',
+      label: 'Bipartite tIoU Evaluator',
+      badge: 'Official Score A Metric',
+      badgeColor: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/30',
+      cmd: `python evaluate_submission.py \\
+  --pred output/submission_A.json \\
+  --gt data/ground_truth.json \\
+  --thresholds 0.3 0.5 0.7 \\
+  --classes all`,
+      note: 'Computes greedy bipartite Hungarian matching at thresholds tau in {0.3, 0.5, 0.7} to reproduce Dev Score A = 0.338.',
+    },
+  };
+
+  const handleCopyCli = (text) => {
+    navigator.clipboard.writeText(text).catch(() => {});
+    setCopiedCli(true);
+    setTimeout(() => setCopiedCli(false), 2000);
+  };
 
   // Real Findings from Section 6 of Asan Ashirov's Engineering Report
   const whatWorked = [
@@ -149,6 +204,116 @@ export default function EngineeringReport() {
               <GithubIcon className="w-4 h-4 text-[#00e5ff]" />
               <span>GitHub Repo: WestCV (v1.0.0)</span>
             </a>
+          </div>
+        </div>
+
+        {/* Jury 1-Click Offline Reproducibility Console */}
+        <div className="mb-14 rounded-3xl bg-[#0c121e] border border-[#1f2d45] overflow-hidden shadow-2xl">
+          {/* Terminal Window Header */}
+          <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-3.5 bg-[#070b12] border-b border-[#1f2d45]">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded-full bg-rose-500/80" />
+                <div className="w-3 h-3 rounded-full bg-amber-500/80" />
+                <div className="w-3 h-3 rounded-full bg-emerald-500/80" />
+              </div>
+              <div className="flex items-center gap-2 text-xs font-mono text-gray-400">
+                <Terminal className="w-3.5 h-3.5 text-[#00e5ff]" />
+                <span className="text-white font-bold">jury_offline_eval.sh</span>
+                <span className="text-gray-600 hidden sm:inline">&bull; bash</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-mono text-emerald-300 font-bold flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                100% Offline • Zero Network Required
+              </span>
+              <span className="px-2.5 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-[10px] font-mono text-blue-300">
+                Tesla T4 Verified
+              </span>
+            </div>
+          </div>
+
+          {/* Terminal Body */}
+          <div className="p-6 sm:p-8 space-y-6">
+            {/* Command Selector Tabs */}
+            <div className="flex flex-wrap items-center gap-2">
+              {Object.values(cliCommands).map((item) => {
+                const isActive = activeCliTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveCliTab(item.id)}
+                    className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-mono transition cursor-pointer border ${
+                      isActive
+                        ? 'bg-[#182236] border-[#00e5ff] text-white font-bold shadow-md shadow-[#00e5ff]/10'
+                        : 'bg-[#121a2a]/60 border-[#1f2d45] text-gray-400 hover:text-white hover:bg-[#121a2a]'
+                    }`}
+                  >
+                    <Play className={`w-3 h-3 ${isActive ? 'text-[#00e5ff]' : 'text-gray-500'}`} />
+                    <span>{item.label}</span>
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded border ${item.badgeColor}`}>
+                      {item.badge}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Code Box */}
+            <div className="relative rounded-2xl bg-[#080c14] border border-[#1f2d45] p-4 sm:p-5 font-mono text-xs sm:text-sm">
+              <div className="flex items-start justify-between gap-4">
+                <pre className="text-emerald-400 overflow-x-auto whitespace-pre leading-relaxed font-mono">
+                  {cliCommands[activeCliTab].cmd}
+                </pre>
+                <button
+                  onClick={() => handleCopyCli(cliCommands[activeCliTab].cmd)}
+                  className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 transition cursor-pointer text-xs"
+                >
+                  {copiedCli ? (
+                    <>
+                      <CheckCheck className="w-3.5 h-3.5 text-emerald-400" />
+                      <span className="text-emerald-400 font-bold">Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5 text-[#00e5ff]" />
+                      <span>Copy Command</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-white/5 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-400">
+                <span>{cliCommands[activeCliTab].note}</span>
+                <span className="font-mono text-[#00e5ff] text-[11px]">{cliCommands[activeCliTab].specs}</span>
+              </div>
+            </div>
+
+            {/* Hardware & Runtime Guarantees Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+              <div className="p-3.5 rounded-xl bg-[#121a2a]/60 border border-[#1f2d45]">
+                <div className="text-[10px] font-mono text-gray-400 uppercase">GPU VRAM Limit</div>
+                <div className="text-sm sm:text-base font-bold font-mono text-white mt-0.5">4.2 GB Peak</div>
+                <div className="text-[10px] text-emerald-400 font-mono">&lt; 5.0 GB Limit Verified</div>
+              </div>
+              <div className="p-3.5 rounded-xl bg-[#121a2a]/60 border border-[#1f2d45]">
+                <div className="text-[10px] font-mono text-gray-400 uppercase">Runtime Ratio</div>
+                <div className="text-sm sm:text-base font-bold font-mono text-[#00e5ff] mt-0.5">2.69x Max</div>
+                <div className="text-[10px] text-emerald-400 font-mono">&lt; 3.0x Hard Limit Met</div>
+              </div>
+              <div className="p-3.5 rounded-xl bg-[#121a2a]/60 border border-[#1f2d45]">
+                <div className="text-[10px] font-mono text-gray-400 uppercase">Input / Output</div>
+                <div className="text-sm sm:text-base font-bold font-mono text-white mt-0.5">Auto Volumes</div>
+                <div className="text-[10px] text-gray-400 font-mono">submission_A &amp; B</div>
+              </div>
+              <div className="p-3.5 rounded-xl bg-[#121a2a]/60 border border-[#1f2d45]">
+                <div className="text-[10px] font-mono text-gray-400 uppercase">Offline Safety</div>
+                <div className="text-sm sm:text-base font-bold font-mono text-purple-400 mt-0.5">Air-Gapped</div>
+                <div className="text-[10px] text-purple-400/80 font-mono">Zero external downloads</div>
+              </div>
+            </div>
           </div>
         </div>
 

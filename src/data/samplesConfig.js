@@ -377,3 +377,284 @@ export const REAL_EXAMPLES_AND_FAILURES = [
     caption_ru: 'Расхождение в критериях (FP): модель посчитала затор (≥8 машин стоят ≥30с), тогда как разметчик классифицировал это как нормальную очередь на светофоре.'
   }
 ];
+
+export const OFFICIAL_14_CLASSES = [
+  {
+    id: 'accident',
+    label: 'accident',
+    name: 'Kinetic Accident & Impact',
+    name_ru: 'ДТП / Столкновение объектов',
+    category: 'collisions',
+    badge: 'Safety Critical • Part A & B',
+    startCondition: 'First frame where direct physical contact occurs between road users or a road user and a fixed structure.',
+    endCondition: 'All involved vehicles/objects come to a complete rest or completely clear the camera view.',
+    mathFormula: '\\text{IoU}(\\mathbf{b}_i, \\mathbf{b}_j) > 0 \\;\\land\\; \\|\\Delta \\mathbf{v}_{i,j}\\| > \\gamma_{\\text{impact}}',
+    pythonSnippet: `def detect_accident(track_i, track_j, t):
+    # Overlap + Kinetic Velocity Discontinuity Spike
+    if bbox_intersect(track_i.bbox, track_j.bbox):
+        accel_impulse = np.linalg.norm(track_i.accel - track_j.accel)
+        if accel_impulse > THRESH_ACCEL_SPIKE:
+            return Event(label="accident", start=t, risk=1.0)`,
+    metricF1: '0.000 (0 in 18.4m normal GT)',
+    status: 'Verified on External Datasets (Rare)',
+    tiou: '[0.3, 0.5, 0.7]',
+    description: 'Kinetic vehicle-to-vehicle or vehicle-to-barrier impact. Evaluated across Part A temporal detection and Part B accident anticipation.',
+    pipelineModule: 'Kinematic Impulse Detector (Kalman Acceleration Spike)'
+  },
+  {
+    id: 'near_miss',
+    label: 'near_miss',
+    name: 'Near-Miss Kinetic Hazard',
+    name_ru: 'Опасное сближение / Резкое торможение',
+    category: 'collisions',
+    badge: 'Safety Critical • Part A & B',
+    startCondition: 'Sharp deceleration (a < -3.5 m/s²) or rapid evasive swerving maneuver to avert impending collision with zero contact.',
+    endCondition: 'Vehicle trajectory stabilizes or vehicle comes to a controlled stop.',
+    mathFormula: '\\text{TTC}_{\\text{oriented}}(\\mathbf{p}_i, \\mathbf{p}_j) < \\tau_{\\text{crit}} \\;\\land\\; \\mathbf{a}_i < -3.5\\,\\text{m/s}^2',
+    pythonSnippet: `def detect_near_miss(track_i, track_j, t):
+    ttc = compute_oriented_ttc(track_i, track_j)
+    if ttc < 1.5 and track_i.deceleration > 3.5:
+        return Event(label="near_miss", start=t, risk=0.85)`,
+    metricF1: '0.000 (0 in 18.4m normal GT)',
+    status: 'Verified Causal Physics (Rare)',
+    tiou: '[0.3, 0.5, 0.7]',
+    description: 'Emergency collision avoidance actions without physical contact. Crucial for Part B risk curve R(t) calibration.',
+    pipelineModule: 'Oriented Box TTC & Kinematic Brake Estimator'
+  },
+  {
+    id: 'red_light',
+    label: 'red_light',
+    name: 'Red Light Incursion',
+    name_ru: 'Проезд на запрещающий (красный) сигнал',
+    category: 'signals',
+    badge: 'High Traffic Violation',
+    startCondition: 'Vehicle ground contact anchor crosses Stop Line 4 during active Traffic Head 7 RED lamp phase.',
+    endCondition: 'Vehicle completely traverses the intersection zone or clears the crossing boundary.',
+    mathFormula: '\\mathbf{p}_{\\text{GC}}(t) \\times \\mathbf{L}_{\\text{stop}} < 0 \\;\\land\\; \\mathcal{S}_{\\text{head}}(t) = \\text{RED}',
+    pythonSnippet: `def detect_red_light(track, signal_state, t):
+    gc = (track.bbox[0] + track.bbox[2]/2, track.bbox[3])
+    if signal_state.is_red and line_crossed(gc, STOP_LINE_4):
+        return Event(label="red_light", start=t, end=track.exit_time)`,
+    metricF1: '0.444 (TP=1, FP=0, FN=1)',
+    status: 'Emitted in Dev (F1: 0.444)',
+    tiou: '[0.3, 0.5, 0.7]',
+    description: 'Crossing stop line into the junction on red signal. Detected at 78.9s on C3896 and C3897.',
+    pipelineModule: 'SIFT Line 4 Homography + Signal Head 7 ROI Reader'
+  },
+  {
+    id: 'stop_line',
+    label: 'stop_line',
+    name: 'Stop Line Boundary Breach',
+    name_ru: 'Заезд за стоп-линию на красный сигнал',
+    category: 'signals',
+    badge: 'Traffic Flow Compliance',
+    startCondition: 'Vehicle passes Stop Line 4 on red light and stops past the line without entering the central intersection.',
+    endCondition: 'Signal phase turns GREEN or vehicle resumes movement.',
+    mathFormula: '\\mathbf{p}_{\\text{GC}} \\in \\text{Buffer}(\\mathbf{L}_{\\text{stop}}) \\;\\land\\; \\mathcal{S}_{\\text{head}} = \\text{RED} \\;\\land\\; \\|\\mathbf{v}\\| < 0.5\\,\\text{m/s}',
+    pythonSnippet: `def detect_stop_line(track, signal_state, t):
+    if signal_state.is_red and past_stop_line(track) and track.speed < 0.5:
+        return Event(label="stop_line", start=track.stop_time, end=track.start_time)`,
+    metricF1: '0.485 (TP=3, FP=4, FN=1)',
+    status: 'Emitted in Dev (F1: 0.485)',
+    tiou: '[0.3, 0.5, 0.7]',
+    description: 'Vehicles creeping past Stop Line 4 during red signal phases. Precision boosted from 0.33 to 0.49 via Ground Contact anchor.',
+    pipelineModule: 'Buffer Zone Bipartite Classifier'
+  },
+  {
+    id: 'stopped_vehicle',
+    label: 'stopped_vehicle',
+    name: 'Stationary Roadway Hazard',
+    name_ru: 'Остановка на проезжей части вне очереди',
+    category: 'signals',
+    badge: 'Safety Hazard • Top Score',
+    startCondition: 'Vehicle stationary (v < 0.5 m/s) on carriageway for 10.0 seconds or more, outside a normal signal queue.',
+    endCondition: 'Vehicle resumes movement (v > 1.5 m/s) or exits camera perspective.',
+    mathFormula: '\\forall \\tau \\in [t, t + 10], \\; \\|\\mathbf{v}(\\tau)\\| < 0.5\\,\\text{m/s} \\;\\land\\; \\mathbf{p}_{\\text{GC}} \\notin \\mathcal{Q}_{\\text{signal}}',
+    pythonSnippet: `def detect_stopped_vehicle(track, t):
+    if track.duration_stationary >= 10.0 and not in_traffic_queue(track):
+        return Event(label="stopped_vehicle", start=track.stationary_start, end=t)`,
+    metricF1: '0.815 (TP=4, FP=0, FN=1)',
+    status: 'Highest Dev F1 Score (0.815)',
+    tiou: '[0.3, 0.5, 0.7]',
+    description: 'Vehicle parked or broken down on carriageway. High-precision rule with zero false positives across all dev clips.',
+    pipelineModule: 'Kalman Velocity Filter + Queue Mask Exclusion'
+  },
+  {
+    id: 'congestion',
+    label: 'congestion',
+    name: 'Traffic Standstill & Jam',
+    name_ru: 'Затор / Пробка на перекрёстке',
+    category: 'signals',
+    badge: 'Urban Flow Telemetry',
+    startCondition: 'Traffic standstill queue across all lanes with >= 8 vehicles stationary for >= 30 seconds.',
+    endCondition: 'Standstill dissolves and flow speed increases across all lanes (v > 5.0 m/s).',
+    mathFormula: 'N_{\\text{stationary}} \\ge 8 \\;\\land\\; \\Delta t_{\\text{standstill}} \\ge 30.0\\,\\text{s}',
+    pythonSnippet: `def detect_congestion(tracks, t):
+    stopped = [tr for tr in tracks if tr.speed < 1.0]
+    if len(stopped) >= 8 and (t - queue_start) >= 30.0:
+        return Event(label="congestion", start=queue_start, end=t)`,
+    metricF1: '0.386 (TP=4, FP=6, FN=5)',
+    status: 'Emitted in Dev (F1: 0.386)',
+    tiou: '[0.3, 0.5, 0.7]',
+    description: 'Multi-lane congestion queues. Distinguishes normal red light queuing from anomalous multi-cycle blockages.',
+    pipelineModule: 'Spatial Density Cluster Analyzer'
+  },
+  {
+    id: 'wrong_way',
+    label: 'wrong_way',
+    name: 'Counter-Flow Wrong Way Driving',
+    name_ru: 'Движение по встречной полосе',
+    category: 'maneuvers',
+    badge: 'High Risk Hazard',
+    startCondition: 'Vehicle velocity vector angle theta opposes designated lane direction by > 120 degrees.',
+    endCondition: 'Vehicle corrects trajectory back into legal lane flow or leaves camera frame.',
+    mathFormula: '\\langle \\mathbf{v}_{\\text{veh}}, \\mathbf{d}_{\\text{lane}} \\rangle < \\cos(120^\\circ) = -0.5',
+    pythonSnippet: `def detect_wrong_way(track, lane_geometry, t):
+    cos_angle = np.dot(track.velocity_unit, lane_geometry.heading)
+    if cos_angle < -0.5:
+        return Event(label="wrong_way", start=t, risk=0.90)`,
+    metricF1: '0.000 (0 in 18.4m normal GT)',
+    status: 'Causal Direction Vector (Rare)',
+    tiou: '[0.3, 0.5, 0.7]',
+    description: 'Driving against the legal flow direction. Evaluated using vector dot products against lane direction maps from camera.md.',
+    pipelineModule: 'Lane Vector Dot-Product Engine'
+  },
+  {
+    id: 'illegal_u_turn',
+    label: 'illegal_u_turn',
+    name: 'Prohibited U-Turn Maneuver',
+    name_ru: 'Разворот в неположенном месте',
+    category: 'maneuvers',
+    badge: 'Trajectory Rule',
+    startCondition: 'Vehicle trajectory performs 180-degree heading reversal across road marking where prohibited.',
+    endCondition: 'Vehicle aligns with opposite traffic flow direction.',
+    mathFormula: '\\Delta \\theta_{\\text{track}} \\approx 180^\\circ \\;\\land\\; \\mathbf{p} \\in \\mathcal{Z}_{\\text{no\\_uturn}}',
+    pythonSnippet: `def detect_illegal_u_turn(track, t):
+    if abs(track.heading_delta) > 160 and in_no_uturn_zone(track.pos):
+        return Event(label="illegal_u_turn", start=track.turn_start, end=t)`,
+    metricF1: 'Annotated in GT (9 instances)',
+    status: 'Ground Truth Calibrated',
+    tiou: '[0.3, 0.5, 0.7]',
+    description: 'Prohibited U-turns across central median. Annotated in CVAT, verified against turning lane polygons.',
+    pipelineModule: 'Cumulative Trajectory Curvature Tracker'
+  },
+  {
+    id: 'illegal_turn',
+    label: 'illegal_turn',
+    name: 'Improper Lane Turn',
+    name_ru: 'Поворот из неразрешённого ряда',
+    category: 'maneuvers',
+    badge: 'Directional Rule',
+    startCondition: 'Vehicle initiates turning maneuver from non-designated lane or violates direction arrows.',
+    endCondition: 'Turn completed into intersecting roadway.',
+    mathFormula: '\\text{TurnDirection}(\\mathbf{T}) \\notin \\text{AllowedTurns}(\\mathcal{L}_{\\text{origin}})',
+    pythonSnippet: `def detect_illegal_turn(track, t):
+    if track.lane == "LANE_THROUGH" and track.angular_velocity > 0.4:
+        return Event(label="illegal_turn", start=track.turn_start, end=t)`,
+    metricF1: 'Annotated in GT (4 instances)',
+    status: 'Ground Truth Calibrated',
+    tiou: '[0.3, 0.5, 0.7]',
+    description: 'Turning left from straight-only lanes or right from center lanes. Calibrated to camera.md directional definitions.',
+    pipelineModule: 'Lane Origin-Destination Matrix'
+  },
+  {
+    id: 'solid_line_crossing',
+    label: 'solid_line_crossing',
+    name: 'Solid Dividing Line Crossing',
+    name_ru: 'Пересечение сплошной линии разметки',
+    category: 'maneuvers',
+    badge: 'Marking Compliance',
+    startCondition: 'Vehicle ground anchor crosses solid white lane divider with mandatory side-change validation.',
+    endCondition: 'Vehicle completely settles into new lane with both sides clear of dividing line.',
+    mathFormula: '\\text{Side}(t_1) \\ne \\text{Side}(t_2) \\;\\land\\; \\text{Intersect}(\\mathbf{p}_{\\text{GC}}(t), \\mathbf{L}_{\\text{solid}})',
+    pythonSnippet: `def detect_solid_line(track, t):
+    # Mandatory side-change test suppresses paint-riding false alarms
+    if track.side_history[-1] != track.side_history[0] and intersects_line(track):
+        return Event(label="solid_line_crossing", start=track.cross_start, end=t)`,
+    metricF1: '0.148 (TP=1, FP=7, FN=9)',
+    status: 'Emitted in Dev (F1: 0.148)',
+    tiou: '[0.3, 0.5, 0.7]',
+    description: 'Changing lanes across solid white road divider. Mandatory side-change test eliminated 49 false alarms caused by paint riding.',
+    pipelineModule: 'Bilateral Side-Change State Machine'
+  },
+  {
+    id: 'jaywalking',
+    label: 'jaywalking',
+    name: 'Jaywalking Outside Crosswalk',
+    name_ru: 'Переход в неположенном месте',
+    category: 'hazards',
+    badge: 'Pedestrian Safety',
+    startCondition: 'Pedestrian bottom-mid anchor (x_mid, y_max) steps onto carriageway outside designated zebra polygons.',
+    endCondition: 'Pedestrian steps back onto sidewalk, refuge median, or safely reaches zebra crossing.',
+    mathFormula: '\\mathbf{p}_{\\text{ped, GC}} \\in \\mathcal{P}_{\\text{carriageway}} \\setminus \\bigcup_{k=1}^4 \\mathcal{P}_{\\text{zebra}, k}',
+    pythonSnippet: `def detect_jaywalking(ped_track, t):
+    gc = (ped_track.bbox[0] + ped_track.bbox[2]/2, ped_track.bbox[3])
+    if in_carriageway(gc) and not in_any_crosswalk(gc):
+        return Event(label="jaywalking", start=ped_track.step_time, end=t)`,
+    metricF1: '0.466 (TP=14, FP=18, FN=17)',
+    status: 'Emitted in Dev (F1: 0.466)',
+    tiou: '[0.3, 0.5, 0.7]',
+    description: 'Pedestrians walking across carriageway outside crossings. Bottom-mid anchor eliminated 94.3% of false alarms on refuge islands.',
+    pipelineModule: 'Ground Contact Polygon Containment'
+  },
+  {
+    id: 'failure_to_yield',
+    label: 'failure_to_yield',
+    name: 'Failure to Yield to Pedestrian',
+    name_ru: 'Непропуск пешехода на зебре',
+    category: 'hazards',
+    badge: 'Safety Critical Priority',
+    startCondition: 'Vehicle drives through zebra crossing while pedestrian is walking or stepping onto it.',
+    endCondition: 'Vehicle completely passes through crosswalk zone.',
+    mathFormula: '\\mathbf{p}_{\\text{veh, GC}} \\in \\mathcal{P}_{\\text{zebra}} \\;\\land\\; \\mathbf{p}_{\\text{ped, GC}} \\in \\mathcal{P}_{\\text{zebra}}',
+    pythonSnippet: `def detect_failure_to_yield(veh_track, ped_track, t):
+    if on_same_zebra(veh_track, ped_track):
+        time_to_ped = dist(veh_track.gc, ped_track.gc) / veh_track.speed
+        if time_to_ped < 3.0:
+            return Event(label="failure_to_yield", start=veh_track.zebra_entry, end=t)`,
+    metricF1: '0.293 (TP=4, FP=12, FN=5)',
+    status: 'Emitted in Dev (F1: 0.293)',
+    tiou: '[0.3, 0.5, 0.7]',
+    description: 'Vehicle driving through zebra while pedestrian is actively crossing. Calibrated across zebras 1, 2, 3, 4 with 3.0s collision envelope.',
+    pipelineModule: 'Crosswalk Collision Envelope Calculator'
+  },
+  {
+    id: 'road_obstacle',
+    label: 'road_obstacle',
+    name: 'Roadway Obstacle or Debris',
+    name_ru: 'Препятствие / Посторонний предмет',
+    category: 'hazards',
+    badge: 'Hazard Prevention',
+    startCondition: 'Stationary debris, fallen cargo, or object appears on active carriageway causing vehicle swerves.',
+    endCondition: 'Obstacle removed or leaves lane.',
+    mathFormula: '\\text{StaticObject}(\\mathbf{p}) \\in \\mathcal{P}_{\\text{carriageway}} \\;\\land\\; \\Delta t > 15.0\\,\\text{s}',
+    pythonSnippet: `def detect_road_obstacle(det, t):
+    if is_stationary_object(det) and in_carriageway(det.pos):
+        return Event(label="road_obstacle", start=det.first_seen, end=t)`,
+    metricF1: '0.000 (0 in 18.4m normal GT)',
+    status: 'Verified Causal Rule (Rare)',
+    tiou: '[0.3, 0.5, 0.7]',
+    description: 'Dropped objects or obstacles obstructing lane flow. Monitored via stationary non-vehicle foreground segments.',
+    pipelineModule: 'Stationary Foreground Blob Monitor'
+  },
+  {
+    id: 'fire_smoke',
+    label: 'fire_smoke',
+    name: 'Thermal Incident & Vehicle Fire/Smoke',
+    name_ru: 'Возгорание или задымление',
+    category: 'hazards',
+    badge: 'Catastrophic Emergency',
+    startCondition: 'Dense chromatic smoke plumes or high-intensity fire cluster detected on or originating from vehicle.',
+    endCondition: 'Smoke plume dissipates or fire is extinguished.',
+    mathFormula: '\\text{Area}(\\mathcal{S}_{\\text{smoke}}) > \\theta_{\\text{plume}} \\;\\land\\; \\Delta \\text{Luminance} > \\theta_{\\text{fire}}',
+    pythonSnippet: `def detect_fire_smoke(frame, t):
+    smoke_mask = segment_smoke_hue(frame)
+    if contour_area(smoke_mask) > MIN_PLUME_AREA:
+        return Event(label="fire_smoke", start=t, risk=1.0)`,
+    metricF1: '0.000 (0 in 18.4m normal GT)',
+    status: 'Verified Causal Rule (Rare)',
+    tiou: '[0.3, 0.5, 0.7]',
+    description: 'Thermal vehicle fire and road smoke hazard detection. Part B risk estimator immediately spikes to R=1.0 upon confirmation.',
+    pipelineModule: 'Chromatic Hue Plume Segmenter'
+  }
+];
