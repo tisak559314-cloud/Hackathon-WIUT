@@ -6,6 +6,7 @@ import {
   Video,
   ShieldAlert,
   Maximize2,
+  Minimize2,
   Volume2,
   VolumeX,
   Terminal,
@@ -41,8 +42,10 @@ export default function LiveDemoSection() {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isMuted, setIsMuted] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const videoRef = useRef(null);
+  const playerContainerRef = useRef(null);
 
   const handleTimeUpdate = () => {
     if (videoRef.current) {
@@ -66,7 +69,68 @@ export default function LiveDemoSection() {
     }
   };
 
-  // Keyboard shortcut listener: Spacebar toggles playback
+  // Fullscreen toggle (support F shortcut like YouTube)
+  const toggleFullscreen = () => {
+    const container = playerContainerRef.current || videoRef.current;
+    if (!container) return;
+
+    const isCurrentlyFullscreen = !!(
+      document.fullscreenElement ||
+      document.webkitFullscreenElement ||
+      document.mozFullScreenElement ||
+      document.msFullscreenElement
+    );
+
+    if (!isCurrentlyFullscreen) {
+      if (container.requestFullscreen) {
+        container.requestFullscreen().catch(() => {});
+      } else if (container.webkitRequestFullscreen) {
+        container.webkitRequestFullscreen();
+      } else if (container.mozRequestFullScreen) {
+        container.mozRequestFullScreen();
+      } else if (container.msRequestFullscreen) {
+        container.msRequestFullscreen();
+      }
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      } else if (document.mozCancelFullScreen) {
+        document.mozCancelFullScreen();
+      } else if (document.msExitFullscreen) {
+        document.msExitFullscreen();
+      }
+    }
+  };
+
+  // Listen for fullscreen change events to update state
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(
+        !!(
+          document.fullscreenElement ||
+          document.webkitFullscreenElement ||
+          document.mozFullScreenElement ||
+          document.msFullscreenElement
+        )
+      );
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+    };
+  }, []);
+
+  // Keyboard shortcut listener: Spacebar = Play/Pause, F = Fullscreen toggle
   useEffect(() => {
     const handleKeyDown = (e) => {
       // Don't intercept if user is typing into input, textarea, or contenteditable
@@ -81,9 +145,18 @@ export default function LiveDemoSection() {
         return;
       }
 
+      // Space: Toggle Play/Pause
       if (e.code === 'Space' || e.key === ' ' || e.keyCode === 32) {
         e.preventDefault();
         togglePlay();
+        return;
+      }
+
+      // F: Toggle Fullscreen (works with English and Russian layout)
+      if (e.code === 'KeyF' || e.key === 'f' || e.key === 'F' || e.key === 'а' || e.key === 'А') {
+        e.preventDefault();
+        toggleFullscreen();
+        return;
       }
     };
 
@@ -179,7 +252,12 @@ export default function LiveDemoSection() {
               </div>
 
               {/* Video Screen Container */}
-              <div className="relative rounded-2xl overflow-hidden bg-black border border-white/10 aspect-video group/screen">
+              <div
+                ref={playerContainerRef}
+                className={`relative rounded-2xl overflow-hidden bg-black border border-white/10 aspect-video group/screen ${
+                  isFullscreen ? '!rounded-none !border-none !aspect-auto w-full h-full flex items-center justify-center' : ''
+                }`}
+              >
                 {/* Precision HUD Corner Reticles */}
                 <div className="absolute top-3 left-3 w-5 h-5 border-t-2 border-l-2 border-[#00e5ff]/70 pointer-events-none z-20" />
                 <div className="absolute top-3 right-3 w-5 h-5 border-t-2 border-r-2 border-[#00e5ff]/70 pointer-events-none z-20" />
@@ -190,7 +268,7 @@ export default function LiveDemoSection() {
                 <video
                   ref={videoRef}
                   src={benchmarkVideo.src}
-                  className="w-full h-full object-cover"
+                  className={`w-full h-full ${isFullscreen ? 'object-contain' : 'object-cover'}`}
                   playsInline
                   muted={isMuted}
                   loop
@@ -199,6 +277,7 @@ export default function LiveDemoSection() {
                   onPlay={() => setIsPlaying(true)}
                   onPause={() => setIsPlaying(false)}
                   onClick={togglePlay}
+                  onDoubleClick={toggleFullscreen}
                 />
 
                 {/* Top-Left Watermark Badge */}
@@ -258,7 +337,9 @@ export default function LiveDemoSection() {
                     <p className="text-xs text-gray-300 font-mono tracking-wide px-4 py-1.5 rounded-full bg-black/80 border border-white/10 backdrop-blur-md shadow-lg flex items-center gap-2">
                       <span>Press</span>
                       <kbd className="px-2 py-0.5 rounded bg-white/20 text-[#00e5ff] font-bold border border-white/20 shadow">SPACE</kbd>
-                      <span>or click to toggle playback</span>
+                      <span>to play &bull;</span>
+                      <kbd className="px-2 py-0.5 rounded bg-white/20 text-[#00e5ff] font-bold border border-white/20 shadow">F</kbd>
+                      <span>for fullscreen</span>
                     </p>
                   </div>
                 )}
@@ -346,14 +427,17 @@ export default function LiveDemoSection() {
                       <button
                         onClick={(e) => {
                           e.currentTarget.blur();
-                          if (videoRef.current?.requestFullscreen) {
-                            videoRef.current.requestFullscreen();
-                          }
+                          toggleFullscreen();
                         }}
                         className="p-1.5 rounded-lg bg-white/5 hover:bg-[#00e5ff]/20 text-white hover:text-[#00e5ff] transition"
-                        aria-label="Fullscreen"
+                        aria-label={isFullscreen ? 'Exit Fullscreen (F)' : 'Fullscreen (F)'}
+                        title={isFullscreen ? 'Exit Fullscreen (F)' : 'Fullscreen (F)'}
                       >
-                        <Maximize2 className="w-3.5 h-3.5" />
+                        {isFullscreen ? (
+                          <Minimize2 className="w-3.5 h-3.5 text-[#00e5ff]" />
+                        ) : (
+                          <Maximize2 className="w-3.5 h-3.5" />
+                        )}
                       </button>
                     </div>
                   </div>
@@ -367,6 +451,10 @@ export default function LiveDemoSection() {
             <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#121a2a]/80 border border-[#1f2d45] backdrop-blur-sm shadow-sm">
               <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-[#00e5ff] font-bold text-[10px]">SPACE</kbd>
               <span>Play / Pause</span>
+            </div>
+            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#121a2a]/80 border border-[#1f2d45] backdrop-blur-sm shadow-sm">
+              <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-[#00e5ff] font-bold text-[10px]">F</kbd>
+              <span>Fullscreen</span>
             </div>
             <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#121a2a]/80 border border-[#1f2d45] backdrop-blur-sm shadow-sm">
               <span className="w-1.5 h-1.5 rounded-full bg-[#00e5ff]" />
