@@ -166,18 +166,18 @@ export default function AcademicResearch() {
                 <div>
                   <div className="text-xs font-mono font-bold uppercase tracking-wider text-[#00e5ff] flex items-center gap-2 mb-1">
                     <BarChart2 className="w-4 h-4 text-[#00e5ff]" />
-                    Real Dataset Ground Truth (CVAT Labels)
+                    <span>Real Dataset Ground Truth (CVAT Labels)</span>
                   </div>
-                  <h3 className="text-xl font-extrabold text-white">
+                  <h3 className="text-lg sm:text-xl font-extrabold text-white tracking-tight">
                     108 Events in 18.4 min Normal Traffic
                   </h3>
                 </div>
 
                 {/* Filter Pills */}
-                <div className="flex items-center gap-1 bg-[#121a2a] p-1 rounded-xl border border-[#1f2d45]">
+                <div className="flex items-center gap-1 bg-[#121a2a] p-1 rounded-xl border border-[#1f2d45] shrink-0 self-start sm:self-auto">
                   <button
                     onClick={() => setClassFilter('all')}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase transition ${
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase transition cursor-pointer ${
                       classFilter === 'all' ? 'bg-[#0693e3] text-white shadow' : 'text-gray-400 hover:text-white'
                     }`}
                   >
@@ -185,7 +185,7 @@ export default function AcademicResearch() {
                   </button>
                   <button
                     onClick={() => setClassFilter('frequent')}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase transition ${
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase transition cursor-pointer ${
                       classFilter === 'frequent' ? 'bg-[#00e5ff] text-[#080c14] shadow font-extrabold' : 'text-gray-400 hover:text-white'
                     }`}
                   >
@@ -193,7 +193,7 @@ export default function AcademicResearch() {
                   </button>
                   <button
                     onClick={() => setClassFilter('rare')}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase transition ${
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase transition cursor-pointer ${
                       classFilter === 'rare' ? 'bg-amber-500/80 text-white shadow' : 'text-gray-400 hover:text-white'
                     }`}
                   >
@@ -203,7 +203,7 @@ export default function AcademicResearch() {
               </div>
 
               {/* Interactive Horizontal Bars */}
-              <div className="space-y-2 mb-6 max-h-[310px] overflow-y-auto pr-1">
+              <div className="space-y-2 mb-6 max-h-[320px] overflow-y-auto pr-1.5 scrollbar-thin">
                 {filteredClasses.map((item, idx) => {
                   const originalIdx = classDistribution.findIndex((c) => c.name === item.name);
                   const isSelected = selectedClassIdx === originalIdx;
@@ -252,7 +252,7 @@ export default function AcademicResearch() {
 
             {/* Selected Class Deep-Dive Card */}
             <div className="p-4 rounded-2xl bg-[#121a2a] border border-[#1f2d45] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
+              <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-mono font-bold uppercase text-white">
                     Inspecting: <span className="text-[#00e5ff]">{selectedClass.name}</span>
@@ -261,10 +261,10 @@ export default function AcademicResearch() {
                     GT Count: {selectedClass.count}
                   </span>
                 </div>
-                <p className="text-xs text-gray-400 mt-1">{selectedClass.desc}</p>
+                <p className="text-xs text-gray-400">{selectedClass.desc}</p>
               </div>
 
-              <div className="text-right shrink-0">
+              <div className="text-left sm:text-right shrink-0">
                 <span className="text-[10px] font-mono text-gray-500 uppercase">Detection Status</span>
                 <div className="text-sm font-mono font-extrabold text-[#00e5ff]">
                   {selectedClass.status}
@@ -297,64 +297,73 @@ export default function AcademicResearch() {
               </p>
 
               {/* Visual Interactive Road Homography Canvas */}
-              <div className="relative rounded-2xl overflow-hidden aspect-[4/3] bg-gradient-to-b from-[#080c14] to-[#121a2a] border border-[#1f2d45] p-4 flex flex-col justify-between shadow-inner">
+              <div className="relative rounded-2xl overflow-hidden bg-gradient-to-b from-[#080c14] to-[#121a2a] border border-[#1f2d45] p-5 flex flex-col justify-between shadow-inner min-h-[350px]">
                 {/* 3D Perspective Road Grid Lines */}
                 <div className="absolute inset-0 sensor-grid opacity-30 pointer-events-none" />
 
-                {/* Simulated Calibrated Polygons */}
-                <div className="relative z-10 flex items-center justify-between text-[11px] font-mono">
+                {/* Simulated Calibrated Polygons Header */}
+                <div className="relative z-10 flex items-center justify-between text-[11px] font-mono mb-2">
                   <span className="text-gray-400">SHIFT: Δx≈-74px, Δy≈+42px</span>
-                  <span className="text-emerald-400 font-bold">RANSAC REGISTERED</span>
+                  <span className="text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                    RANSAC REGISTERED
+                  </span>
                 </div>
 
                 {/* Interactive Simulated Vehicle with BBox & Point Projection */}
-                <div className="relative z-10 flex flex-col items-center justify-center py-6">
+                <div className="relative z-10 flex flex-col items-center justify-center my-3">
                   {/* Vehicle Bounding Box */}
-                  <div className="relative w-36 h-28 border-2 border-[#00e5ff] rounded-lg bg-[#00e5ff]/10 flex flex-col items-center justify-between p-2 shadow-lg shadow-[#00e5ff]/20">
-                    <div className="text-[10px] font-mono text-white bg-black/80 px-1.5 py-0.5 rounded self-start">
-                      Vehicle #14 (C3905)
+                  <div className="relative w-44 h-28 border-2 border-[#00e5ff] rounded-xl bg-[#00e5ff]/10 flex flex-col items-center justify-between p-2.5 shadow-lg shadow-[#00e5ff]/20">
+                    <div className="flex items-center justify-between w-full">
+                      <span className="text-[10px] font-mono font-bold text-white bg-black/90 px-2 py-0.5 rounded border border-white/10">
+                        Vehicle #14 (C3905)
+                      </span>
+                      <span className="text-[9px] font-mono text-[#00e5ff] font-bold">H · p</span>
                     </div>
 
-                    {/* Naive Center Point */}
-                    {homographyAnchor === 'naive' && (
-                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center animate-bounce">
-                        <div className="w-3.5 h-3.5 rounded-full bg-red-500 border-2 border-white shadow-lg" />
-                        <span className="text-[10px] font-mono font-bold text-red-400 bg-black/90 px-1 rounded mt-1 whitespace-nowrap">
-                          BBox Center: +4.8m Parallax Error
+                    {/* Point & Label Display inside the box */}
+                    {homographyAnchor === 'ground' ? (
+                      <div className="flex flex-col items-center">
+                        <span className="text-[10px] font-mono font-bold text-[#00d084] bg-black/90 border border-[#00d084]/40 px-2 py-0.5 rounded-full shadow-lg mb-1 whitespace-nowrap">
+                          Ground Contact (x_mid, y_max)
+                        </span>
+                        <div className="w-4 h-4 rounded-full bg-[#00d084] border-2 border-white shadow-[0_0_12px_#00d084] animate-pulse" />
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center">
+                        <div className="w-4 h-4 rounded-full bg-red-500 border-2 border-white shadow-[0_0_12px_rgba(239,68,68,0.8)] animate-bounce" />
+                        <span className="text-[10px] font-mono font-bold text-red-400 bg-black/90 border border-red-500/40 px-2 py-0.5 rounded-full shadow-lg mt-1 whitespace-nowrap">
+                          BBox Center: +4.8m Drift
                         </span>
                       </div>
                     )}
 
-                    {/* Calibrated Ground Point */}
-                    {homographyAnchor === 'ground' && (
-                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 flex flex-col items-center animate-pulse">
-                        <div className="w-4 h-4 rounded-full bg-[#00d084] border-2 border-white shadow-lg shadow-[#00d084]/50" />
-                        <span className="text-[10px] font-mono font-bold text-[#00d084] bg-black/90 px-1.5 py-0.5 rounded mt-1 whitespace-nowrap">
-                          Ground Contact (x_mid, y_max): &lt;0.1m
-                        </span>
-                      </div>
-                    )}
-
-                    <div className="text-[9px] font-mono text-gray-400 self-end">
-                      H · p_ground
+                    <div className="text-[9px] font-mono text-gray-400 text-center w-full">
+                      {homographyAnchor === 'ground' ? '✓ True Ground Coordinate' : '✗ Naive Perspective Error'}
                     </div>
                   </div>
 
-                  {/* Road Stop-Line Vector */}
-                  <div className="w-full mt-4 h-1.5 bg-red-500/80 rounded relative">
-                    <span className="absolute -top-4 right-2 text-[10px] font-mono text-red-400 font-bold">
-                      Stop Line 4 (Canonical View)
-                    </span>
+                  {/* Road Stop-Line Vector (With its label cleanly underneath) */}
+                  <div className="w-full mt-6">
+                    <div className="w-full h-2 bg-gradient-to-r from-red-600 via-rose-500 to-red-600 rounded-full shadow-[0_0_12px_rgba(239,68,68,0.6)]" />
+                    <div className="flex items-center justify-between text-[10px] font-mono mt-1.5 px-0.5">
+                      <span className="text-red-400 font-bold flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                        Stop Line 4 (CVAT Geometry)
+                      </span>
+                      <span className={homographyAnchor === 'ground' ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}>
+                        {homographyAnchor === 'ground' ? '✓ Correct: <0.1m Precision' : '⚠ False Alarm: +4.8m Overlap'}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
                 {/* Point Switcher Tabs */}
-                <div className="relative z-10 flex items-center justify-between bg-black/60 backdrop-blur-md p-1.5 rounded-xl border border-white/10 text-xs">
+                <div className="relative z-10 flex items-center justify-between bg-black/70 backdrop-blur-md p-1.5 rounded-xl border border-white/10 text-xs mt-2">
                   <button
                     onClick={() => setHomographyAnchor('ground')}
-                    className={`flex-1 py-1.5 rounded-lg font-mono font-bold text-center transition ${
+                    className={`flex-1 py-2 rounded-lg font-mono font-bold text-center transition cursor-pointer text-xs ${
                       homographyAnchor === 'ground'
-                        ? 'bg-[#00d084] text-black shadow'
+                        ? 'bg-[#00d084] text-black shadow-md'
                         : 'text-gray-400 hover:text-white'
                     }`}
                   >
@@ -362,9 +371,9 @@ export default function AcademicResearch() {
                   </button>
                   <button
                     onClick={() => setHomographyAnchor('naive')}
-                    className={`flex-1 py-1.5 rounded-lg font-mono font-bold text-center transition ${
+                    className={`flex-1 py-2 rounded-lg font-mono font-bold text-center transition cursor-pointer text-xs ${
                       homographyAnchor === 'naive'
-                        ? 'bg-red-500 text-white shadow'
+                        ? 'bg-red-500 text-white shadow-md'
                         : 'text-gray-400 hover:text-white'
                     }`}
                   >
