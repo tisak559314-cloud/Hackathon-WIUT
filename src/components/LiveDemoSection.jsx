@@ -1,143 +1,48 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Play,
   Pause,
   RotateCcw,
-  UploadCloud,
   Video,
-  AlertTriangle,
   ShieldAlert,
-  Activity,
-  Cpu,
   Maximize2,
   Volume2,
   VolumeX,
-  FileVideo,
 } from 'lucide-react';
 
+const benchmarkVideo = {
+  id: 'sample1',
+  title: 'Cam #01: Official C3905 Full Model Inference',
+  location: 'WestCV Intersection C3905 (1080p @ 25 FPS)',
+  src: '/ft.mp4',
+  badge: 'Official Elimination Demo',
+  badgeColor: 'text-[#00e5ff] bg-[#00e5ff]/10 border-[#00e5ff]/30',
+  description: 'Full end-to-end model pipeline inference on the official benchmark video C3905. Shows burned-in multi-class tracking, road geometry violations (stop-line, crosswalk), traffic signal states, and timeline.',
+  events: [
+    { time: 1.0, label: 'stopped_vehicle', track: 'White Car #08', conf: 0.98, desc: 'Stationary on carriageway > 10s outside signal queue', type: 'warning' },
+    { time: 6.0, label: 'jaywalking', track: 'Pedestrian #04', conf: 0.95, desc: 'Pedestrian stepped on carriageway outside crosswalk', type: 'danger' },
+    { time: 14.5, label: 'stop_line', track: 'White Sedan #22', conf: 0.97, desc: 'Vehicle stopped past stop line on red signal', type: 'danger' },
+    { time: 31.0, label: 'failure_to_yield', track: 'Minivan #09', conf: 0.92, desc: 'Vehicle passing through crosswalk with active pedestrian', type: 'critical' },
+    { time: 48.0, label: 'solid_line', track: 'Car #17', conf: 0.94, desc: 'Vehicle crossed continuous solid line before stop bar', type: 'warning' },
+    { time: 72.0, label: 'red_light', track: 'Taxi #31', conf: 0.99, desc: 'Breached stop-line and crossed intersection on RED signal', type: 'critical' },
+    { time: 85.0, label: 'congestion', track: 'Approach 1 Lanes', conf: 0.93, desc: 'Dense queue stationary > 20s across direction', type: 'warning' },
+  ],
+  getRisk: (t) => {
+    if (t < 25.0) return 0.20 + (t / 25.0) * 0.15;
+    if (t < 40.0) return 0.35 + ((t - 25.0) / 15.0) * 0.45;
+    if (t < 75.0) return 0.30 + ((t - 40.0) / 35.0) * 0.55;
+    return 0.35;
+  },
+};
+
 export default function LiveDemoSection() {
-  const [activeTab, setActiveTab] = useState('sample1'); // sample1, sample2, sample3, upload
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isMuted, setIsMuted] = useState(true);
-  const [showBoxes, setShowBoxes] = useState(true);
-  const [showTrails, setShowTrails] = useState(true);
-  const [showRiskOverlay, setShowRiskOverlay] = useState(true);
-
-  // Upload simulation state
-  const [uploadedVideoUrl, setUploadedVideoUrl] = useState(null);
-  const [uploadedFileName, setUploadedFileName] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [processingProgress, setProcessingProgress] = useState(0);
-  const [processingStage, setProcessingStage] = useState('');
-  const [uploadError, setUploadError] = useState('');
 
   const videoRef = useRef(null);
 
-  // Sample Videos Data (CCTV footage with pre-calculated ground-truth & model detection timelines)
-  const sampleVideos = {
-    sample1: {
-      id: 'sample1',
-      title: 'Cam #01: Official C3905 Full Model Inference',
-      location: 'WestCV Intersection C3905 (1080p @ 25 FPS)',
-      src: '/ft.mp4',
-      badge: 'Official Elimination Demo',
-      badgeColor: 'text-[#00e5ff] bg-[#00e5ff]/10 border-[#00e5ff]/30',
-      description: 'Full end-to-end model pipeline inference on the official benchmark video C3905. Shows burned-in multi-class tracking, road geometry violations (stop-line, crosswalk), traffic signal states, and timeline.',
-      isRealModelVideo: true,
-      events: [
-        { time: 1.0, label: 'stopped_vehicle', track: 'White Car #08', conf: 0.98, desc: 'Stationary on carriageway > 10s outside signal queue', type: 'warning' },
-        { time: 6.0, label: 'jaywalking', track: 'Pedestrian #04', conf: 0.95, desc: 'Pedestrian stepped on carriageway outside crosswalk', type: 'danger' },
-        { time: 14.5, label: 'stop_line', track: 'White Sedan #22', conf: 0.97, desc: 'Vehicle stopped past stop line on red signal', type: 'danger' },
-        { time: 31.0, label: 'failure_to_yield', track: 'Minivan #09', conf: 0.92, desc: 'Vehicle passing through crosswalk with active pedestrian', type: 'critical' },
-        { time: 48.0, label: 'solid_line', track: 'Car #17', conf: 0.94, desc: 'Vehicle crossed continuous solid line before stop bar', type: 'warning' },
-        { time: 72.0, label: 'red_light', track: 'Taxi #31', conf: 0.99, desc: 'Breached stop-line and crossed intersection on RED signal', type: 'critical' },
-        { time: 85.0, label: 'congestion', track: 'Approach 1 Lanes', conf: 0.93, desc: 'Dense queue stationary > 20s across direction', type: 'warning' },
-      ],
-      getRisk: (t) => {
-        if (t < 25.0) return 0.20 + (t / 25.0) * 0.15;
-        if (t < 40.0) return 0.35 + ((t - 25.0) / 15.0) * 0.45;
-        if (t < 75.0) return 0.30 + ((t - 40.0) / 35.0) * 0.55;
-        return 0.35;
-      },
-      boundingBoxes: null
-    },
-    sample2: {
-      id: 'sample2',
-      title: 'Cam #12: Arterial Solid Line & Near-Miss',
-      location: 'Ring Road Overpass (1080p @ 25 FPS)',
-      src: '/object-detection-demo.mp4',
-      badge: 'Multi-Object Tracking',
-      badgeColor: 'text-[#00e5ff] bg-[#00e5ff]/10 border-[#00e5ff]/30',
-      description: 'Continuous ByteTrack association across 14 dense lanes. Aggressive solid-line lane cut with sudden emergency braking.',
-      events: [
-        { time: 1.5, label: 'following_too_close', track: 'SUV #42', conf: 0.89, desc: 'Headway delta < 0.6s at 58 km/h', type: 'warning' },
-        { time: 3.8, label: 'solid_line', track: 'SUV #42', conf: 0.95, desc: 'Crossed continuous white marking into lane 1', type: 'danger' },
-        { time: 5.2, label: 'near_miss', track: 'SUV #42 x Van #19', conf: 0.93, desc: 'Emergency deceleration -6.8 m/s², TTC = 0.8s', type: 'critical' },
-        { time: 7.0, label: 'traffic_flow_restored', track: 'Sector A', conf: 0.97, desc: 'Gap restored, risk normalized', type: 'info' },
-      ],
-      getRisk: (t) => {
-        if (t < 2.5) return 0.12;
-        if (t < 5.5) return 0.12 + ((t - 2.5) / 3.0) * 0.65;
-        if (t < 7.0) return 0.77 - ((t - 5.5) / 1.5) * 0.45;
-        return 0.18;
-      },
-      boundingBoxes: [
-        { start: 0, end: 10, x: 42, y: 40, w: 22, h: 24, label: 'SUV #42', speed: '58 km/h', color: '#ffaa00' },
-        { start: 0, end: 10, x: 68, y: 50, w: 20, h: 22, label: 'Van #19', speed: '44 km/h', color: '#00e5ff' },
-      ]
-    },
-    sample3: {
-      id: 'sample3',
-      title: 'Cam #07: Pedestrian Jaywalking & Low Light',
-      location: 'Commercial Boulevard Night CCTV (1080p @ 25 FPS)',
-      src: '/predictive-safety-part1.mp4',
-      badge: 'Night Robustness',
-      badgeColor: 'text-[#9b51e0] bg-[#9b51e0]/10 border-[#9b51e0]/30',
-      description: 'Night conditions with glare. Pedestrian crosses outside crosswalk while minivan executes abrupt turn.',
-      events: [
-        { time: 1.8, label: 'low_illumination', track: 'Sensor Level', conf: 0.99, desc: 'Adaptive CLAHE gamma compensation active', type: 'info' },
-        { time: 4.2, label: 'jaywalking', track: 'Pedestrian #18', conf: 0.92, desc: 'Crossed 18m away from designated zebra crossing', type: 'danger' },
-        { time: 6.8, label: 'illegal_u_turn', track: 'Minivan #33', conf: 0.94, desc: 'U-turn across double barrier median', type: 'danger' },
-        { time: 8.5, label: 'near_miss', track: 'Minivan #33 x Ped #18', conf: 0.90, desc: 'Braking 1.8m before pedestrian contact point', type: 'critical' },
-      ],
-      getRisk: (t) => {
-        if (t < 3.0) return 0.18;
-        if (t < 7.0) return 0.18 + ((t - 3.0) / 4.0) * 0.52;
-        if (t < 9.0) return 0.70 + ((t - 7.0) / 2.0) * 0.22;
-        return 0.28;
-      },
-      boundingBoxes: [
-        { start: 1, end: 12, x: 38, y: 62, w: 12, h: 26, label: 'Pedestrian #18', speed: '4 km/h', color: '#ff3366' },
-        { start: 2, end: 12, x: 52, y: 38, w: 26, h: 28, label: 'Minivan #33', speed: '31 km/h', color: '#00e5ff' },
-      ]
-    },
-  };
-
-  const currentSample = activeTab === 'upload' && uploadedVideoUrl
-    ? {
-        id: 'uploaded',
-        title: uploadedFileName || 'Custom Uploaded Video',
-        location: 'Inference Session (Tesla T4 TensorRT FP16)',
-        src: uploadedVideoUrl,
-        badge: 'Custom Inference',
-        badgeColor: 'text-[#00e5ff] bg-[#00e5ff]/10 border-[#00e5ff]/30',
-        description: 'Edge model processed 1080p frames using YOLO26m (NMS-free) + ByteTrack with camera.md homography matrix.',
-        events: [
-          { time: 1.2, label: 'tracking_active', track: 'ByteTrack', conf: 0.98, desc: 'Kalman filtering established for 11 tracks', type: 'info' },
-          { time: 3.5, label: 'solid_line', track: 'Vehicle #07', conf: 0.92, desc: 'Boundary crossing detected', type: 'warning' },
-          { time: 6.2, label: 'near_miss', track: 'Vehicle #07 x Vehicle #03', conf: 0.89, desc: 'Sudden deceleration, TTC = 1.1s', type: 'danger' },
-        ],
-        getRisk: (t) => 0.2 + Math.sin(t * 0.8) * 0.35 + 0.15,
-        boundingBoxes: [
-          { start: 0, end: 30, x: 35, y: 45, w: 22, h: 24, label: 'Target #07', speed: '52 km/h', color: '#ffaa00' },
-          { start: 0, end: 30, x: 62, y: 55, w: 20, h: 20, label: 'Vehicle #03', speed: '46 km/h', color: '#00e5ff' },
-        ]
-      }
-    : sampleVideos[activeTab] || sampleVideos.sample1;
-
-  // Handle Video Time Update
   const handleTimeUpdate = () => {
     if (videoRef.current) {
       setCurrentTime(videoRef.current.currentTime);
@@ -178,73 +83,8 @@ export default function LiveDemoSection() {
     }
   };
 
-  // Video Upload Handler
-  const handleFileUpload = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Check size limit: 100MB
-    if (file.size > 100 * 1024 * 1024) {
-      setUploadError('File exceeds 100MB limit. Please upload a shorter clip (<60s).');
-      return;
-    }
-
-    setUploadError('');
-    setUploadedFileName(file.name);
-    setIsProcessing(true);
-    setProcessingProgress(0);
-
-    const objectUrl = URL.createObjectURL(file);
-
-    // Simulate multi-stage pipeline inference on Tesla T4
-    const stages = [
-      'Calibrating homography matrix from camera.md...',
-      'Running YOLO26m (NMS-free) + ByteTrack spatial association...',
-      'Evaluating 14 spatiotemporal event rules...',
-      'Synthesizing causal Risk Score R(t) curve (H=5.0s)...',
-      'Inference complete. Rendering overlay stream...'
-    ];
-
-    let currentProgress = 0;
-    let stageIdx = 0;
-    const interval = setInterval(() => {
-      currentProgress += 4;
-      if (currentProgress >= 100) {
-        clearInterval(interval);
-        setUploadedVideoUrl(objectUrl);
-        setIsProcessing(false);
-        setActiveTab('upload');
-        setTimeout(() => {
-          if (videoRef.current) {
-            videoRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
-          }
-        }, 300);
-      } else {
-        setProcessingProgress(currentProgress);
-        stageIdx = Math.min(stages.length - 1, Math.floor((currentProgress / 100) * stages.length));
-        setProcessingStage(stages[stageIdx]);
-      }
-    }, 90);
-  };
-
-  // Switch Sample
-  const handleTabChange = (tabKey) => {
-    setActiveTab(tabKey);
-    setCurrentTime(0);
-    setIsPlaying(false);
-    if (videoRef.current) {
-      videoRef.current.currentTime = 0;
-      videoRef.current.pause();
-    }
-  };
-
-  const currentRisk = currentSample.getRisk ? currentSample.getRisk(currentTime) : 0.2;
+  const currentRisk = benchmarkVideo.getRisk(currentTime);
   const isCriticalRisk = currentRisk >= 0.70;
-
-  // Active detected events at currentTime
-  const activeEvents = currentSample.events.filter(
-    (ev) => currentTime >= ev.time - 0.8 && currentTime <= ev.time + 2.5
-  );
 
   return (
     <section id="technology" className="py-24 bg-[#0c121e] relative border-t border-[#1f2d45]">
@@ -254,317 +94,174 @@ export default function LiveDemoSection() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Section Header */}
-        <div className="flex flex-col items-center text-center space-y-4 mb-14">
+        <div className="flex flex-col items-center text-center space-y-4 mb-12">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#182236]/90 border border-[#2a3a56] text-xs font-semibold uppercase tracking-widest text-[#00e5ff] shadow-lg">
             <Video className="w-4 h-4 text-[#00e5ff]" />
             Official Elimination Benchmark (50% Rubric Score)
           </div>
           <h2 className="text-3xl sm:text-5xl font-extrabold uppercase tracking-tight text-white">
-            LIVE CCTV DEMO &amp; TIMELINE INSPECTOR
+            OFFICIAL CCTV BENCHMARK DEMO
           </h2>
           <div className="w-16 h-1 bg-[#0693e3] rounded-full" />
           <p className="text-gray-300 text-sm sm:text-base max-w-3xl leading-relaxed">
-            Interactively explore our end-to-end edge pipeline on official WIUT benchmark traffic scenarios, or upload your own CCTV video. Features synchronized bounding boxes, ground-plane tracking, and causal 5.0-second accident anticipation curves.
+            Full end-to-end model pipeline inference on the official benchmark video C3905. Demonstrating multi-class tracking (YOLO26m + ByteTrack), road geometry boundary checks (stop-line, crosswalk), traffic signal states, and causal accident anticipation curves on Tesla T4.
           </p>
         </div>
 
-        {/* Top Control Bar: Tabs & Upload CTA */}
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-8 bg-[#121a2a] p-3 rounded-2xl border border-[#1f2d45]">
-          {/* Sample Selectors */}
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              onClick={() => handleTabChange('sample1')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${
-                activeTab === 'sample1'
-                  ? 'bg-[#0693e3] text-white shadow-lg shadow-[#0693e3]/30 border border-[#2ea3f2]/50'
-                  : 'bg-[#182236] text-gray-300 hover:text-white hover:bg-[#202d46] border border-transparent'
-              }`}
-            >
-              <span className="w-2 h-2 rounded-full bg-[#00e5ff] animate-pulse" />
-              Official Demo: C3905 Full Inference
-            </button>
+        {/* Main Video Viewport */}
+        <div className="w-full max-w-5xl mx-auto">
+          <div className="relative rounded-2xl overflow-hidden bg-black border border-[#1f2d45] shadow-2xl aspect-video group">
+            {/* HTML5 Video element */}
+            <video
+              ref={videoRef}
+              src={benchmarkVideo.src}
+              className="w-full h-full object-cover"
+              playsInline
+              muted={isMuted}
+              loop
+              onTimeUpdate={handleTimeUpdate}
+              onLoadedMetadata={handleLoadedMetadata}
+              onClick={togglePlay}
+            />
 
-            <button
-              onClick={() => handleTabChange('sample2')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${
-                activeTab === 'sample2'
-                  ? 'bg-[#0693e3] text-white shadow-lg shadow-[#0693e3]/30 border border-[#2ea3f2]/50'
-                  : 'bg-[#182236] text-gray-300 hover:text-white hover:bg-[#202d46] border border-transparent'
-              }`}
-            >
-              <span className="w-2 h-2 rounded-full bg-[#00e5ff]" />
-              Sample 2: Solid Line &amp; Near-Miss
-            </button>
+            {/* Live HUD Watermark / Calibration Badge */}
+            <div className="absolute top-4 left-4 z-20 flex flex-col gap-1 pointer-events-none">
+              <div className="flex items-center gap-2 bg-[#080c14]/80 backdrop-blur-md px-3 py-1 rounded-lg border border-white/10 text-xs font-mono">
+                <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
+                <span className="font-bold text-white">LIVE REC</span>
+                <span className="text-gray-400">|</span>
+                <span className="text-[#00e5ff] font-semibold">{benchmarkVideo.location}</span>
+              </div>
+              <div className="text-[10px] font-mono text-gray-400 bg-black/60 backdrop-blur px-2 py-0.5 rounded w-max">
+                HOMOGRAPHY: camera.md (ACTIVE)
+              </div>
+            </div>
 
-            <button
-              onClick={() => handleTabChange('sample3')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${
-                activeTab === 'sample3'
-                  ? 'bg-[#0693e3] text-white shadow-lg shadow-[#0693e3]/30 border border-[#2ea3f2]/50'
-                  : 'bg-[#182236] text-gray-300 hover:text-white hover:bg-[#202d46] border border-transparent'
-              }`}
-            >
-              <span className="w-2 h-2 rounded-full bg-[#9b51e0]" />
-              Sample 3: Jaywalking &amp; Night
-            </button>
-
-            {uploadedVideoUrl && (
-              <button
-                onClick={() => handleTabChange('upload')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${
-                  activeTab === 'upload'
-                    ? 'bg-[#00e5ff] text-[#080c14] shadow-lg shadow-[#00e5ff]/30 font-extrabold'
-                    : 'bg-[#182236] text-[#00e5ff] hover:bg-[#202d46]'
+            {/* Top-Right Risk Indicator Pill */}
+            <div className="absolute top-4 right-4 z-20 pointer-events-none">
+              <div
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border backdrop-blur-md transition-colors ${
+                  isCriticalRisk
+                    ? 'bg-red-500/30 border-red-500 text-red-200 animate-bounce'
+                    : 'bg-[#080c14]/80 border-[#1f2d45] text-gray-200'
                 }`}
               >
-                <FileVideo className="w-3.5 h-3.5" />
-                Custom: {uploadedFileName.slice(0, 14)}...
-              </button>
-            )}
-          </div>
-
-          {/* Upload Button with Hidden Input */}
-          <div className="relative">
-            <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider text-white bg-gradient-to-r from-[#00e5ff]/20 to-[#0693e3]/20 hover:from-[#00e5ff]/30 hover:to-[#0693e3]/30 border border-[#00e5ff]/40 transition shadow-md group">
-              <UploadCloud className="w-4 h-4 text-[#00e5ff] group-hover:scale-110 transition" />
-              <span>Upload Custom CCTV Video</span>
-              <input
-                type="file"
-                accept="video/mp4,video/avi,video/quicktime,video/mkv"
-                onChange={handleFileUpload}
-                className="hidden"
-              />
-            </label>
-          </div>
-        </div>
-
-
-        {/* Upload Processing State Modal / Overlay */}
-        {isProcessing && (
-          <div className="mb-6 p-6 rounded-2xl bg-[#121a2a] border border-[#00e5ff]/40 shadow-2xl animate-pulse">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <Cpu className="w-5 h-5 text-[#00e5ff] animate-spin" />
-                <span className="text-sm font-bold text-white uppercase tracking-wider">
-                  NVIDIA Tesla T4 Inference Running...
-                </span>
-              </div>
-              <span className="font-mono text-sm text-[#00e5ff] font-bold">{processingProgress}%</span>
-            </div>
-            <div className="w-full bg-[#182236] h-2 rounded-full overflow-hidden mb-3">
-              <div
-                className="bg-gradient-to-r from-[#00e5ff] to-[#0693e3] h-full transition-all duration-150"
-                style={{ width: `${processingProgress}%` }}
-              />
-            </div>
-            <div className="text-xs font-mono text-gray-300 flex items-center gap-2">
-              <Activity className="w-3.5 h-3.5 text-[#00e5ff]" />
-              {processingStage}
-            </div>
-          </div>
-        )}
-
-        {uploadError && (
-          <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/40 text-red-400 text-xs flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 shrink-0" />
-            <span>{uploadError}</span>
-          </div>
-        )}
-
-        {/* Main Video Viewport */}
-        <div className="w-full max-w-5xl mx-auto mb-8">
-          <div className="relative rounded-2xl overflow-hidden bg-black border border-[#1f2d45] shadow-2xl aspect-video group">
-              {/* HTML5 Video element */}
-              <video
-                ref={videoRef}
-                src={currentSample.src}
-                className="w-full h-full object-cover"
-                playsInline
-                muted={isMuted}
-                loop
-                onTimeUpdate={handleTimeUpdate}
-                onLoadedMetadata={handleLoadedMetadata}
-                onClick={togglePlay}
-              />
-
-              {/* Dynamic Bounding Box Overlay */}
-              {showBoxes && currentSample.boundingBoxes && (
-                <div className="absolute inset-0 pointer-events-none">
-                  {currentSample.boundingBoxes
-                    .filter((box) => currentTime >= box.start && currentTime <= box.end)
-                    .map((box, bIdx) => (
-                      <div
-                        key={bIdx}
-                        className="absolute border-2 transition-all duration-150 rounded"
-                        style={{
-                          left: `${box.x}%`,
-                          top: `${box.y}%`,
-                          width: `${box.w}%`,
-                          height: `${box.h}%`,
-                          borderColor: box.color,
-                          backgroundColor: `${box.color}15`,
-                          boxShadow: `0 0 12px ${box.color}40`,
-                        }}
-                      >
-                        <div
-                          className="absolute -top-6 left-0 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold text-black flex items-center gap-1.5 whitespace-nowrap shadow"
-                          style={{ backgroundColor: box.color }}
-                        >
-                          <span>{box.label}</span>
-                          <span className="opacity-90">{box.speed}</span>
-                        </div>
-                        {showTrails && (
-                          <div
-                            className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1.5 h-12 bg-gradient-to-t from-transparent to-current opacity-60"
-                            style={{ color: box.color }}
-                          />
-                        )}
-                      </div>
-                    ))}
-                </div>
-              )}
-
-              {/* Live HUD Watermark / Calibration Badge */}
-              <div className="absolute top-4 left-4 z-20 flex flex-col gap-1 pointer-events-none">
-                <div className="flex items-center gap-2 bg-[#080c14]/80 backdrop-blur-md px-3 py-1 rounded-lg border border-white/10 text-xs font-mono">
-                  <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
-                  <span className="font-bold text-white">LIVE REC</span>
-                  <span className="text-gray-400">|</span>
-                  <span className="text-[#00e5ff] font-semibold">{currentSample.location}</span>
-                </div>
-                <div className="text-[10px] font-mono text-gray-400 bg-black/60 backdrop-blur px-2 py-0.5 rounded w-max">
-                  HOMOGRAPHY: camera.md (ACTIVE)
-                </div>
-              </div>
-
-              {/* Top-Right Risk Indicator Pill */}
-              {showRiskOverlay && (
-                <div className="absolute top-4 right-4 z-20 pointer-events-none">
-                  <div
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border backdrop-blur-md transition-colors ${
-                      isCriticalRisk
-                        ? 'bg-red-500/30 border-red-500 text-red-200 animate-bounce'
-                        : 'bg-[#080c14]/80 border-[#1f2d45] text-gray-200'
+                <ShieldAlert
+                  className={`w-4 h-4 ${isCriticalRisk ? 'text-red-400' : 'text-[#00e5ff]'}`}
+                />
+                <div className="text-xs font-mono">
+                  <span className="font-bold uppercase">Risk R(t): </span>
+                  <span
+                    className={`font-extrabold ${
+                      isCriticalRisk ? 'text-red-300' : 'text-[#00e5ff]'
                     }`}
                   >
-                    <ShieldAlert
-                      className={`w-4 h-4 ${isCriticalRisk ? 'text-red-400' : 'text-[#00e5ff]'}`}
-                    />
-                    <div className="text-xs font-mono">
-                      <span className="font-bold uppercase">Risk R(t): </span>
-                      <span
-                        className={`font-extrabold ${
-                          isCriticalRisk ? 'text-red-300' : 'text-[#00e5ff]'
-                        }`}
-                      >
-                        {(currentRisk * 100).toFixed(0)}%
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Center "RESUME" Button Overlay on Pause */}
-              {!isPlaying && (
-                <div className="absolute inset-0 bg-black/45 backdrop-blur-[2px] flex flex-col items-center justify-center gap-3.5 z-20 transition-all duration-300">
-                  <button
-                    onClick={togglePlay}
-                    className="group inline-flex items-center gap-3 px-8 py-3.5 rounded-2xl bg-gradient-to-r from-[#00e5ff] to-[#0693e3] hover:from-[#00cce6] hover:to-[#0582ca] text-[#080c14] font-black text-sm uppercase tracking-wider shadow-2xl shadow-[#00e5ff]/40 hover:shadow-[#00e5ff]/60 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
-                    aria-label="Resume playback"
-                  >
-                    <div className="w-7 h-7 rounded-full bg-[#080c14] flex items-center justify-center text-[#00e5ff] group-hover:scale-110 transition-transform shadow">
-                      <Play className="w-3.5 h-3.5 fill-current translate-x-0.5" />
-                    </div>
-                    <span className="text-sm tracking-widest font-black text-[#080c14]">RESUME</span>
-                  </button>
-                  <p className="text-xs text-gray-300 font-mono tracking-wide px-3 py-1 rounded bg-black/70 border border-white/10 backdrop-blur-sm">
-                    Click &ldquo;Resume&rdquo; to start video playback
-                  </p>
-                </div>
-              )}
-
-              {/* Bottom Video Controls Overlay */}
-              <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-4 flex flex-col gap-2 z-20">
-                {/* Scrubbable Progress Bar */}
-                <div
-                  className="relative w-full h-2 bg-white/20 rounded-full cursor-pointer hover:h-3 transition-all"
-                  onClick={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    const pos = (e.clientX - rect.left) / rect.width;
-                    seekTo(pos * (duration || 1));
-                  }}
-                >
-                  <div
-                    className="absolute top-0 left-0 h-full bg-gradient-to-r from-[#00e5ff] to-[#0693e3] rounded-full"
-                    style={{ width: `${((currentTime / (duration || 1)) * 100).toFixed(2)}%` }}
-                  />
-                  {/* Event markers on seekbar */}
-                  {currentSample.events.map((ev, eIdx) => {
-                    const pct = duration ? (ev.time / duration) * 100 : 0;
-                    return (
-                      <div
-                        key={eIdx}
-                        className={`absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 border-black transform -translate-x-1/2 ${
-                          ev.type === 'danger' || ev.type === 'critical'
-                            ? 'bg-red-500'
-                            : 'bg-[#ffaa00]'
-                        }`}
-                        style={{ left: `${pct}%` }}
-                        title={`${ev.label} at ${ev.time}s`}
-                      />
-                    );
-                  })}
-                </div>
-
-                {/* Control Buttons & Timestamps */}
-                <div className="flex items-center justify-between text-xs text-white">
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={togglePlay}
-                      className="p-1 hover:text-[#00e5ff] transition"
-                      aria-label={isPlaying ? 'Pause' : 'Play'}
-                    >
-                      {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                    </button>
-                    <button
-                      onClick={restartVideo}
-                      className="p-1 hover:text-[#00e5ff] transition"
-                      aria-label="Restart"
-                    >
-                      <RotateCcw className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={() => setIsMuted(!isMuted)}
-                      className="p-1 hover:text-[#00e5ff] transition"
-                      aria-label={isMuted ? 'Unmute' : 'Mute'}
-                    >
-                      {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-                    </button>
-                    <span className="font-mono text-[11px] text-gray-300">
-                      {currentTime.toFixed(1)}s / {(duration || 0).toFixed(1)}s
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <span className="text-[11px] text-gray-400 font-mono hidden sm:inline">
-                      FPS: 25.0 | LATENCY: 28.4ms
-                    </span>
-                    <button
-                      onClick={() => {
-                        if (videoRef.current?.requestFullscreen) {
-                          videoRef.current.requestFullscreen();
-                        }
-                      }}
-                      className="p-1 hover:text-[#00e5ff] transition"
-                      aria-label="Fullscreen"
-                    >
-                      <Maximize2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
+                    {(currentRisk * 100).toFixed(0)}%
+                  </span>
                 </div>
               </div>
             </div>
 
+            {/* Center "RESUME" Button Overlay on Pause */}
+            {!isPlaying && (
+              <div className="absolute inset-0 bg-black/45 backdrop-blur-[2px] flex flex-col items-center justify-center gap-3.5 z-20 transition-all duration-300">
+                <button
+                  onClick={togglePlay}
+                  className="group inline-flex items-center gap-3 px-8 py-3.5 rounded-2xl bg-gradient-to-r from-[#00e5ff] to-[#0693e3] hover:from-[#00cce6] hover:to-[#0582ca] text-[#080c14] font-black text-sm uppercase tracking-wider shadow-2xl shadow-[#00e5ff]/40 hover:shadow-[#00e5ff]/60 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
+                  aria-label="Resume playback"
+                >
+                  <div className="w-7 h-7 rounded-full bg-[#080c14] flex items-center justify-center text-[#00e5ff] group-hover:scale-110 transition-transform shadow">
+                    <Play className="w-3.5 h-3.5 fill-current translate-x-0.5" />
+                  </div>
+                  <span className="text-sm tracking-widest font-black text-[#080c14]">RESUME</span>
+                </button>
+                <p className="text-xs text-gray-300 font-mono tracking-wide px-3 py-1 rounded bg-black/70 border border-white/10 backdrop-blur-sm">
+                  Click &ldquo;Resume&rdquo; to start video playback
+                </p>
+              </div>
+            )}
+
+            {/* Bottom Video Controls Overlay */}
+            <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-4 flex flex-col gap-2 z-20">
+              {/* Scrubbable Progress Bar */}
+              <div
+                className="relative w-full h-2 bg-white/20 rounded-full cursor-pointer hover:h-3 transition-all"
+                onClick={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const pos = (e.clientX - rect.left) / rect.width;
+                  seekTo(pos * (duration || 1));
+                }}
+              >
+                <div
+                  className="absolute top-0 left-0 h-full bg-gradient-to-r from-[#00e5ff] to-[#0693e3] rounded-full"
+                  style={{ width: `${((currentTime / (duration || 1)) * 100).toFixed(2)}%` }}
+                />
+                {/* Event markers on seekbar */}
+                {benchmarkVideo.events.map((ev, eIdx) => {
+                  const pct = duration ? (ev.time / duration) * 100 : 0;
+                  return (
+                    <div
+                      key={eIdx}
+                      className={`absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 border-black transform -translate-x-1/2 ${
+                        ev.type === 'danger' || ev.type === 'critical'
+                          ? 'bg-red-500'
+                          : 'bg-[#ffaa00]'
+                      }`}
+                      style={{ left: `${pct}%` }}
+                      title={`${ev.label} at ${ev.time}s`}
+                    />
+                  );
+                })}
+              </div>
+
+              {/* Control Buttons & Timestamps */}
+              <div className="flex items-center justify-between text-xs text-white">
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={togglePlay}
+                    className="p-1 hover:text-[#00e5ff] transition"
+                    aria-label={isPlaying ? 'Pause' : 'Play'}
+                  >
+                    {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                  </button>
+                  <button
+                    onClick={restartVideo}
+                    className="p-1 hover:text-[#00e5ff] transition"
+                    aria-label="Restart"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => setIsMuted(!isMuted)}
+                    className="p-1 hover:text-[#00e5ff] transition"
+                    aria-label={isMuted ? 'Unmute' : 'Mute'}
+                  >
+                    {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                  </button>
+                  <span className="font-mono text-[11px] text-gray-300">
+                    {currentTime.toFixed(1)}s / {(duration || 0).toFixed(1)}s
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <span className="text-[11px] text-gray-400 font-mono hidden sm:inline">
+                    FPS: 25.0 | LATENCY: 28.4ms
+                  </span>
+                  <button
+                    onClick={() => {
+                      if (videoRef.current?.requestFullscreen) {
+                        videoRef.current.requestFullscreen();
+                      }
+                    }}
+                    className="p-1 hover:text-[#00e5ff] transition"
+                    aria-label="Fullscreen"
+                  >
+                    <Maximize2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
