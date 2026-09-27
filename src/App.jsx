@@ -19,7 +19,7 @@ export default function App() {
 
       {/* Main Hackathon Elimination Showcase Layout */}
       <main className="flex-1 w-full overflow-hidden">
-        {/* Hero Section: Live CCTV stream, 14 classes, 25 FPS counter */}
+        {/* Hero Section: Live CCTV stream, 14 classes, 30 FPS counter */}
         <Hero />
 
         {/* Section 1: Problem Statement & Elimination Challenge Overview */}
