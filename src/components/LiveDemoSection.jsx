@@ -485,21 +485,21 @@ export default function LiveDemoSection() {
                 </div>
               )}
 
-              {/* Center "Продолжить" Button Overlay on Pause */}
+              {/* Center "RESUME" Button Overlay on Pause */}
               {!isPlaying && (
                 <div className="absolute inset-0 bg-black/45 backdrop-blur-[2px] flex flex-col items-center justify-center gap-3.5 z-20 transition-all duration-300">
                   <button
                     onClick={togglePlay}
                     className="group inline-flex items-center gap-3 px-8 py-3.5 rounded-2xl bg-gradient-to-r from-[#00e5ff] to-[#0693e3] hover:from-[#00cce6] hover:to-[#0582ca] text-[#080c14] font-black text-sm uppercase tracking-wider shadow-2xl shadow-[#00e5ff]/40 hover:shadow-[#00e5ff]/60 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
-                    aria-label="Продолжить"
+                    aria-label="Resume playback"
                   >
                     <div className="w-7 h-7 rounded-full bg-[#080c14] flex items-center justify-center text-[#00e5ff] group-hover:scale-110 transition-transform shadow">
                       <Play className="w-3.5 h-3.5 fill-current translate-x-0.5" />
                     </div>
-                    <span className="text-sm tracking-widest font-black text-[#080c14]">ПРОДОЛЖИТЬ</span>
+                    <span className="text-sm tracking-widest font-black text-[#080c14]">RESUME</span>
                   </button>
                   <p className="text-xs text-gray-300 font-mono tracking-wide px-3 py-1 rounded bg-black/70 border border-white/10 backdrop-blur-sm">
-                    Нажмите «Продолжить», чтобы начать воспроизведение видео
+                    Click &ldquo;Resume&rdquo; to start video playback
                   </p>
                 </div>
               )}

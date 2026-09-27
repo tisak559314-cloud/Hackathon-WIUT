@@ -92,7 +92,6 @@ export default function TeamSection() {
     {
       id: 'member-1',
       name: 'Azam Xodjimetov',
-      nameRu: 'Азам Ходжиметов',
       role: 'Team Lead & Technical Product Manager • Web Platform & Data Delivery',
       badge: 'TPM & AI Product Builder • Uzum Tech / Inha',
       photo: '/azam-khodzhimetov.jpg',
@@ -121,26 +120,26 @@ export default function TeamSection() {
       imageLeft: true, // 1st: Photo Left (25%), Info Right (75%)
       dossier: {
         title: 'Technical Project Manager • Web Platform & Data Delivery Lead',
-        location: 'Ташкент, Узбекистан',
-        summary: 'Technical Project Manager и Software & ML Engineer с 1.5+ годами практического опыта управления FinTech-продуктами в Uzum Tech (Uzum Business). Фундаментальная база Computer Science (Inha University, School 21 ML Track) с доказанным лидерством в создании сложных AI-решений, кросс-функциональном менеджменте и быстром прототипировании. Многократный победитель хакатонов (1-е место Kapitalbank & Uzum, 1-е место Кубок Ректора 2025), объединяющий инженерные команды (Backend, QA, DevOps) со стратегическими целями бизнеса.',
+        location: 'Tashkent, Uzbekistan',
+        summary: 'Technical Project Manager and Software & ML Engineer with 1.5+ years of hands-on FinTech product leadership at Uzum Tech (Uzum Business). Rigorous Computer Science foundation (Inha University, School 21 ML Track) with proven leadership in engineering complex AI solutions, cross-functional management, and rapid prototyping. Multiple hackathon champion (1st Place Kapitalbank & Uzum, 1st Place Rector\'s Cup 2025), aligning engineering teams (Backend, QA, DevOps) with strategic business objectives.',
         hackathonFocus: [
-          'Руководство проектом (Team Lead) и архитектура веб-платформы (25% оценки): создание интерактивного Live Demo плеера, Bento Grid EDA и инженерного отчета',
-          'Построение пайплайна разметки данных: совместная разметка 14 классов событий на видео в Label Studio и формирование эталонного dev_gt.json',
-          'Контроль критериев сдачи: воспроизводимость решения, изоляция зависимостей (Dockerfile, --network none), валидация бюджета времени на Tesla T4'
+          'Project Management (Team Lead) & Web Platform Architecture (25% score): engineered interactive Live Demo inspector, Bento Grid EDA, and official engineering report',
+          'Data Annotation Pipeline Leadership: co-annotated 14 traffic event classes on CCTV video in Label Studio and structured reference ground truth dev_gt.json',
+          'Submission Compliance & Quality Control: solution reproducibility, dependency isolation (Dockerfile, --network none), and runtime budget validation on Tesla T4'
         ],
         experience: [
           {
             company: 'Uzum Tech — Uzum Business',
             role: 'Project Manager',
-            period: '2025 — Настоящее время (1.5+ года)',
-            location: 'Ташкент, Узбекистан',
+            period: '2025 — Present (1.5+ yrs)',
+            location: 'Tashkent, Uzbekistan',
             badge: 'FinTech & B2B Ecosystem',
             highlights: [
-              'Руководство сквозной разработкой (End-to-End Delivery) ключевых сервисов интернет-банкинга и финансовых услуг для бизнеса.',
-              'Координация кросс-функциональных команд: backend, frontend, QA, продуктовые дизайнеры, системные аналитики.',
-              'Ускорение релизных циклов за счет перевода бизнес-логики в четкие технические требования, спринт-бэклоги Jira и критерии приемки.',
-              'Проведение ежедневных agile-церемоний (daily syncs, sprint planning, backlog grooming, post-mortems), устранение блокеров между командами.',
-              'Тесное взаимодействие с системными аналитиками и техлидами по требованиям к БД, API-контрактам и зависимостям интеграций.'
+              'Spearheaded end-to-end delivery of core internet banking and financial services for business clients.',
+              'Coordinated cross-functional teams: backend, frontend, QA, product designers, and system analysts.',
+              'Accelerated release velocity by translating business requirements into clear technical specifications, Jira sprint backlogs, and acceptance criteria.',
+              'Led daily agile ceremonies (daily syncs, sprint planning, backlog grooming, post-mortems) and unblocked cross-team dependencies.',
+              'Collaborated closely with system analysts and tech leads on database requirements, API contracts, and integration dependencies.'
             ]
           }
         ],
@@ -149,31 +148,31 @@ export default function TeamSection() {
             institution: 'Inha University in Tashkent (IUT)',
             degree: 'Bachelor of Science in Computer Science and Software Engineering (3rd Year)',
             specialization: 'Cumulative GPA: 4.1 / 4.5 • Data Structures & Algorithms, OOP, Discrete Math, OS',
-            period: '2024 — Настоящее время',
+            period: '2024 — Present',
           },
           {
             institution: 'School 21',
-            degree: 'Machine Learning Engineer Track (1+ год)',
-            specialization: 'Прикладной C/C++, алгоритмический problem-solving, Linux, основы ML',
-            period: '2025 — Настоящее время',
+            degree: 'Machine Learning Engineer Track (1+ yr)',
+            specialization: 'Applied C/C++, algorithmic problem-solving, Linux systems, foundational ML algorithms',
+            period: '2025 — Present',
           }
         ],
         achievements: [
           {
             title: '1st Place — Kapitalbank & Uzum Hackathon',
-            desc: 'Абсолютный победитель хакатона по разработке FinTech и AI решений.'
+            desc: 'Grand champion in FinTech and AI solution engineering.'
           },
           {
             title: '1st Place — Rector\'s Cup 2025 Hackathon',
-            desc: 'Победитель кубка ректора по разработке инновационных цифровых платформ.'
+            desc: 'Winner of Rector\'s Cup for innovative digital platforms.'
           },
           {
             title: '3rd Place — TheBuildX Hackathon',
-            desc: 'Призовое место в соревновании по продуктовой разработке и прототипированию.'
+            desc: 'Prize winner in product development and rapid prototyping.'
           },
           {
             title: 'Top 10% Finalist & Podium Finishes',
-            desc: 'Многократные призовые места на национальных и региональных AI-хакатонах (включая No Flame No Game AI Hackathon).'
+            desc: 'Multiple awards in national and regional AI hackathons (including No Flame No Game AI Hackathon).'
           }
         ],
         skillCategories: [
@@ -195,8 +194,8 @@ export default function TeamSection() {
           }
         ],
         languages: [
-          { name: 'Русский', level: 'Native / Bilingual' },
-          { name: 'O‘zbek', level: 'Native / Bilingual' },
+          { name: 'Russian', level: 'Native / Bilingual' },
+          { name: 'Uzbek', level: 'Native / Bilingual' },
           { name: 'English', level: 'Professional Working Proficiency' },
           { name: 'Chinese (中文)', level: 'B2 (Upper-Intermediate)' }
         ]
@@ -205,7 +204,6 @@ export default function TeamSection() {
     {
       id: 'member-2',
       name: 'Diyora Fatakhova',
-      nameRu: 'Диёра Фатахова',
       role: 'Data & Annotation Lead • UI/UX Co-Developer',
       badge: 'Data Operations & UI/UX • Inha / School 21',
       photo: '/teammate-2.jpg',
@@ -232,124 +230,123 @@ export default function TeamSection() {
       imageLeft: false, // 2nd: Info Left (75%), Photo Right (25%) - CHESSBOARD
       dossier: {
         title: 'Data & Annotation Lead • Business Systems Analyst • UI/UX Co-Developer',
-        location: 'Ташкент, Узбекистан',
-        summary: 'Студентка 3-го курса INHA University in Tashkent (School of Computer and Information Engineering) и School 21 (Business Systems Analytics). Сочетаю базовые навыки в IT (C++, SQL, Excel) со свободным владением тремя языками (RU, UZ, EN) и лидерским опытом: развиваю собственный English Speaking Club (100+ участников) в School 21, занимаюсь активной деятельностью в роли дизайнера и маркетолога в сообществе Women in Tech Uzbekistan. Регулярно участвую в хакатонах, лекциях и технологических проектах. Специализируюсь на бизнес-анализе, CustDev, координации кросс-функциональных команд и запуске инновационных продуктов с интеграцией AI-камер.',
+        location: 'Tashkent, Uzbekistan',
+        summary: '3rd-year student at INHA University in Tashkent (School of Computer and Information Engineering) and School 21 (Business Systems Analytics). Combines core technical skills (C++, SQL, Excel) with trilingual fluency (RU, UZ, EN) and proven leadership: founded the English Speaking Club (100+ participants) at School 21, active designer and marketer at Women in Tech Uzbekistan. Regularly participates in hackathons, workshops, and tech initiatives. Specializes in business analysis, CustDev, cross-functional team coordination, and deploying innovative AI-vision products.',
         hackathonFocus: [
-          'Управление процессом разметки данных: покадровая разметка 14 классов событий дорожного движения на 4K-сэмплах в Label Studio',
-          'Пространственная калибровка геометрии перекрестка: разметка полигонов полос, стоп-линий и пешеходных зон в labelme для scene.yaml',
-          'UI/UX и фронтенд-координация: совместное проектирование пользовательского опыта публичного сайта, адаптивная верстка и визуальная аналитика'
+          'Data Annotation Pipeline Lead: frame-by-frame annotation of 14 road traffic event classes across 4K CCTV samples in Label Studio',
+          'Intersection Spatial Geometry Calibration: annotated lane polygons, stop-lines, and pedestrian crosswalk zones in labelme for scene.yaml calibration',
+          'UI/UX & Frontend Co-Design: co-designed user experience, interactive controls, and visual clarity across the web presentation platform'
         ],
         experience: [
           {
             company: 'Talkaholics Anonymous',
-            role: 'Основатель и организатор',
-            period: 'Май 2025 — настоящее время',
-            location: 'Ташкент / School 21',
+            role: 'Founder & Community Lead',
+            period: 'May 2025 — Present',
+            location: 'Tashkent / School 21',
             badge: 'Community & Leadership',
             highlights: [
-              'Event-менеджмент: с нуля создала и координирую языковое сообщество, объединяющее 100+ участников; регулярно организую внутренние интерактивные мероприятия и встречи.',
-              'Внутренние коммуникации: веду Telegram-канал клуба, пишу вовлекающие анонсы для комьюнити, развиваю англоязычный чат; привлекла новых участников и удерживала их внимание через интерактивные форматы.'
+              'Event Management: built from scratch and coordinate a vibrant English conversational club with 100+ active members; regularly organize interactive workshops and debate meetups.',
+              'Internal Communications: manage the club\'s Telegram channel, author engaging community announcements, and drive English-first discussions; achieved high member retention through gamified formats.'
             ]
           },
           {
             company: 'Women in Tech Uzbekistan',
-            role: 'Маркетинг и графический дизайн',
-            period: 'Июнь 2025 — настоящее время',
-            location: 'Ташкент',
+            role: 'Marketing & Visual Designer',
+            period: 'June 2025 — Present',
+            location: 'Tashkent, Uzbekistan',
             badge: 'Community & Marketing',
             highlights: [
-              'Более года развиваю маркетинг и визуальные коммуникации сообщества Women in Tech Uzbekistan.',
-              'Координирую запуск специальных проектов и технологических инициатив в кросс-функциональной команде.',
-              'Создание айдентики, визуальных материалов и продвижение мероприятий сообщества.'
+              'Spearheaded marketing and visual design communications for Women in Tech Uzbekistan for over a year.',
+              'Coordinated cross-functional teams for special event launches and technical education initiatives.',
+              'Created visual identities, promotional assets, and marketing campaigns for community conferences.'
             ]
           },
           {
-            company: 'Проект «Zira» (Technovation Girls\'25)',
-            role: 'Координатор команды & Product Analyst',
-            period: 'Март — Май 2025',
-            location: 'Ташкент',
+            company: 'Project «Zira» (Technovation Girls\'25)',
+            role: 'Team Lead & Product Analyst',
+            period: 'March — May 2025',
+            location: 'Tashkent, Uzbekistan',
             badge: 'AI Camera Mobile App',
             highlights: [
-              'Разработка в команде концепции и MVP мобильного приложения для экстренных ситуаций с интеграцией AI-камеры.',
-              'CustDev и требования: провела интервью с пользователями, выявила ключевые боли в экстренных ситуациях и сформировала функциональные требования к MVP приложения с AI-камерой.',
-              'Координация команды: организовала работу кросс-функциональной команды, распределяла задачи, настраивала дедлайны и фасилитировала созвоны.'
+              'Co-developed product concept and MVP for an emergency mobile application integrated with AI camera vision.',
+              'Customer Development & Requirements: conducted user interviews, mapped pain points during emergency situations, and drafted PRD / functional specifications for the AI camera MVP.',
+              'Team Coordination: orchestrated sprint tasks for cross-functional peers, aligned deadlines, and facilitated progress standups.'
             ]
           },
           {
-            company: 'Платформа IMTS (INHA Mock Testing System)',
+            company: 'IMTS Platform (INHA Mock Testing System)',
             role: 'Product / Launch Manager',
-            period: 'Март — Апрель 2025',
-            location: 'Ташкент',
+            period: 'March — April 2025',
+            location: 'Tashkent, Uzbekistan',
             badge: 'Product Launch & Pitching',
             highlights: [
-              'Продуктовый запуск и питчинг: провела 2 масштабные презентации платформы (в Ziyo Forum и университете INHA), собрав суммарно 150+ участников (целевая аудитория — абитуриенты).',
-              'Продвижение и привлечение: успешно продвигала подкурсы через социальные сети и презентации, обеспечив стабильный поток целевой аудитории и повысив узнаваемость продукта.'
+              'Product Launch & Public Pitching: delivered two key platform presentations (at Ziyo Forum and INHA University) with 150+ attendees (target audience: prospective university applicants).',
+              'Growth & Acquisition: promoted preparatory courses via social channels and direct presentations, driving consistent target user acquisition and brand awareness.'
             ]
           }
         ],
         education: [
           {
             institution: 'School 21',
-            degree: 'Business Systems Analytics',
-            specialization: 'Бизнес и системный анализ, архитектура процессов',
-            period: '2025 — настоящее время',
+            degree: 'Business Systems Analytics Track',
+            specialization: 'Business & Systems Analysis, Process Architecture, Peer-to-Peer Engineering',
+            period: '2025 — Present',
           },
           {
             institution: 'INHA University in Tashkent (IUT)',
-            degree: 'Студентка 3-го курса, School of Computer and Information Engineering (SOCIE)',
+            degree: '3rd Year Undergraduate, School of Computer and Information Engineering (SOCIE)',
             specialization: 'Computer and Information Engineering',
-            period: '2024 — настоящее время',
+            period: '2024 — Present',
           },
           {
-            institution: 'ALUzSWLU (Академический лицей при УзГУМЯ)',
-            degree: 'Exact Sciences (Точные науки)',
-            specialization: 'Математика и информатика',
+            institution: 'ALUzSWLU (Academic Lyceum under UzSWLU)',
+            degree: 'Exact Sciences Diploma',
+            specialization: 'Advanced Mathematics & Computer Science',
             period: '2022 — 2024',
           }
         ],
         achievements: [
           {
-            title: 'Technovation Girls\'25 — Проект «Zira»',
-            desc: 'Разработка мобильного приложения для экстренных ситуаций с интеграцией AI-камеры и исследование болей пользователей.'
+            title: 'Technovation Girls\'25 — Project «Zira»',
+            desc: 'Developed emergency response mobile application integrating AI computer vision and user safety workflows.'
           },
           {
-            title: 'Основатель Talkaholics Anonymous (100+ участников)',
-            desc: 'Успешное создание и масштабирование англоязычного комьюнити в School 21.'
+            title: 'Founder — Talkaholics Anonymous (100+ Members)',
+            desc: 'Successfully launched and scaled an active peer English-speaking community at School 21.'
           },
           {
-            title: 'Product Launch Manager IMTS',
-            desc: 'Запуск и публичный питчинг системы тестирования INHA на 150+ участников.'
+            title: 'Product Launch Manager — IMTS',
+            desc: 'Spearheaded launch and public pitching of the INHA Mock Testing System to 150+ prospective students.'
           }
         ],
         skillCategories: [
           {
-            category: 'Бизнес-анализ & Продукт',
+            category: 'Business Analysis & Product',
             items: ['Business Systems Analysis', 'CustDev', 'Product Launch', 'Requirements Gathering', 'Event Management', 'Team Coordination']
           },
           {
-            category: 'Инструменты & Дизайн',
+            category: 'Design & Office Tools',
             items: ['Figma', 'Canva', 'Excel', 'PowerPoint', 'Google Docs', 'Notion']
           },
           {
-            category: 'Базовый IT-стек & AI',
+            category: 'Core IT Stack & AI',
             items: ['SQL', 'C++', 'Gemini', 'Notion AI', 'Data Analysis']
           },
           {
-            category: 'Менеджмент & Контент',
-            items: ['Создание визуала и текстов (EN/RU)', 'Организация ивентов', 'Ведение Telegram-каналов', 'Фасилитация созвонов']
+            category: 'Management & Content',
+            items: ['Visual & Copywriting (EN/RU)', 'Event Organization', 'Telegram Channel Ops', 'Meeting Facilitation']
           }
         ],
         languages: [
-          { name: 'Русский', level: 'Свободный (Native)' },
-          { name: 'English', level: 'Свободный (C1 / Founder Speaking Club)' },
-          { name: 'O‘zbek', level: 'Свободный (Native)' }
+          { name: 'Russian', level: 'Native / Bilingual' },
+          { name: 'English', level: 'Fluent (C1 / Speaking Club Founder)' },
+          { name: 'Uzbek', level: 'Native / Bilingual' }
         ]
       }
     },
     {
       id: 'member-3',
       name: 'Ashirov Asan',
-      nameRu: 'Аширов Асан',
       role: 'Chief ML & Computer Vision Architect • Systems Engineer',
       badge: 'Lead AI Vision & Systems Architect • Airi.uz / Inha',
       photo: '/teammate-3.jpg',
@@ -377,83 +374,83 @@ export default function TeamSection() {
       imageLeft: true, // 3rd: Photo Left (25%), Info Right (75%) - CHESSBOARD
       dossier: {
         title: 'Chief ML & Computer Vision Architect • Systems Engineer',
-        location: 'Ташкент, Узбекистан',
-        summary: 'Специализируюсь на прикладном машинном обучении, компьютерном зрении (CV), обработке естественного языка (NLP) и рекомендательных системах. Имею подтверждённый опыт разработки промышленных пайплайнов детекции объектов, ансамблевых моделей градиентного бустинга с высокой точностью (ROC-AUC > 0.93, lift 58x), интеграции моделей распознавания речи (STT/TTS) и создания автономных RAG-агентов. В рамках хакатона единолично спроектировал и реализовал весь алгоритмический бэкенд, детекцию, трекинг, геометрические правила для 14 классов и причинный модуль предсказания аварий Part B.',
+        location: 'Tashkent, Uzbekistan',
+        summary: 'Specializing in applied machine learning, computer vision (CV), natural language processing (NLP), and recommender systems. Proven track record building industrial object detection pipelines, high-precision gradient boosted ensembles (ROC-AUC > 0.93, lift 58x), speech synthesis/recognition (STT/TTS) integrations, and autonomous RAG agents. For the WIUT Hackathon, solely designed and implemented the entire core algorithmic backend: frame detection, multi-object tracking, geometric rules engine for all 14 Part A classes, and the causal Part B accident prediction module.',
         hackathonFocus: [
-          'Разработка всей технической архитектуры решения (Core ML/CV Backend): пайплайн solution.py, интеграция детектора YOLO26m/YOLOv8 и трекера ByteTrack',
-          'Программирование модулей правил для всех 14 классов Part A: математическая логика нарушений на базе гомографии camera.md (TTC, скорости, курсы, стоп-линии)',
-          'Создание причинного RiskEstimator для Part B: двухканальная шкала риска (ранжирование <=0.4999, тревога >=0.5 за 0.5-1.0с до удара) и оптимизация инференса под Tesla T4'
+          'End-to-End Core ML/CV Pipeline Architecture: designed solution.py, integrated YOLO26m/YOLOv8 detector and ByteTrack tracker (with fuse_score=False fix)',
+          'Mathematical Rule Engine for all 14 Part A Classes: implemented violation logic based on camera.md homography (TTC, metric velocity, heading angles, stop-lines)',
+          'Causal Part B RiskEstimator: dual-channel risk calibration (continuous <=0.4999 ranking vs >=0.5 alarm trigger 0.5-1.0s pre-collision) and Tesla T4 runtime optimization'
         ],
         experience: [
           {
-            company: 'Институт исследований цифровых технологий и искусственного интеллекта (airi.uz)',
-            role: 'ML-инженер',
-            period: 'Июль 2026 — настоящее время (3 мес.)',
-            location: 'Ташкент',
-            badge: 'Текущее место работы',
+            company: 'Institute of Digital Technologies and Artificial Intelligence (airi.uz)',
+            role: 'Machine Learning Engineer',
+            period: 'July 2026 — Present (3 mos)',
+            location: 'Tashkent, Uzbekistan',
+            badge: 'Current Employment',
             highlights: [
-              'Разработка и дообучение моделей распознавания и синтеза речи (STT/TTS) для узбекского языка.',
-              'Проектирование и внедрение архитектур RAG (Retrieval-Augmented Generation) для корпоративных баз знаний.',
-              'Исследование и внедрение мультимодальных AI VISION моделей для анализа визуальных данных.'
+              'Trained and fine-tuned speech recognition and synthesis models (STT/TTS) for the Uzbek language.',
+              'Architected and deployed enterprise RAG (Retrieval-Augmented Generation) systems for corporate knowledge bases.',
+              'Researched and integrated multimodal AI Vision models for complex visual scene analysis.'
             ]
           },
           {
             company: 'LINKTRADE',
             role: 'Data Scientist / ML Engineer',
-            period: 'Январь 2026 — Август 2026 (8 мес.)',
-            location: 'Ташкент',
+            period: 'January 2026 — August 2026 (8 mos)',
+            location: 'Tashkent, Uzbekistan',
             badge: 'Computer Vision & B2B ML',
             highlights: [
-              'Computer Vision: разработал систему распознавания и классификации товаров на полках магазинов для брендов AVON и Sardor Snacks с точностью детекции >95%, сократив ручную проверку на 70%.',
-              'B2B Прогнозирование заказов: создал ансамбль из 4 моделей LightGBM с walk-forward валидацией (ROC-AUC > 0.93, lift 58x), оптимизировав цепочку поставок и оборотный капитал.',
-              'Разработал интеллектуальных RAG-агентов (LangChain, LlamaIndex) для генерации бизнес-аналитики и автоматических отчётов.'
+              'Computer Vision: developed shelf product recognition and classification system for brands like AVON and Sardor Snacks with >95% detection accuracy, slashing manual verification by 70%.',
+              'B2B Order Forecasting: built 4-model LightGBM ensemble with walk-forward validation (ROC-AUC > 0.93, lift 58x), optimizing supply chain and working capital.',
+              'Engineered intelligent RAG agents (LangChain, LlamaIndex) for automated business intelligence and operational reporting.'
             ]
           },
           {
-            company: 'Яндекс Крауд',
-            role: 'Специалист по сбору и анализу данных',
-            period: 'Июнь 2025 — Декабрь 2025 (7 мес.)',
-            location: 'Ташкент / Удалённо',
+            company: 'Yandex Crowd',
+            role: 'Data Collection & Quality Assurance Specialist',
+            period: 'June 2025 — December 2025 (7 mos)',
+            location: 'Tashkent / Remote',
             badge: 'Data Ops & QA',
             highlights: [
-              'Сбор, структурирование и валидация геопространственных данных для сервисов Яндекс.Карты и Яндекс.Go.',
-              'Верификация и контроль качества обучающих выборок для моделей Computer Vision и NLP.',
-              'Автоматизация детекции аномалий в разметке и подготовка датасетов к обучению.'
+              'Curated, structured, and validated geospatial training datasets for Yandex Maps and Yandex Go.',
+              'Conducted quality control and label auditing for production Computer Vision and NLP datasets.',
+              'Automated annotation anomaly detection and training dataset pre-processing pipelines.'
             ]
           },
           {
             company: 'Syncall AI',
             role: 'Data Analyst',
-            period: 'Июль 2025 — Октябрь 2025 (4 мес.)',
-            location: 'Ташкент',
+            period: 'July 2025 — October 2025 (4 mos)',
+            location: 'Tashkent, Uzbekistan',
             badge: 'Voice AI Analytics',
             highlights: [
-              'Анализ качества и валидация моделей синтеза и распознавания речи (STT/TTS) в голосовых роботах.',
-              'Построение аналитических пайплайнов на Python для мониторинга конверсий диалоговых сценариев и проведения A/B тестов.'
+              'Analyzed performance and quality of speech synthesis and recognition models (STT/TTS) in conversational voice bots.',
+              'Built analytical Python data pipelines to monitor dialogue conversion rates and evaluate A/B test cohorts.'
             ]
           },
           {
             company: 'Neuro Pulse',
             role: 'Data Scientist / AI Engineer (Intern)',
-            period: 'Декабрь 2024 — Февраль 2025 (3 мес.)',
-            location: 'Ташкент',
+            period: 'December 2024 — February 2025 (3 mos)',
+            location: 'Tashkent, Uzbekistan',
             badge: 'Deep Learning R&D',
             highlights: [
-              'Исследование современных архитектур трансформеров и обучение baseline-моделей на PyTorch.',
-              'Инженерия признаков (Feature Engineering) и предварительная обработка табличных и текстовых данных.'
+              'Researched modern transformer architectures and trained deep learning baseline models in PyTorch.',
+              'Performed feature engineering and pre-processing across tabular, speech, and text modalities.'
             ]
           }
         ],
         education: [
           {
             institution: 'Inha University in Tashkent (IUT)',
-            degree: 'Бакалавр, Компьютерные науки и инженерия (CSE)',
+            degree: 'Bachelor of Science in Computer Science and Engineering (CSE)',
             specialization: 'Software Engineering & Data Science / ML',
             period: '2024 — 2028',
           },
           {
             institution: 'Qwasar Silicon Valley',
-            degree: 'Программа специализации Data Science & ML Engineering',
+            degree: 'Data Science & ML Engineering Specialization',
             specialization: 'Applied Deep Learning, Algorithms & Data Structures',
             period: '2023 — 2024',
           }
@@ -461,15 +458,15 @@ export default function TeamSection() {
         achievements: [
           {
             title: 'Yandex Contest (CMC) — Top 11',
-            desc: 'Высокий результат среди участников в соревновании по алгоритмам анализа данных и машинному обучению.'
+            desc: 'High percentile finish in competitive algorithmic data science and machine learning.'
           },
           {
-            title: 'Хакатоны CBU & IT-Park — Призёр',
-            desc: 'Призовые места в соревнованиях по прикладным ML/AI задачам и разработке data-driven продуктов.'
+            title: 'CBU & IT-Park Hackathons — Prize Winner',
+            desc: 'Multiple top placements in applied ML/AI engineering and data-driven product challenges.'
           },
           {
-            title: 'Kaggle Competitions Participant',
-            desc: 'Успешные решения в задачах табличного моделирования (Tabular Data) и классификации изображений.'
+            title: 'Kaggle Competitions Contributor',
+            desc: 'Top solutions in tabular feature engineering and image classification benchmarks.'
           }
         ],
         skillCategories: [
@@ -491,10 +488,10 @@ export default function TeamSection() {
           }
         ],
         languages: [
-          { name: 'Русский', level: 'Родной' },
+          { name: 'Russian', level: 'Native' },
           { name: 'English', level: 'B2 / Professional Working' },
-          { name: 'O‘zbek', level: 'C1 / Professional' },
-          { name: 'Қазақ', level: 'C1 / Professional' },
+          { name: 'Uzbek', level: 'C1 / Professional' },
+          { name: 'Kazakh', level: 'C1 / Professional' },
         ]
       }
     },
@@ -535,7 +532,7 @@ export default function TeamSection() {
                 className={`relative w-full h-full min-h-[380px] sm:min-h-[440px] rounded-3xl border border-[#1f2d45] hover:border-[#00e5ff]/50 overflow-hidden group col-span-1 shadow-2xl transition-all duration-300 bg-[#090f1a] flex flex-col justify-between p-5 cursor-pointer ${
                   isPhotoLeft ? 'order-1' : 'order-1 md:order-2'
                 }`}
-                title="Нажмите, чтобы открыть полное резюме сотрудника"
+                title="Click to view full dossier & resume"
               >
                 {/* Full-bleed Photo filling entire rectangle */}
                 <img
@@ -563,7 +560,7 @@ export default function TeamSection() {
                 <div className="relative z-10 flex justify-end">
                   <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#080c14]/90 backdrop-blur-md border border-[#00e5ff]/40 text-xs font-semibold text-[#00e5ff] shadow-xl">
                     <Sparkles className="w-3.5 h-3.5" />
-                    <span>Посмотреть досье</span>
+                    <span>View Dossier</span>
                   </div>
                 </div>
 
@@ -576,7 +573,7 @@ export default function TeamSection() {
                   </div>
 
                   <span className="text-xs font-mono text-gray-400 group-hover:text-[#00e5ff] transition">
-                    Резюме &rarr;
+                    Dossier &rarr;
                   </span>
                 </div>
               </div>
@@ -588,7 +585,7 @@ export default function TeamSection() {
                 className={`w-full flex flex-col justify-between p-6 sm:p-8 bg-[#121a2a] rounded-3xl border border-[#1f2d45] hover:border-[#00e5ff]/50 transition-all shadow-xl group col-span-1 md:col-span-3 cursor-pointer ${
                   isPhotoLeft ? 'order-2' : 'order-2 md:order-1'
                 }`}
-                title="Нажмите, чтобы открыть полное резюме сотрудника"
+                title="Click to view full dossier & resume"
               >
                 <div>
                   {/* Top Bar: Role badge & Social Links */}
@@ -682,11 +679,6 @@ export default function TeamSection() {
                     <h3 className="text-2xl sm:text-3xl font-extrabold text-white group-hover:text-[#00e5ff] transition">
                       {member.name}
                     </h3>
-                    {member.nameRu && member.nameRu !== member.name && (
-                      <span className="text-base font-medium text-gray-400">
-                        ({member.nameRu})
-                      </span>
-                    )}
                   </div>
                   <div className="text-sm font-medium text-gray-400 mb-4">
                     {member.role}
@@ -736,7 +728,7 @@ export default function TeamSection() {
                         className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#0693e3]/20 to-[#00e5ff]/20 hover:from-[#0693e3]/40 hover:to-[#00e5ff]/40 text-[#00e5ff] hover:text-white font-semibold text-xs border border-[#00e5ff]/30 hover:border-[#00e5ff] transition-all shadow-lg hover:shadow-[#00e5ff]/20 group/btn"
                       >
                         <FileText className="w-4 h-4 text-[#00e5ff] group-hover/btn:scale-110 transition-transform" />
-                        <span>Подробнее / Полное резюме</span>
+                        <span>View Full Dossier</span>
                         <ArrowUpRight className="w-3.5 h-3.5 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform" />
                       </button>
                     </div>
@@ -774,7 +766,7 @@ export default function TeamSection() {
 
             <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
               <a
-                href="https://github.com/antigradient/traffic-cv-2026"
+                href="https://github.com/tisak559314-cloud/Hackathon-WIUT"
                 target="_blank"
                 rel="noreferrer"
                 className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#0693e3] hover:bg-[#0582ca] text-white font-bold text-xs uppercase tracking-wider transition shadow-lg shadow-[#0693e3]/20"
@@ -785,7 +777,7 @@ export default function TeamSection() {
               </a>
 
               <a
-                href="https://github.com/antigradient/traffic-cv-2026/releases/download/v1.0/weights.zip"
+                href="https://github.com/tisak559314-cloud/Hackathon-WIUT/releases"
                 target="_blank"
                 rel="noreferrer"
                 className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#182236] hover:bg-[#202e47] text-white font-bold text-xs uppercase tracking-wider border border-[#2a3a56] transition"
@@ -795,7 +787,7 @@ export default function TeamSection() {
               </a>
 
               <a
-                href="https://github.com/antigradient/traffic-cv-2026/blob/main/predictions_samples.json"
+                href="https://github.com/tisak559314-cloud/Hackathon-WIUT/blob/main/predictions_samples.json"
                 target="_blank"
                 rel="noreferrer"
                 className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#182236] hover:bg-[#202e47] text-white font-bold text-xs uppercase tracking-wider border border-[#2a3a56] transition"
@@ -809,7 +801,7 @@ export default function TeamSection() {
       </div>
 
       {/* ========================================================================= */}
-      {/* POP-UP MODAL: ПОЛНОЕ РЕЗЮМЕ И ДОСЬЕ СОТРУДНИКА                            */}
+      {/* POP-UP MODAL: FULL CANDIDATE DOSSIER & RESUME                             */}
       {/* ========================================================================= */}
       {selectedMember && selectedMember.dossier && (
         <div
@@ -824,8 +816,8 @@ export default function TeamSection() {
             <button
               onClick={() => setSelectedMember(null)}
               className="sticky top-4 right-4 float-right z-30 p-2 sm:p-2.5 rounded-full bg-[#080c14]/90 text-gray-300 hover:text-white hover:bg-[#1f2d45] border border-[#1f2d45] shadow-xl backdrop-blur-md transition-all mr-4 mt-4 -mb-12"
-              title="Закрыть (Esc)"
-              aria-label="Закрыть"
+              title="Close (Esc)"
+              aria-label="Close"
             >
               <X className="w-5 h-5" />
             </button>
@@ -850,13 +842,8 @@ export default function TeamSection() {
                     <span>{selectedMember.badge}</span>
                   </div>
 
-                  <h3 className="text-2xl sm:text-3xl font-extrabold text-white flex flex-wrap items-center gap-2">
+                  <h3 className="text-2xl sm:text-3xl font-extrabold text-white">
                     <span>{selectedMember.name}</span>
-                    {selectedMember.nameRu && selectedMember.nameRu !== selectedMember.name && (
-                      <span className="text-gray-400 text-lg font-normal">
-                        ({selectedMember.nameRu})
-                      </span>
-                    )}
                   </h3>
 
                   <p className="text-sm font-medium text-gray-300">
@@ -921,7 +908,7 @@ export default function TeamSection() {
                     className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-[#182236] hover:bg-[#202e47] border border-[#2a3a56] text-gray-200 text-xs font-semibold transition"
                   >
                     <Phone className="w-3.5 h-3.5 text-[#00d084]" />
-                    <span>Позвонить</span>
+                    <span>Call</span>
                   </a>
                 )}
 
@@ -981,11 +968,11 @@ export default function TeamSection() {
 
             {/* Modal Body */}
             <div className="p-6 sm:p-8 space-y-8 text-gray-300">
-              {/* 1. Summary / О специалисте */}
+              {/* 1. Summary / Executive Summary */}
               <div className="p-5 rounded-2xl bg-[#121a2a]/70 border border-[#1f2d45]">
                 <h4 className="text-xs font-mono uppercase tracking-widest text-[#00e5ff] font-bold mb-2 flex items-center gap-2">
                   <FileText className="w-4 h-4" />
-                  О специалисте (Executive Summary)
+                  Executive Summary
                 </h4>
                 <p className="text-sm text-gray-200 leading-relaxed">
                   {selectedMember.dossier.summary}
@@ -997,7 +984,7 @@ export default function TeamSection() {
                 <div className="space-y-3">
                   <h4 className="text-xs font-mono uppercase tracking-widest text-[#00e5ff] font-bold flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-[#00e5ff]" />
-                    Ключевые задачи и вклад в решение Хакатона WIUT 2026:
+                    Key Hackathon Deliverables &amp; Impact (WIUT 2026):
                   </h4>
                   <div className="grid grid-cols-1 gap-2.5">
                     {selectedMember.dossier.hackathonFocus.map((focus, fIdx) => (
@@ -1013,12 +1000,12 @@ export default function TeamSection() {
                 </div>
               )}
 
-              {/* 3. Work Experience / Опыт работы */}
+              {/* 3. Work Experience */}
               {selectedMember.dossier.experience && selectedMember.dossier.experience.length > 0 && (
                 <div className="space-y-4">
                   <h4 className="text-xs font-mono uppercase tracking-widest text-[#00e5ff] font-bold flex items-center gap-2">
                     <Briefcase className="w-4 h-4 text-[#00e5ff]" />
-                    Опыт работы (Work Experience):
+                    Work Experience &amp; Leadership:
                   </h4>
 
                   <div className="space-y-4 relative before:absolute before:left-3 before:top-3 before:bottom-3 before:w-0.5 before:bg-[#1f2d45]">
@@ -1075,7 +1062,7 @@ export default function TeamSection() {
                   <div className="space-y-3">
                     <h4 className="text-xs font-mono uppercase tracking-widest text-[#00e5ff] font-bold flex items-center gap-2">
                       <GraduationCap className="w-4 h-4 text-[#00e5ff]" />
-                      Образование (Education):
+                      Education &amp; Academic Background:
                     </h4>
                     <div className="space-y-3">
                       {selectedMember.dossier.education.map((edu, edIdx) => (
@@ -1105,7 +1092,7 @@ export default function TeamSection() {
                   <div className="space-y-3">
                     <h4 className="text-xs font-mono uppercase tracking-widest text-[#00e5ff] font-bold flex items-center gap-2">
                       <Trophy className="w-4 h-4 text-[#00d084]" />
-                      Достижения & Соревнования:
+                      Honors, Hackathons &amp; Competitions:
                     </h4>
                     <div className="space-y-3">
                       {selectedMember.dossier.achievements.map((ach, acIdx) => (
@@ -1129,7 +1116,7 @@ export default function TeamSection() {
                 <div className="space-y-3">
                   <h4 className="text-xs font-mono uppercase tracking-widest text-[#00e5ff] font-bold flex items-center gap-2">
                     <Code className="w-4 h-4 text-[#00e5ff]" />
-                    Стек технологий & Навыки (Skills & Technologies):
+                    Technical Skills &amp; Stack:
                   </h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {selectedMember.dossier.skillCategories.map((cat, cIdx) => (
@@ -1158,7 +1145,7 @@ export default function TeamSection() {
                 <div className="space-y-3">
                   <h4 className="text-xs font-mono uppercase tracking-widest text-[#00e5ff] font-bold flex items-center gap-2">
                     <Languages className="w-4 h-4 text-[#00e5ff]" />
-                    Владение языками:
+                    Spoken Languages:
                   </h4>
                   <div className="flex flex-wrap gap-3">
                     {selectedMember.dossier.languages.map((lang, lIdx) => (
@@ -1190,14 +1177,14 @@ export default function TeamSection() {
                     className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-[#0088cc] hover:bg-[#0077b5] text-white font-bold text-xs uppercase tracking-wider transition shadow-lg"
                   >
                     <Send className="w-3.5 h-3.5" />
-                    <span>Написать в Telegram</span>
+                    <span>Message on Telegram</span>
                   </a>
                 )}
                 <button
                   onClick={() => setSelectedMember(null)}
                   className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-[#182236] hover:bg-[#202e47] text-gray-300 font-bold text-xs uppercase tracking-wider border border-[#2a3a56] transition"
                 >
-                  Закрыть
+                  Close
                 </button>
               </div>
             </div>
