@@ -93,16 +93,16 @@ export default function TeamSection() {
       id: 'member-1',
       name: 'Azam Xodjimetov',
       nameRu: 'Азам Ходжиметов',
-      role: 'Team Lead & Technical Project Manager • AI Solutions',
+      role: 'Team Lead & Technical Product Manager • Web Platform & Data Delivery',
       badge: 'TPM & AI Product Builder • Uzum Tech / Inha',
       photo: '/azam-khodzhimetov.jpg',
       objectPosition: 'center 26%',
       initials: 'AX',
-      bio: 'Results-driven Technical Project Manager and Software & ML Engineer with 1.5+ years FinTech product leadership at Uzum Tech (Uzum Business). Rigorous CS foundation at Inha University (GPA 4.1/4.5) and School 21 (ML Track). Multiple hackathon champion (1st Place Kapitalbank & Uzum, Rector\'s Cup 2025) bridging engineering, business analysis, and applied AI.',
+      bio: 'Results-driven Technical Project Manager and Software & ML Engineer with 1.5+ years FinTech product leadership at Uzum Tech (Uzum Business). Rigorous CS foundation at Inha University (GPA 4.1/4.5) and School 21 (ML Track). Multiple hackathon champion (1st Place Kapitalbank & Uzum, Rector\'s Cup 2025). Co-engineered the full public presentation web platform (25% of score) and orchestrated dataset annotation for the 14 traffic event classes.',
       contributions: [
-        'Team Lead & technical delivery orchestration: end-to-end alignment of perception pipeline with hackathon evaluation benchmarks',
-        'System requirements translation, acceptance criteria validation & submission container optimization (Tesla T4, <5 GB)',
-        'Cross-functional coordination, presentation platform architecture & deterministic reproducible pipeline execution',
+        'End-to-End Web Platform Architecture: engineered interactive 25% scoring web portal with live CCTV inspector, clickable timeline & Bento Grid EDA',
+        'Data Pipeline & Annotation: co-annotated 14 spatiotemporal event classes in Label Studio and verified ground truth calibration',
+        'Project Management & Submission Packaging: sprint planning, Dockerfile isolation, zero-network compliance and time budget scheduling',
       ],
       proudProjects: [
         'Uzum Business FinTech Product Initiatives (1.5+ yrs)',
@@ -120,13 +120,13 @@ export default function TeamSection() {
       },
       imageLeft: true, // 1st: Photo Left (25%), Info Right (75%)
       dossier: {
-        title: 'Technical Project Manager • AI & Software Solutions • AI Product Builder',
+        title: 'Technical Project Manager • Web Platform & Data Delivery Lead',
         location: 'Ташкент, Узбекистан',
         summary: 'Technical Project Manager и Software & ML Engineer с 1.5+ годами практического опыта управления FinTech-продуктами в Uzum Tech (Uzum Business). Фундаментальная база Computer Science (Inha University, School 21 ML Track) с доказанным лидерством в создании сложных AI-решений, кросс-функциональном менеджменте и быстром прототипировании. Многократный победитель хакатонов (1-е место Kapitalbank & Uzum, 1-е место Кубок Ректора 2025), объединяющий инженерные команды (Backend, QA, DevOps) со стратегическими целями бизнеса.',
         hackathonFocus: [
-          'Руководство инженерной командой (Team Lead), сквозная синхронизация модулей детекции, трекинга и оценки рисков аварий',
-          'Трансляция регламента хакатона (Requirements 1–7) в спринты разработки, управление рисками и критериями приемки',
-          'Контроль ограничений бенчмарка: пропускная способность NVIDIA Tesla T4 (25+ FPS), лимит веса до 5 ГБ и детерминированная воспроизводимость'
+          'Руководство проектом (Team Lead) и архитектура веб-платформы (25% оценки): создание интерактивного Live Demo плеера, Bento Grid EDA и инженерного отчета',
+          'Построение пайплайна разметки данных: совместная разметка 14 классов событий на видео в Label Studio и формирование эталонного dev_gt.json',
+          'Контроль критериев сдачи: воспроизводимость решения, изоляция зависимостей (Dockerfile, --network none), валидация бюджета времени на Tesla T4'
         ],
         experience: [
           {
@@ -206,16 +206,16 @@ export default function TeamSection() {
       id: 'member-2',
       name: 'Diyora Fatakhova',
       nameRu: 'Диёра Фатахова',
-      role: 'Business Systems Analyst & AI Product Lead',
-      badge: 'Business Systems & AI Product • Inha / School 21',
+      role: 'Data & Annotation Lead • UI/UX Co-Developer',
+      badge: 'Data Operations & UI/UX • Inha / School 21',
       photo: '/teammate-2.jpg',
       objectPosition: '48% 22%',
       initials: 'DF',
-      bio: '3rd year student at INHA University in Tashkent (School of Computer & Information Engineering) and School 21 (Business Systems Analytics). Combines core IT skills (C++, SQL, business analysis) with fluent trilingual leadership (RU, EN, UZ). Founder of Talkaholics Anonymous (100+ members) and marketing & visual design coordinator at Women in Tech Uzbekistan.',
+      bio: '3rd year student at INHA University in Tashkent (School of Computer & Information Engineering) and School 21 (Business Systems Analytics). Founder of Talkaholics Anonymous (100+ members) and marketing & visual design coordinator at Women in Tech Uzbekistan. Led the end-to-end video data annotation pipeline across 14 event classes, calibrated scene road geometry polygons in labelme, and co-designed the interactive user experience of the presentation web platform.',
       contributions: [
-        'Analysis & structuring of hackathon system requirements (Requirements 1–7) and evaluation criteria compliance',
-        'Emergency AI-camera application scenario formulation, user requirement specifications, and incident validation',
-        'Product positioning, cross-functional coordination, presentation pitch materials, and UI/UX demo platform',
+        'Data Annotation Pipeline Lead: comprehensive frame-by-frame labeling of 14 spatiotemporal event classes across multi-camera 4K CCTV samples in Label Studio',
+        'Spatial Road Geometry: polygon annotation of stop-lines, lane dividers, pedestrian crosswalks and traffic signal ROIs for scene.yaml',
+        'Web Platform UI/UX & Quality: co-designed visual presentation, dossier modals, responsive mobile layouts and structured product requirements',
       ],
       proudProjects: [
         'Technovation Girls\'25 «Zira» (Emergency AI-Camera App)',
@@ -231,13 +231,13 @@ export default function TeamSection() {
       },
       imageLeft: false, // 2nd: Info Left (75%), Photo Right (25%) - CHESSBOARD
       dossier: {
-        title: 'Business Systems Analyst • Product & Launch Manager',
+        title: 'Data & Annotation Lead • Business Systems Analyst • UI/UX Co-Developer',
         location: 'Ташкент, Узбекистан',
         summary: 'Студентка 3-го курса INHA University in Tashkent (School of Computer and Information Engineering) и School 21 (Business Systems Analytics). Сочетаю базовые навыки в IT (C++, SQL, Excel) со свободным владением тремя языками (RU, UZ, EN) и лидерским опытом: развиваю собственный English Speaking Club (100+ участников) в School 21, занимаюсь активной деятельностью в роли дизайнера и маркетолога в сообществе Women in Tech Uzbekistan. Регулярно участвую в хакатонах, лекциях и технологических проектах. Специализируюсь на бизнес-анализе, CustDev, координации кросс-функциональных команд и запуске инновационных продуктов с интеграцией AI-камер.',
         hackathonFocus: [
-          'Анализ и структурирование системных требований хакатона (Requirements 1–7) и контроль соответствия регламенту сдачи',
-          'Разработка сценариев применения AI-камер, выявление пользовательских кейсов и функциональных требований к детектированию инцидентов',
-          'Координация кросс-функциональной работы команды, подготовка технического отчета и финального продуктового питча'
+          'Управление процессом разметки данных: покадровая разметка 14 классов событий дорожного движения на 4K-сэмплах в Label Studio',
+          'Пространственная калибровка геометрии перекрестка: разметка полигонов полос, стоп-линий и пешеходных зон в labelme для scene.yaml',
+          'UI/UX и фронтенд-координация: совместное проектирование пользовательского опыта публичного сайта, адаптивная верстка и визуальная аналитика'
         ],
         experience: [
           {
@@ -350,16 +350,16 @@ export default function TeamSection() {
       id: 'member-3',
       name: 'Ashirov Asan',
       nameRu: 'Аширов Асан',
-      role: 'ML Engineer & Computer Vision Architect',
-      badge: 'AI Vision & Deep Learning • Airi.uz / Inha',
+      role: 'Chief ML & Computer Vision Architect • Systems Engineer',
+      badge: 'Lead AI Vision & Systems Architect • Airi.uz / Inha',
       photo: '/teammate-3.jpg',
       objectPosition: '53% 20%',
       initials: 'AA',
-      bio: 'Machine Learning & Computer Vision engineer with proven experience building industrial CV object detection systems, 4-LGBM order forecasting ensembles, STT/TTS speech models, and RAG architectures. Top 11 in Yandex Contest (CMC) and active Kaggle/Hackathon participant.',
+      bio: 'Machine Learning & Computer Vision engineer with proven experience building industrial CV object detection systems, 4-LGBM order forecasting ensembles, STT/TTS speech models, and RAG architectures. Top 11 in Yandex Contest (CMC). Sole architect and developer of the entire core technical ML/CV backend, object perception, kinematics rules engine for 14 classes, and Part B Causal Risk Estimator.',
       contributions: [
-        'Part B Causal Risk Estimator & TTC kinematic risk forecasting interface',
-        'YOLOv8 & RT-DETR detection adaptation and post-processing pipeline',
-        'Validation harness, ensemble evaluation, and submission packaging',
+        'Complete Core ML/CV Pipeline: designed solution.py, YOLO26m/YOLOv8 vehicle & pedestrian detection and ByteTrack tracking (fuse_score=False fix)',
+        'Rules Engine for 14 Classes: engineered kinematic and geometric rules on top of camera.md homography (speed in km/h, heading, stop-lines, solid lines, congestion)',
+        'Part B Causal Risk Estimator: developed online step() causal anticipation model with two-channel score (<=0.4999 ranking vs >=0.5 alarm) and TTC collision detection',
       ],
       proudProjects: [
         'Yandex Contest (CMC) — Top 11 ranking',
@@ -376,13 +376,13 @@ export default function TeamSection() {
       },
       imageLeft: true, // 3rd: Photo Left (25%), Info Right (75%) - CHESSBOARD
       dossier: {
-        title: 'Data Scientist • Machine Learning Engineer • AI Engineer',
+        title: 'Chief ML & Computer Vision Architect • Systems Engineer',
         location: 'Ташкент, Узбекистан',
-        summary: 'Специализируюсь на прикладном машинном обучении, компьютерном зрении (CV), обработке естественного языка (NLP) и рекомендательных системах. Имею подтверждённый опыт разработки промышленных пайплайнов детекции объектов, ансамблевых моделей градиентного бустинга с высокой точностью (ROC-AUC > 0.93, lift 58x), интеграции моделей распознавания речи (STT/TTS) и создания автономных RAG-агентов.',
+        summary: 'Специализируюсь на прикладном машинном обучении, компьютерном зрении (CV), обработке естественного языка (NLP) и рекомендательных системах. Имею подтверждённый опыт разработки промышленных пайплайнов детекции объектов, ансамблевых моделей градиентного бустинга с высокой точностью (ROC-AUC > 0.93, lift 58x), интеграции моделей распознавания речи (STT/TTS) и создания автономных RAG-агентов. В рамках хакатона единолично спроектировал и реализовал весь алгоритмический бэкенд, детекцию, трекинг, геометрические правила для 14 классов и причинный модуль предсказания аварий Part B.',
         hackathonFocus: [
-          'Архитектура причинного прогнозирования рисков аварий (Part B Causal Risk Estimator) со строгим соблюдением нулевого заглядывания в будущее',
-          'Оценка кинематических аномалий и расчет метрик Time-to-Collision (TTC) на 5-секундном горизонте',
-          'Интеграция предсказаний компьютерного зрения и валидация скрипта оценки метрик AP'
+          'Разработка всей технической архитектуры решения (Core ML/CV Backend): пайплайн solution.py, интеграция детектора YOLO26m/YOLOv8 и трекера ByteTrack',
+          'Программирование модулей правил для всех 14 классов Part A: математическая логика нарушений на базе гомографии camera.md (TTC, скорости, курсы, стоп-линии)',
+          'Создание причинного RiskEstimator для Part B: двухканальная шкала риска (ранжирование <=0.4999, тревога >=0.5 за 0.5-1.0с до удара) и оптимизация инференса под Tesla T4'
         ],
         experience: [
           {
@@ -520,7 +520,7 @@ export default function TeamSection() {
           <div className="w-16 h-1 bg-[#0693e3] rounded-full" />
 
           <p className="text-gray-400 text-sm sm:text-base max-w-2xl leading-relaxed">
-            Three computer vision and systems engineers uniting deep learning detection, real-time multi-object tracking, and causal kinematics to solve the WIUT Hackathon 2026 Elimination Challenge.
+            A cohesive three-member team uniting a dedicated ML/CV Systems Architect with Technical Product, UI/UX, and Video Annotation Leads to deliver a robust end-to-end solution for the WIUT Hackathon 2026 Elimination Challenge.
           </p>
         </div>
 
