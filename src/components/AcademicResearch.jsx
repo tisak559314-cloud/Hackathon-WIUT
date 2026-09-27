@@ -23,8 +23,132 @@ import {
   Users,
   Gauge,
   Zap,
+  Cpu,
 } from 'lucide-react';
 import { EDA_FINDINGS } from '../data/samplesConfig';
+
+const ENRICHED_FINDINGS = [
+  {
+    num: '01',
+    title: '4K H.264 4:2:2 10-bit Decoding Bottleneck',
+    category: 'Ingestion & Hardware',
+    icon: Cpu,
+    accentBorder: 'hover:border-amber-500/50',
+    accentText: 'text-amber-400',
+    accentBg: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
+    badge: '⚡ 2.0× Faster CPU Decoding',
+    desc: 'Footage is encoded in 3840×2160 @ 29.97 FPS at ~140 Mbit/s. Tesla T4 Turing NVDEC lacks hardware decoding for 4:2:2 10-bit color profile. PyAV with NONREF flag selectively decodes reference frames of GOP IBBP (~10 FPS), cutting compute overhead by 2×.',
+    metric: {
+      leftLabel: 'cv2.read (naive)',
+      leftVal: '1.41× clip time',
+      rightLabel: 'PyAV NONREF',
+      rightVal: '0.70× clip time',
+      pill: '2.0× Faster',
+      pillColor: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+    },
+    tags: ['4K H.264 4:2:2 10-bit', 'Turing NVDEC limitation', 'GOP IBBP Skip'],
+  },
+  {
+    num: '02',
+    title: 'Resolution Sweet Spot: 1280 px vs 1920 px',
+    category: 'Perception Efficiency',
+    icon: Zap,
+    accentBorder: 'hover:border-[#00e5ff]/50',
+    accentText: 'text-[#00e5ff]',
+    accentBg: 'bg-[#00e5ff]/10 text-[#00e5ff] border-[#00e5ff]/30',
+    badge: '🎯 97.3% Agreement at 0.24× Cost',
+    desc: 'Downscaling frames to 1280 px achieves ~97% pedestrian recall, matching 1920 px inference with a 0.973 agreement on jaywalking while cutting inference cost in half, comfortably fitting in the 5 GB package weight limit.',
+    metric: {
+      leftLabel: '1920 px Resolution',
+      leftVal: '0.48× runtime',
+      rightLabel: '1280 px Sweet Spot',
+      rightVal: '0.24× runtime',
+      pill: '4× Inference Margin',
+      pillColor: 'bg-[#00e5ff]/20 text-[#00e5ff] border-[#00e5ff]/30',
+    },
+    tags: ['YOLO26m NMS-Free', 'TensorRT FP16', '< 5 GB Weights'],
+  },
+  {
+    num: '03',
+    title: 'In-Cabin Driver & Passenger Filtering',
+    category: 'Spatial Geometry Gate',
+    icon: ShieldCheck,
+    accentBorder: 'hover:border-emerald-500/50',
+    accentText: 'text-emerald-400',
+    accentBg: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+    badge: '🛡️ 100% In-Cabin FP Suppressed',
+    desc: '2.2% to 5.6% of raw person detections correspond to drivers and passengers visible through windshields. A spatial filter suppressing pedestrian detections inside moving vehicle hulls completely eliminated these false alarms.',
+    metric: {
+      leftLabel: 'Windshield Detections',
+      leftVal: '2.2%–5.6% false person',
+      rightLabel: 'Hull Containment Filter',
+      rightVal: '0 Spurious Alarms',
+      pill: '100% Purged',
+      pillColor: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+    },
+    tags: ['Hull Containment Gate', 'Windshield Reflections', 'Zero False Alarms'],
+  },
+  {
+    num: '04',
+    title: 'Intersection Road User Density',
+    category: 'Spatiotemporal Flows',
+    icon: Activity,
+    accentBorder: 'hover:border-sky-500/50',
+    accentText: 'text-sky-400',
+    accentBg: 'bg-sky-500/10 text-sky-400 border-sky-500/30',
+    badge: '📊 82 vs 68 veh/min Evening Wave',
+    desc: 'Average load per frame: 20–31 pedestrians, 24–27 passenger cars, 1.9–4.5 buses/trucks, and <0.7 two-wheelers. Traffic is denser at dusk: 82 new vehicle tracks per minute compared to 68 at midday rush.',
+    metric: {
+      leftLabel: 'Noon Daylight (C3896)',
+      leftVal: '68 veh/min • 20 peds',
+      rightLabel: 'Evening Dusk (C3905)',
+      rightVal: '82 veh/min • 31 peds',
+      pill: '+20.6% Rush Wave',
+      pillColor: 'bg-sky-500/20 text-sky-400 border-sky-500/30',
+    },
+    tags: ['ByteTrack Trajectories', 'Rush Hour Waves', 'Queue Dynamics'],
+  },
+  {
+    num: '05',
+    title: 'Traffic Signal Periodicity (75s Day vs 80s Evening)',
+    category: 'Deterministic Telemetry',
+    icon: Clock,
+    accentBorder: 'hover:border-purple-500/50',
+    accentText: 'text-purple-400',
+    accentBg: 'bg-purple-500/10 text-purple-400 border-purple-500/30',
+    badge: '⏱️ ±0.08s Sub-Second Sync',
+    desc: 'Fixed signal cycle duration: 75.0s during daytime (36s green, 3s yellow, 36s red) and 80.0s at evening dusk (38s green, 3s yellow, 39s red). Pedestrian green starts synchronously (±0.1s) with vehicular phase. Read reliably from traffic head pixel ROIs.',
+    metric: {
+      leftLabel: 'Day Cycle (C3896)',
+      leftVal: '75.0s (36s G / 3s Y / 36s R)',
+      rightLabel: 'Evening Cycle (C3905)',
+      rightVal: '80.0s (38s G / 3s Y / 39s R)',
+      pill: '±0.08s Precision',
+      pillColor: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+    },
+    tags: ['Heads 7 & 8 Pixel ROI', 'Signal State Machine', 'Stop Line Sync'],
+  },
+  {
+    num: '06',
+    title: 'Camera Drift Compensation (SIFT + RANSAC)',
+    category: 'Geometric Homography',
+    icon: Compass,
+    accentBorder: 'hover:border-teal-500/50',
+    accentText: 'text-teal-400',
+    accentBg: 'bg-teal-500/10 text-teal-400 border-teal-500/30',
+    badge: '🧭 50–100 px Sway Compensated',
+    desc: 'The physical CCTV camera swayed and shifted by 50–100 px between morning and evening. SIFT inliers dropped 10× at dusk (338 vs 4,133 at noon). Registering every video to a canonical reference view was essential for stop line and crosswalk polygon accuracy.',
+    metric: {
+      leftLabel: 'Day Inliers (C3896)',
+      leftVal: '4,133 points matched',
+      rightLabel: 'Dusk Inliers (C3905)',
+      rightVal: '338 points matched',
+      pill: 'Matrix H Locked',
+      pillColor: 'bg-teal-500/20 text-teal-400 border-teal-500/30',
+    },
+    tags: ['SIFT Feature Matching', 'RANSAC Robust Estimator', 'Canonical Map H'],
+  },
+];
 
 export default function AcademicResearch() {
   // Class Distribution Interactive State
@@ -833,37 +957,102 @@ export default function AcademicResearch() {
             SECTION: 6 KEY ENGINEERING FINDINGS (from findings_ru.md)
         ═══════════════════════════════════════════════════════════════ */}
         <div className="mb-16">
-          <div className="text-center max-w-3xl mx-auto mb-10">
-            <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#00e5ff]">
-              KEY ENGINEERING TAKEAWAYS
-            </span>
-            <h3 className="text-2xl sm:text-3xl font-extrabold text-white uppercase tracking-tight mt-1">
+          <div className="text-center max-w-3xl mx-auto mb-12">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#00e5ff]/10 text-[#00e5ff] border border-[#00e5ff]/30 text-xs font-mono font-bold uppercase tracking-wider mb-3">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Key Engineering Takeaways</span>
+            </div>
+            <h3 className="text-2xl sm:text-4xl font-extrabold text-white uppercase tracking-tight">
               Core Technical Findings from Dataset Analysis
             </h3>
-            <p className="text-sm text-gray-400 mt-2">
-              Critical architecture decisions derived from exploring 4K video streams, traffic light timing, and camera physics.
+            <p className="text-sm text-gray-400 mt-2.5 max-w-2xl mx-auto">
+              Empirical architectural decisions derived from exploring 4K video streams, traffic light timing, and camera physics on fixed CCTV.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {EDA_FINDINGS.map((finding, idx) => (
-              <div
-                key={idx}
-                className="p-6 rounded-2xl bg-[#0c121e] border border-[#1f2d45] hover:border-[#00e5ff]/50 transition-all duration-300 shadow-lg flex flex-col justify-between group"
-              >
-                <div>
-                  <div className="w-8 h-8 rounded-xl bg-[#00e5ff]/10 text-[#00e5ff] border border-[#00e5ff]/30 flex items-center justify-center font-mono font-bold text-xs mb-4 group-hover:scale-110 transition-transform">
-                    0{idx + 1}
+            {ENRICHED_FINDINGS.map((finding, idx) => {
+              const Icon = finding.icon;
+              return (
+                <div
+                  key={idx}
+                  className={`p-6 sm:p-7 rounded-3xl bg-[#0c121e] border border-[#1f2d45] ${finding.accentBorder} transition-all duration-300 shadow-xl flex flex-col justify-between group relative overflow-hidden`}
+                >
+                  {/* Subtle corner gradient flare */}
+                  <div
+                    className="absolute -top-12 -right-12 w-36 h-36 rounded-full blur-2xl pointer-events-none opacity-10 group-hover:opacity-25 transition-opacity"
+                    style={{ backgroundColor: finding.accentColor }}
+                  />
+
+                  <div>
+                    {/* Header: Category Badge + Glowing Tech Icon */}
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-mono font-black text-gray-500 group-hover:text-white transition-colors">
+                          #{finding.num}
+                        </span>
+                        <span className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border uppercase ${finding.accentBg}`}>
+                          {finding.category}
+                        </span>
+                      </div>
+                      <div className={`p-2 rounded-xl bg-white/5 border border-white/10 ${finding.accentText} group-hover:scale-110 transition-transform shadow`}>
+                        <Icon className="w-4 h-4" />
+                      </div>
+                    </div>
+
+                    {/* Title */}
+                    <h4 className="text-lg font-bold text-white mb-2.5 group-hover:text-[#00e5ff] transition-colors leading-snug">
+                      {finding.title}
+                    </h4>
+
+                    {/* Highlight Metric Pill */}
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black/60 border border-white/10 text-xs font-mono font-bold text-gray-200 mb-3 shadow-inner">
+                      <span>{finding.badge}</span>
+                    </div>
+
+                    {/* Description */}
+                    <p className="text-xs text-gray-300 leading-relaxed mb-6">
+                      {finding.desc}
+                    </p>
                   </div>
-                  <h4 className="text-base font-bold text-white mb-2 group-hover:text-[#00e5ff] transition-colors">
-                    {finding.title}
-                  </h4>
-                  <p className="text-xs text-gray-300 leading-relaxed">
-                    {finding.desc}
-                  </p>
+
+                  <div>
+                    {/* Empirical Verification Data Comparison Box */}
+                    <div className="p-3 rounded-2xl bg-[#080c14] border border-[#1f2d45]/80 mb-4 font-mono text-[11px] shadow-inner">
+                      <div className="flex items-center justify-between pb-2 border-b border-white/5 mb-2">
+                        <span className="text-gray-400 text-[10px] uppercase font-bold tracking-wider">Benchmark Insight</span>
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${finding.metric.pillColor}`}>
+                          {finding.metric.pill}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-2">
+                        <div>
+                          <div className="text-[9px] text-gray-500 uppercase">{finding.metric.leftLabel}</div>
+                          <div className="text-gray-300 font-bold">{finding.metric.leftVal}</div>
+                        </div>
+                        <div className="text-gray-600 font-bold">&rarr;</div>
+                        <div className="text-right">
+                          <div className="text-[9px] text-[#00e5ff] uppercase">{finding.metric.rightLabel}</div>
+                          <div className="text-white font-bold">{finding.metric.rightVal}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Tags Footer */}
+                    <div className="flex flex-wrap gap-1.5 pt-2 border-t border-white/5">
+                      {finding.tags.map((tag, tIdx) => (
+                        <span
+                          key={tIdx}
+                          className="px-2 py-0.5 rounded text-[10px] font-mono bg-white/5 text-gray-400 border border-white/5"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
