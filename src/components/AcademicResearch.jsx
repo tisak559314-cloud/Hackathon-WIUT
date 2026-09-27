@@ -727,32 +727,51 @@ export default function AcademicResearch() {
             SECTION: INTERACTIVE EDA FIGURES GALLERY (6 REAL CHARTS)
         ═══════════════════════════════════════════════════════════════ */}
         <div className="mb-16 rounded-3xl bg-[#0c121e] border border-[#1f2d45] p-6 sm:p-8 shadow-2xl">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#1f2d45] mb-6">
-            <div>
-              <div className="text-xs font-mono font-bold uppercase tracking-wider text-[#00e5ff] flex items-center gap-2 mb-1">
-                <Eye className="w-4 h-4 text-[#00e5ff]" />
-                Dataset Exploration Figures
+          {/* Gallery Header */}
+          <div className="pb-6 border-b border-[#1f2d45] mb-6">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+              <div>
+                <div className="text-xs font-mono font-bold uppercase tracking-wider text-[#00e5ff] flex items-center gap-2 mb-1.5">
+                  <Eye className="w-4 h-4 text-[#00e5ff]" />
+                  <span>Dataset Exploration Figures • 6 Core Analytical Visualizations</span>
+                </div>
+                <h3 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                  Interactive Analytical Plots &amp; Visualizations
+                </h3>
               </div>
-              <h3 className="text-2xl font-extrabold text-white">
-                Interactive Analytical Plots &amp; Visualizations
-              </h3>
+              <div className="text-xs font-mono text-gray-400">
+                Viewing: <span className="text-[#00e5ff] font-bold">Figure {activeEdaTab + 1} of {edaCharts.length}</span> &bull; Click to switch
+              </div>
             </div>
 
-            {/* Tabs for EDA plots */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full">
-              {edaCharts.map((chart, idx) => (
-                <button
-                  key={chart.id}
-                  onClick={() => setActiveEdaTab(idx)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition whitespace-nowrap cursor-pointer ${
-                    activeEdaTab === idx
-                      ? 'bg-[#00e5ff] text-[#080c14] shadow font-extrabold'
-                      : 'bg-[#121a2a] text-gray-400 hover:text-white border border-[#1f2d45]'
-                  }`}
-                >
-                  {chart.title}
-                </button>
-              ))}
+            {/* Full-width 6 Figure Selector Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+              {edaCharts.map((chart, idx) => {
+                const isActive = activeEdaTab === idx;
+                return (
+                  <button
+                    key={chart.id}
+                    onClick={() => setActiveEdaTab(idx)}
+                    className={`p-3 rounded-2xl text-left transition-all duration-200 cursor-pointer border flex flex-col justify-between group ${
+                      isActive
+                        ? 'bg-[#182236] border-[#00e5ff] shadow-lg shadow-[#00e5ff]/20 scale-[1.02]'
+                        : 'bg-[#080c14] border-[#1f2d45] hover:border-gray-500 hover:bg-[#121a2a]'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between text-[10px] font-mono mb-1.5">
+                      <span className={`font-bold ${isActive ? 'text-[#00e5ff]' : 'text-gray-500 group-hover:text-gray-300'}`}>
+                        FIG 0{idx + 1}
+                      </span>
+                      {isActive && (
+                        <span className="w-2 h-2 rounded-full bg-[#00e5ff] animate-ping" />
+                      )}
+                    </div>
+                    <div className={`text-xs font-bold leading-snug ${isActive ? 'text-white' : 'text-gray-300 group-hover:text-white'}`}>
+                      {chart.title}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
