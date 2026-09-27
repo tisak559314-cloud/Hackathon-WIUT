@@ -7,17 +7,12 @@ import {
   Video,
   AlertTriangle,
   ShieldAlert,
-  CheckCircle2,
   Activity,
-  Sliders,
   Cpu,
-  Clock,
-  Sparkles,
   Maximize2,
   Volume2,
   VolumeX,
   FileVideo,
-  Info
 } from 'lucide-react';
 
 export default function LiveDemoSection() {
@@ -343,20 +338,6 @@ export default function LiveDemoSection() {
           </div>
         </div>
 
-        {/* Upload Limits & Constraints Banner */}
-        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 rounded-xl bg-[#121a2a]/60 border border-[#1f2d45] text-xs text-gray-400 mb-6">
-          <div className="flex items-center gap-2">
-            <Info className="w-4 h-4 text-[#00e5ff] shrink-0" />
-            <span>
-              <strong>Upload Guidelines:</strong> Max video length <span className="text-white font-mono font-bold">60s</span> | Max file size <span className="text-white font-mono font-bold">100 MB</span> | Formats: MP4, AVI, MOV.
-            </span>
-          </div>
-          <div className="flex items-center gap-4 text-[11px] font-mono text-gray-400">
-            <span>BACKBONE: YOLO26m (NMS-free)</span>
-            <span>TRACKER: ByteTrack</span>
-            <span>DEVICE: Tesla T4 (28.4ms)</span>
-          </div>
-        </div>
 
         {/* Upload Processing State Modal / Overlay */}
         {isProcessing && (
@@ -390,11 +371,9 @@ export default function LiveDemoSection() {
           </div>
         )}
 
-        {/* Main Video Viewport & Telemetry Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
-          {/* Left: Video Player with Augmented Bounding Box Overlay (8 Cols) */}
-          <div className="lg:col-span-8 flex flex-col">
-            <div className="relative rounded-2xl overflow-hidden bg-black border border-[#1f2d45] shadow-2xl aspect-video group">
+        {/* Main Video Viewport */}
+        <div className="w-full max-w-5xl mx-auto mb-8">
+          <div className="relative rounded-2xl overflow-hidden bg-black border border-[#1f2d45] shadow-2xl aspect-video group">
               {/* HTML5 Video element */}
               <video
                 ref={videoRef}
@@ -586,210 +565,6 @@ export default function LiveDemoSection() {
               </div>
             </div>
 
-            {/* Video Context Info Banner */}
-            <div className="mt-3 p-3.5 rounded-xl bg-[#121a2a] border border-[#1f2d45] flex items-center justify-between">
-              <div>
-                <h4 className="text-xs font-bold text-white flex items-center gap-2">
-                  <span>{currentSample.title}</span>
-                  <span className={`px-2 py-0.5 rounded text-[10px] font-mono border ${currentSample.badgeColor}`}>
-                    {currentSample.badge}
-                  </span>
-                </h4>
-                <p className="text-[11px] text-gray-400 mt-0.5">{currentSample.description}</p>
-              </div>
-              <div className="text-right shrink-0 hidden sm:block">
-                <span className="text-[10px] uppercase font-mono text-gray-400">Horizon (H)</span>
-                <div className="text-xs font-mono font-bold text-[#00e5ff]">5.0 SECONDS</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right: Real-time Telemetry, Risk Gauge & Active Alert Feed (4 Cols) */}
-          <div className="lg:col-span-4 flex flex-col gap-4">
-            {/* Risk Estimator Part B Gauge */}
-            <div className="p-5 rounded-2xl bg-[#121a2a] border border-[#1f2d45] shadow-xl">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <Activity className="w-4 h-4 text-[#00e5ff]" />
-                  <span className="text-xs font-bold uppercase tracking-wider text-white">
-                    Part B: Risk Estimator
-                  </span>
-                </div>
-                <span
-                  className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded ${
-                    isCriticalRisk ? 'bg-red-500/20 text-red-300' : 'bg-[#00e5ff]/20 text-[#00e5ff]'
-                  }`}
-                >
-                  {isCriticalRisk ? 'CRITICAL HAZARD' : 'NOMINAL SAFETY'}
-                </span>
-              </div>
-
-              {/* Visual Meter Bar */}
-              <div className="relative w-full h-4 bg-[#182236] rounded-full overflow-hidden mb-2">
-                <div
-                  className={`h-full transition-all duration-200 rounded-full ${
-                    isCriticalRisk
-                      ? 'bg-gradient-to-r from-yellow-500 to-red-500 shadow-[0_0_15px_rgba(239,68,68,0.6)]'
-                      : 'bg-gradient-to-r from-[#00d084] via-[#00e5ff] to-[#0693e3]'
-                  }`}
-                  style={{ width: `${(currentRisk * 100).toFixed(0)}%` }}
-                />
-              </div>
-
-              <div className="flex items-center justify-between font-mono text-[10px] text-gray-400">
-                <span>0.00 (Safe)</span>
-                <span className="text-white font-bold text-xs">{(currentRisk).toFixed(2)}</span>
-                <span className="text-red-400">1.00 (Accident)</span>
-              </div>
-
-              <p className="text-[11px] text-gray-400 mt-3 leading-relaxed border-t border-[#1f2d45] pt-2.5">
-                Causal frame evaluation: computes kinematic Time-to-Collision (TTC) and violation density within the continuous <code className="text-[#00e5ff]">H=5.0s</code> lookahead window.
-              </p>
-            </div>
-
-            {/* Viewport Overlay Controls */}
-            <div className="p-4 rounded-2xl bg-[#121a2a] border border-[#1f2d45]">
-              <div className="text-xs font-bold uppercase tracking-wider text-gray-300 mb-3 flex items-center gap-2">
-                <Sliders className="w-3.5 h-3.5 text-[#00e5ff]" />
-                Display Overlays
-              </div>
-              <div className="space-y-2">
-                <label className="flex items-center justify-between text-xs text-gray-300 cursor-pointer">
-                  <span>Show 2D Bounding Boxes</span>
-                  <input
-                    type="checkbox"
-                    checked={showBoxes}
-                    onChange={(e) => setShowBoxes(e.target.checked)}
-                    className="accent-[#00e5ff] rounded"
-                  />
-                </label>
-                <label className="flex items-center justify-between text-xs text-gray-300 cursor-pointer">
-                  <span>Ground Trajectory Trails</span>
-                  <input
-                    type="checkbox"
-                    checked={showTrails}
-                    onChange={(e) => setShowTrails(e.target.checked)}
-                    className="accent-[#00e5ff] rounded"
-                  />
-                </label>
-                <label className="flex items-center justify-between text-xs text-gray-300 cursor-pointer">
-                  <span>Anticipation HUD Pill</span>
-                  <input
-                    type="checkbox"
-                    checked={showRiskOverlay}
-                    onChange={(e) => setShowRiskOverlay(e.target.checked)}
-                    className="accent-[#00e5ff] rounded"
-                  />
-                </label>
-              </div>
-            </div>
-
-            {/* Currently Active Events Feed */}
-            <div className="p-4 rounded-2xl bg-[#121a2a] border border-[#1f2d45] flex-1 flex flex-col">
-              <div className="text-xs font-bold uppercase tracking-wider text-gray-300 mb-3 flex items-center justify-between">
-                <span>Active Detections</span>
-                <span className="font-mono text-[10px] text-[#00e5ff]">
-                  {activeEvents.length} Active
-                </span>
-              </div>
-
-              <div className="space-y-2 overflow-y-auto max-h-48 pr-1">
-                {activeEvents.length === 0 ? (
-                  <div className="text-xs text-gray-400 py-4 text-center italic font-mono">
-                    No critical events at {currentTime.toFixed(1)}s
-                  </div>
-                ) : (
-                  activeEvents.map((ev, idx) => (
-                    <div
-                      key={idx}
-                      className={`p-2.5 rounded-xl border text-xs flex flex-col gap-1 transition-all ${
-                        ev.type === 'critical' || ev.type === 'danger'
-                          ? 'bg-red-500/10 border-red-500/40 text-red-200'
-                          : 'bg-[#182236] border-[#1f2d45] text-gray-200'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-mono font-bold uppercase text-[11px] text-[#00e5ff]">
-                          {ev.label}
-                        </span>
-                        <span className="text-[10px] font-mono text-gray-400">
-                          {(ev.conf * 100).toFixed(0)}% Conf
-                        </span>
-                      </div>
-                      <div className="text-[11px] font-semibold text-white">{ev.desc}</div>
-                      <div className="text-[10px] font-mono text-gray-400">Target: {ev.track}</div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Clickable Event Timeline (Official Rubric: Sample-video Visualizations 20%) */}
-        <div className="p-6 rounded-2xl bg-[#121a2a] border border-[#1f2d45] shadow-xl">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
-            <div>
-              <h3 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
-                <Clock className="w-4 h-4 text-[#00e5ff]" />
-                Interactive Temporal Event Timeline (Click to Seek)
-              </h3>
-              <p className="text-xs text-gray-400 mt-1">
-                Click any benchmark event card to jump the video directly to the detected frame.
-              </p>
-            </div>
-            <div className="text-xs font-mono text-[#00e5ff] flex items-center gap-2">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Multi-threshold IoU τ ∈ &#123;0.3, 0.5, 0.7&#125;</span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
-            {currentSample.events.map((ev, idx) => {
-              const isEventActive = currentTime >= ev.time - 0.5 && currentTime <= ev.time + 1.5;
-              return (
-                <button
-                  key={idx}
-                  onClick={() => seekTo(ev.time)}
-                  className={`text-left p-3.5 rounded-xl border transition-all flex flex-col justify-between group ${
-                    isEventActive
-                      ? 'bg-[#0693e3]/20 border-[#00e5ff] shadow-lg shadow-[#00e5ff]/20 scale-102'
-                      : 'bg-[#182236] border-[#1f2d45] hover:border-[#00e5ff]/50'
-                  }`}
-                >
-                  <div>
-                    <div className="flex items-center justify-between text-[11px] font-mono mb-1.5">
-                      <span className="font-bold text-[#00e5ff] group-hover:underline">
-                        00:{ev.time < 10 ? `0${ev.time.toFixed(1)}` : ev.time.toFixed(1)}
-                      </span>
-                      <span
-                        className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${
-                          ev.type === 'critical' || ev.type === 'danger'
-                            ? 'bg-red-500/20 text-red-400'
-                            : 'bg-yellow-500/20 text-yellow-300'
-                        }`}
-                      >
-                        {ev.type}
-                      </span>
-                    </div>
-
-                    <div className="text-xs font-bold text-white uppercase tracking-tight mb-1">
-                      {ev.label}
-                    </div>
-
-                    <p className="text-[11px] text-gray-400 leading-snug line-clamp-2">
-                      {ev.desc}
-                    </p>
-                  </div>
-
-                  <div className="mt-3 pt-2 border-t border-[#1f2d45] flex items-center justify-between text-[10px] font-mono text-gray-500">
-                    <span>{ev.track}</span>
-                    <span className="text-[#00e5ff]">{(ev.conf * 100).toFixed(0)}%</span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
         </div>
       </div>
     </section>
