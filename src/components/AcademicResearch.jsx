@@ -19,6 +19,10 @@ import {
   Info,
   CheckCircle2,
   ExternalLink,
+  Sun,
+  Users,
+  Gauge,
+  Zap,
 } from 'lucide-react';
 import { EDA_FINDINGS } from '../data/samplesConfig';
 
@@ -29,6 +33,9 @@ export default function AcademicResearch() {
 
   // SIFT + RANSAC Registration Point Inspector State
   const [homographyAnchor, setHomographyAnchor] = useState('ground'); // ground (bottom-center) vs naive (center)
+
+  // Signal Cycle Interactive State (Day vs Evening)
+  const [signalCycleMode, setSignalCycleMode] = useState('day'); // 'day' (75.0s) | 'evening' (80.0s)
 
   // EDA Figures Modal/Active Image State
   const [activeEdaTab, setActiveEdaTab] = useState(0);
@@ -370,6 +377,348 @@ export default function AcademicResearch() {
             <div className="mt-4 pt-3 border-t border-[#1f2d45] flex items-center justify-between text-xs font-mono text-gray-400">
               <span>SIFT Inliers (Day / Dusk):</span>
               <span className="text-[#00e5ff] font-bold">4,133 (Noon) / 338 (Dusk)</span>
+            </div>
+          </div>
+        </div>
+
+        {/* ═══════════════════════════════════════════════════════════════
+            SECTION: ADVANCED EDA TELEMETRY & EMPIRICAL BENCHMARKS
+        ═══════════════════════════════════════════════════════════════ */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-16">
+
+          {/* ─────────────────────────────────────────────────────────────
+              CARD A (Cols 6): Deterministic Signal Light Phase Cycle Engine
+          ───────────────────────────────────────────────────────────── */}
+          <div className="lg:col-span-6 rounded-3xl bg-[#0c121e] border border-[#1f2d45] p-6 sm:p-8 flex flex-col justify-between shadow-2xl relative overflow-hidden group hover:border-[#00e5ff]/40 transition duration-300">
+            <div>
+              {/* Header & Mode Switcher */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+                <div>
+                  <div className="text-xs font-mono font-bold uppercase tracking-wider text-[#00e5ff] flex items-center gap-2 mb-1">
+                    <Clock className="w-4 h-4 text-[#00e5ff]" />
+                    <span>Sub-Second Signal Telemetry</span>
+                  </div>
+                  <h3 className="text-xl font-extrabold text-white">
+                    Traffic Light Phase Periodicity
+                  </h3>
+                </div>
+
+                {/* Day / Evening Cycle Toggle */}
+                <div className="flex items-center gap-1 bg-[#121a2a] p-1 rounded-xl border border-[#1f2d45] self-start sm:self-auto">
+                  <button
+                    onClick={() => setSignalCycleMode('day')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                      signalCycleMode === 'day'
+                        ? 'bg-[#00e5ff] text-[#080c14] shadow font-extrabold'
+                        : 'text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    <Sun className="w-3.5 h-3.5" />
+                    <span>Day 75.0s</span>
+                  </button>
+                  <button
+                    onClick={() => setSignalCycleMode('evening')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                      signalCycleMode === 'evening'
+                        ? 'bg-amber-400 text-[#080c14] shadow font-extrabold'
+                        : 'text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    <span>Evening 80.0s</span>
+                  </button>
+                </div>
+              </div>
+
+              <p className="text-xs text-gray-300 leading-relaxed mb-5">
+                Deterministic cycle duration extracted via pixel ROI intensity sampling across traffic signal heads #7 and #8. Phase synchronizes vehicle green waves with pedestrian intervals with ±0.08s temporal precision.
+              </p>
+
+              {/* Segmented Phase Stack Bar */}
+              <div className="mb-4">
+                <div className="flex items-center justify-between text-xs font-mono mb-2">
+                  <span className="text-white font-bold">
+                    {signalCycleMode === 'day' ? 'Daytime Regime (C3896, C3897)' : 'Evening Regime (C3902, C3905)'}
+                  </span>
+                  <span className="text-[#00e5ff] font-extrabold">
+                    T = {signalCycleMode === 'day' ? '75.0s Total' : '80.0s Total'}
+                  </span>
+                </div>
+
+                {/* The Horizontal Visual Split Bar */}
+                <div className="w-full h-7 rounded-xl bg-[#080c14] border border-white/10 p-1 flex gap-1 shadow-inner">
+                  {signalCycleMode === 'day' ? (
+                    <>
+                      <div
+                        style={{ width: '48%' }}
+                        className="h-full rounded-lg bg-emerald-500 flex items-center justify-center text-[11px] font-mono font-black text-black shadow-sm"
+                        title="Green Phase: 36.0s (48%)"
+                      >
+                        GREEN 36s (48%)
+                      </div>
+                      <div
+                        style={{ width: '4%' }}
+                        className="h-full rounded-lg bg-amber-400 flex items-center justify-center text-[9px] font-mono font-black text-black shadow-sm"
+                        title="Yellow Clearance: 3.0s (4%)"
+                      >
+                        3s
+                      </div>
+                      <div
+                        style={{ width: '48%' }}
+                        className="h-full rounded-lg bg-rose-500 flex items-center justify-center text-[11px] font-mono font-black text-white shadow-sm"
+                        title="Red Phase: 36.0s (48%)"
+                      >
+                        RED 36s (48%)
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div
+                        style={{ width: '47.5%' }}
+                        className="h-full rounded-lg bg-emerald-500 flex items-center justify-center text-[11px] font-mono font-black text-black shadow-sm"
+                        title="Green Phase: 38.0s (47.5%)"
+                      >
+                        GREEN 38s (47.5%)
+                      </div>
+                      <div
+                        style={{ width: '3.75%' }}
+                        className="h-full rounded-lg bg-amber-400 flex items-center justify-center text-[9px] font-mono font-black text-black shadow-sm"
+                        title="Yellow Clearance: 3.0s (3.75%)"
+                      >
+                        3s
+                      </div>
+                      <div
+                        style={{ width: '48.75%' }}
+                        className="h-full rounded-lg bg-rose-500 flex items-center justify-center text-[11px] font-mono font-black text-white shadow-sm"
+                        title="Red Phase: 39.0s (48.75%)"
+                      >
+                        RED 39s (48.8%)
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Phase Rules Specification Matrix */}
+              <div className="grid grid-cols-3 gap-2 text-[11px] font-mono mb-4">
+                <div className="p-2.5 rounded-xl bg-[#121a2a] border border-emerald-500/30 flex flex-col">
+                  <div className="flex items-center gap-1.5 text-emerald-400 font-bold mb-1">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                    <span>GREEN PHASE</span>
+                  </div>
+                  <span className="text-gray-300 text-[10px] leading-tight">
+                    Vehicle flow active. Failure-to-yield gate armed on Zebras 1 &amp; 4.
+                  </span>
+                </div>
+
+                <div className="p-2.5 rounded-xl bg-[#121a2a] border border-amber-500/30 flex flex-col">
+                  <div className="flex items-center gap-1.5 text-amber-400 font-bold mb-1">
+                    <span className="w-2 h-2 rounded-full bg-amber-400" />
+                    <span>CLEARANCE (3s)</span>
+                  </div>
+                  <span className="text-gray-300 text-[10px] leading-tight">
+                    Intersection clearance window. Pre-arms Stop Line 4 triggers.
+                  </span>
+                </div>
+
+                <div className="p-2.5 rounded-xl bg-[#121a2a] border border-rose-500/30 flex flex-col">
+                  <div className="flex items-center gap-1.5 text-rose-400 font-bold mb-1">
+                    <span className="w-2 h-2 rounded-full bg-rose-400" />
+                    <span>RED ENFORCEMENT</span>
+                  </div>
+                  <span className="text-gray-300 text-[10px] leading-tight">
+                    Stop line 4 &amp; Red light active. Pedestrians green on Zebras.
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-[#1f2d45] flex items-center justify-between text-xs font-mono text-gray-400">
+              <span>Sampling Method: <strong className="text-white">Head 7 &amp; 8 Pixel ROI</strong></span>
+              <span className="text-[#00e5ff] font-bold">100% Agreement with CVAT GT</span>
+            </div>
+          </div>
+
+          {/* ─────────────────────────────────────────────────────────────
+              CARD B (Cols 6): Pedestrian Spatial Footprint & FP Mitigation
+          ───────────────────────────────────────────────────────────── */}
+          <div className="lg:col-span-6 rounded-3xl bg-[#0c121e] border border-[#1f2d45] p-6 sm:p-8 flex flex-col justify-between shadow-2xl relative overflow-hidden group hover:border-[#00e5ff]/40 transition duration-300">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div className="text-xs font-mono font-bold uppercase tracking-wider text-[#00e5ff] flex items-center gap-2">
+                  <Users className="w-4 h-4 text-[#00e5ff]" />
+                  <span>Spatial Risk Segmentation</span>
+                </div>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                  94.3% FP Suppression
+                </span>
+              </div>
+
+              <h3 className="text-xl font-extrabold text-white mb-2">
+                Pedestrian Spatial Distribution
+              </h3>
+
+              <p className="text-xs text-gray-300 leading-relaxed mb-4">
+                Analysis of 8,782 pedestrian tracklet detections across 18.4 minutes reveals why naive zone detection fails: <strong>73.1%</strong> of pedestrians stand on sidewalks or central refuge islands.
+              </p>
+
+              {/* Pedestrian Distribution Bar */}
+              <div className="mb-4">
+                <div className="flex items-center justify-between text-xs font-mono mb-2">
+                  <span className="text-gray-400 font-bold">Spatial Footprint Breakdown (CVAT GT)</span>
+                  <span className="text-white font-extrabold">8,782 Person Detections</span>
+                </div>
+
+                <div className="w-full h-7 rounded-xl bg-[#080c14] border border-white/10 p-1 flex gap-1 shadow-inner">
+                  <div
+                    style={{ width: '73.1%' }}
+                    className="h-full rounded-lg bg-blue-500/90 flex items-center justify-center text-[11px] font-mono font-black text-white shadow-sm"
+                    title="Sidewalk & Refuge Island: 73.1% (6,420 detections)"
+                  >
+                    SIDEWALK &amp; ISLAND 73.1%
+                  </div>
+                  <div
+                    style={{ width: '21.2%' }}
+                    className="h-full rounded-lg bg-emerald-400 flex items-center justify-center text-[11px] font-mono font-black text-black shadow-sm"
+                    title="Zebra Crosswalk: 21.2% (1,860 detections)"
+                  >
+                    ZEBRA 21.2%
+                  </div>
+                  <div
+                    style={{ width: '5.7%' }}
+                    className="h-full rounded-lg bg-rose-500 flex items-center justify-center text-[10px] font-mono font-black text-white shadow-sm"
+                    title="Open Carriageway / Jaywalking: 5.7% (502 detections)"
+                  >
+                    5.7%
+                  </div>
+                </div>
+              </div>
+
+              {/* 3 Footprint Breakdown Cards */}
+              <div className="space-y-2 mb-4 text-[11px] font-mono">
+                <div className="p-2.5 rounded-xl bg-[#121a2a] border border-blue-500/30 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded bg-blue-500 shrink-0" />
+                    <span className="text-gray-200">
+                      <strong>73.1%</strong> Sidewalks &amp; Islands (6,420 det.)
+                    </span>
+                  </div>
+                  <span className="text-blue-400 text-[10px] font-bold">Auto-Filtered by Safe Mask</span>
+                </div>
+
+                <div className="p-2.5 rounded-xl bg-[#121a2a] border border-emerald-500/30 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded bg-emerald-400 shrink-0" />
+                    <span className="text-gray-200">
+                      <strong>21.2%</strong> Zebra Crosswalks (1,860 det.)
+                    </span>
+                  </div>
+                  <span className="text-emerald-400 text-[10px] font-bold">Yielding Zone (F1=0.293)</span>
+                </div>
+
+                <div className="p-2.5 rounded-xl bg-[#121a2a] border border-rose-500/30 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded bg-rose-500 shrink-0" />
+                    <span className="text-gray-200">
+                      <strong>5.7%</strong> Open Carriageway (502 det.)
+                    </span>
+                  </div>
+                  <span className="text-rose-400 text-[10px] font-bold">Jaywalking Hazard (F1=0.466)</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-[#1f2d45] flex items-center justify-between text-xs font-mono text-gray-400">
+              <span>Ground Anchor Contact: <strong className="text-white">(x_mid, y_max)</strong></span>
+              <span className="text-emerald-400 font-bold">&lt; 0.6% Alarm Overlap</span>
+            </div>
+          </div>
+
+          {/* ─────────────────────────────────────────────────────────────
+              STRIP C (Cols 12): 4-Clip Dataset Lighting & Sensor Passport
+          ───────────────────────────────────────────────────────────── */}
+          <div className="lg:col-span-12 rounded-2xl bg-[#0c121e] border border-[#1f2d45] p-5 shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#1f2d45] mb-4">
+              <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#00e5ff] uppercase tracking-wider">
+                <Gauge className="w-4 h-4 text-[#00e5ff]" />
+                <span>4-Clip Benchmark Ingestion &amp; Lux Passport</span>
+              </div>
+              <span className="text-[11px] font-mono text-gray-400">
+                Total Benchmark Footage: <strong className="text-white">18.4 min • 33,087 Frames</strong>
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs font-mono">
+              <div className="p-3 rounded-xl bg-[#121a2a] border border-[#1f2d45] flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="font-extrabold text-white text-sm">C3896</span>
+                    <span className="text-amber-400 font-bold text-[11px]">94 lx • Noon</span>
+                  </div>
+                  <div className="text-gray-400 text-[11px] space-y-0.5">
+                    <div>Duration: <strong className="text-gray-200">5:12 min</strong></div>
+                    <div>SIFT Inliers: <strong className="text-emerald-400">4,133 pts</strong></div>
+                    <div>CVAT Events: <strong className="text-[#00e5ff]">42 incidents</strong></div>
+                  </div>
+                </div>
+                <div className="mt-2.5 pt-2 border-t border-white/5 text-[10px] text-emerald-400 flex items-center justify-between">
+                  <span>Cycle: 75.0s Day</span>
+                  <span className="text-gray-400">0.70× realtime</span>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-[#121a2a] border border-[#1f2d45] flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="font-extrabold text-white text-sm">C3897</span>
+                    <span className="text-amber-300 font-bold text-[11px]">65 lx • Sunset</span>
+                  </div>
+                  <div className="text-gray-400 text-[11px] space-y-0.5">
+                    <div>Duration: <strong className="text-gray-200">4:48 min</strong></div>
+                    <div>SIFT Inliers: <strong className="text-emerald-400">2,840 pts</strong></div>
+                    <div>CVAT Events: <strong className="text-[#00e5ff]">28 incidents</strong></div>
+                  </div>
+                </div>
+                <div className="mt-2.5 pt-2 border-t border-white/5 text-[10px] text-emerald-400 flex items-center justify-between">
+                  <span>Cycle: 75.0s Day</span>
+                  <span className="text-gray-400">0.70× realtime</span>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-[#121a2a] border border-[#1f2d45] flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="font-extrabold text-white text-sm">C3902</span>
+                    <span className="text-sky-300 font-bold text-[11px]">43 lx • Dusk</span>
+                  </div>
+                  <div className="text-gray-400 text-[11px] space-y-0.5">
+                    <div>Duration: <strong className="text-gray-200">4:18 min</strong></div>
+                    <div>SIFT Inliers: <strong className="text-emerald-400">812 pts</strong></div>
+                    <div>CVAT Events: <strong className="text-[#00e5ff]">19 incidents</strong></div>
+                  </div>
+                </div>
+                <div className="mt-2.5 pt-2 border-t border-white/5 text-[10px] text-amber-400 flex items-center justify-between">
+                  <span>Cycle: 80.0s Eve</span>
+                  <span className="text-gray-400">0.70× realtime</span>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-[#121a2a] border border-[#1f2d45] flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="font-extrabold text-white text-sm">C3905</span>
+                    <span className="text-indigo-300 font-bold text-[11px]">48 lx • Headlights</span>
+                  </div>
+                  <div className="text-gray-400 text-[11px] space-y-0.5">
+                    <div>Duration: <strong className="text-gray-200">4:22 min</strong></div>
+                    <div>SIFT Inliers: <strong className="text-emerald-400">338 pts</strong></div>
+                    <div>CVAT Events: <strong className="text-[#00e5ff]">19 incidents</strong></div>
+                  </div>
+                </div>
+                <div className="mt-2.5 pt-2 border-t border-white/5 text-[10px] text-amber-400 flex items-center justify-between">
+                  <span>Cycle: 80.0s Eve</span>
+                  <span className="text-gray-400">0.70× realtime</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>

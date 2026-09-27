@@ -43,6 +43,7 @@ export default function PlatformStack() {
       num: '01',
       title: 'Selective GOP Video Decoding',
       layer: 'Layer 01 • Decoding & Ingestion',
+      paradigm: { label: 'HARDWARE & I/O', color: 'text-amber-400 bg-amber-400/10 border-amber-400/30' },
       icon: Camera,
       headline: 'PyAV NONREF Decoding @ 10 FPS on CPU',
       description:
@@ -54,6 +55,7 @@ export default function PlatformStack() {
       num: '02',
       title: 'NMS-Free Road User Detection',
       layer: 'Layer 02 • Neural Perception',
+      paradigm: { label: 'LEARNED NEURAL', color: 'text-purple-400 bg-purple-400/10 border-purple-400/30' },
       icon: Eye,
       headline: 'YOLO26m @ 1280 px (FP16 TensorRT)',
       description:
@@ -65,6 +67,7 @@ export default function PlatformStack() {
       num: '03',
       title: 'Multi-Object Tracking & Filtering',
       layer: 'Layer 03 • Trajectory Association',
+      paradigm: { label: 'STATE & KALMAN', color: 'text-blue-400 bg-blue-400/10 border-blue-400/30' },
       icon: Cpu,
       headline: 'ByteTrack with Driver-in-Vehicle Occlusion Filter',
       description:
@@ -76,6 +79,7 @@ export default function PlatformStack() {
       num: '04',
       title: 'Spatial Scene Registration',
       layer: 'Layer 04 • Geometry & Homography',
+      paradigm: { label: 'GEOMETRIC SIFT', color: 'text-cyan-400 bg-cyan-400/10 border-cyan-400/30' },
       icon: Sliders,
       headline: 'SIFT + RANSAC Canonical View Alignment',
       description:
@@ -87,6 +91,7 @@ export default function PlatformStack() {
       num: '05',
       title: 'Traffic Light State Reader',
       layer: 'Layer 05 • Signal Telemetry',
+      paradigm: { label: 'SIGNAL TELEMETRY', color: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/30' },
       icon: Clock,
       headline: 'Pixel ROI Lamp Reader (75s Day / 80s Evening)',
       description:
@@ -98,6 +103,7 @@ export default function PlatformStack() {
       num: '06',
       title: 'Dual Spatiotemporal Evaluator',
       layer: 'Layer 06 • Rules & Risk Curve',
+      paradigm: { label: 'CAUSAL RULES & RISK', color: 'text-rose-400 bg-rose-400/10 border-rose-400/30' },
       icon: Code2,
       headline: 'Part A Rules + Part B Causal Risk Estimator',
       description:
@@ -226,6 +232,22 @@ export default function PlatformStack() {
         {/* Tab 1: 6 Pipeline Stages */}
         {showPipeline && (
           <div>
+            {/* Architecture Paradigm Legend Bar */}
+            <div className="mb-6 p-4 rounded-2xl bg-[#0c121e]/90 border border-[#1f2d45] flex flex-wrap items-center justify-between gap-3 text-xs font-mono shadow-lg">
+              <span className="text-gray-300 font-bold uppercase tracking-wider text-[11px] flex items-center gap-2">
+                <Layers className="w-4 h-4 text-[#00e5ff]" />
+                <span>Execution Paradigms:</span>
+              </span>
+              <div className="flex flex-wrap items-center gap-2 text-[10px]">
+                <span className="px-2.5 py-1 rounded-lg bg-amber-400/10 text-amber-400 border border-amber-400/30 font-bold">HARDWARE &amp; I/O</span>
+                <span className="px-2.5 py-1 rounded-lg bg-purple-400/10 text-purple-400 border border-purple-400/30 font-bold">LEARNED NEURAL</span>
+                <span className="px-2.5 py-1 rounded-lg bg-blue-400/10 text-blue-400 border border-blue-400/30 font-bold">STATE &amp; KALMAN</span>
+                <span className="px-2.5 py-1 rounded-lg bg-cyan-400/10 text-cyan-400 border border-cyan-400/30 font-bold">GEOMETRIC SIFT</span>
+                <span className="px-2.5 py-1 rounded-lg bg-emerald-400/10 text-emerald-400 border border-emerald-400/30 font-bold">SIGNAL TELEMETRY</span>
+                <span className="px-2.5 py-1 rounded-lg bg-rose-400/10 text-rose-400 border border-rose-400/30 font-bold">CAUSAL RULES &amp; RISK</span>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {stages.map((st, idx) => {
                 const Icon = st.icon;
@@ -243,9 +265,14 @@ export default function PlatformStack() {
                           <Icon className="w-3.5 h-3.5" />
                           <span>{st.layer}</span>
                         </div>
-                        <span className="text-xl font-mono font-black text-gray-600 group-hover:text-[#00e5ff] transition-colors">
-                          {st.num}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border uppercase ${st.paradigm.color}`}>
+                            {st.paradigm.label}
+                          </span>
+                          <span className="text-xl font-mono font-black text-gray-600 group-hover:text-[#00e5ff] transition-colors">
+                            {st.num}
+                          </span>
+                        </div>
                       </div>
 
                       <h3 className="text-lg font-bold text-white mb-1 group-hover:text-[#00e5ff] transition-colors">
