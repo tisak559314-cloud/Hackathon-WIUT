@@ -21,7 +21,22 @@ import {
 } from 'lucide-react';
 
 export default function PlatformStack() {
-  const [activeTab, setActiveTab] = useState('pipeline'); // 'pipeline' | 'matrix'
+  const [activeTab, setActiveTab] = useState('pipeline'); // 'pipeline' | 'matrix' | 'both'
+
+  // Hash-based tab deep linking (e.g. clicking #matrix in Navbar)
+  useEffect(() => {
+    const handleHash = () => {
+      const hash = window.location.hash;
+      if (hash === '#matrix') {
+        setActiveTab('matrix');
+      } else if (hash === '#pipeline') {
+        setActiveTab('pipeline');
+      }
+    };
+    handleHash();
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
+  }, []);
 
   const stages = [
     {
@@ -125,112 +140,198 @@ export default function PlatformStack() {
     },
   ];
 
+  const showPipeline = activeTab === 'pipeline' || activeTab === 'both';
+  const showMatrix = activeTab === 'matrix' || activeTab === 'both';
+
   return (
     <section id="platform" className="py-24 bg-[#080c14] relative border-t border-[#1f2d45]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="flex flex-col items-center text-center space-y-4 mb-16">
+        <div className="flex flex-col items-center text-center space-y-4 mb-14">
           <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#00e5ff]">
-            SYSTEM ARCHITECTURE • WIUT HACKATHON 2026
+            {activeTab === 'pipeline' && 'SYSTEM ARCHITECTURE • WIUT HACKATHON 2026'}
+            {activeTab === 'matrix' && 'COMPARATIVE BENCHMARK • SYSTEM EVALUATION'}
+            {activeTab === 'both' && 'FULL ARCHITECTURE & MATRIX • COMPLETE SYSTEM'}
           </span>
-          <h2 className="text-3xl sm:text-5xl font-extrabold uppercase tracking-tight text-white">
-            6-STAGE MODULAR PIPELINE
+          <h2 className="text-3xl sm:text-5xl font-extrabold uppercase tracking-tight text-white transition-all duration-200">
+            {activeTab === 'pipeline' && '6-STAGE MODULAR PIPELINE'}
+            {activeTab === 'matrix' && 'LEARNED VS MODULAR MATRIX'}
+            {activeTab === 'both' && 'PIPELINE & ARCHITECTURAL MATRIX'}
           </h2>
           <div className="w-16 h-1 bg-[#0693e3] rounded-full" />
           <p className="text-gray-400 text-sm sm:text-base max-w-3xl leading-relaxed">
-            Engineered specifically for the physical constraints of 4K H.264 4:2:2 10-bit CCTV streams, zero-network isolation, and Tesla T4 compute budgets.
+            {activeTab === 'pipeline' &&
+              'Engineered specifically for the physical constraints of 4K H.264 4:2:2 10-bit CCTV streams, zero-network isolation, and Tesla T4 compute budgets.'}
+            {activeTab === 'matrix' &&
+              'Direct quantitative evaluation: why a hybrid modular pipeline strictly beats pure end-to-end 3D architectures on Tesla T4 inference speed, auditability, and false alarm suppression.'}
+            {activeTab === 'both' &&
+              'Comprehensive view of our 6-stage edge processing pipeline alongside the empirical trade-off matrix comparing modular and deep end-to-end paradigms.'}
           </p>
 
-          {/* Switcher: Pipeline Stages vs Architecture Comparison */}
-          <div className="inline-flex items-center gap-1.5 p-1 rounded-2xl bg-[#0c121e] border border-[#1f2d45] mt-4">
+          {/* Switcher: Pipeline Stages vs Architecture Comparison vs View Both */}
+          <div className="relative z-20 inline-flex items-center gap-1.5 p-1.5 rounded-2xl bg-[#0c121e] border border-[#1f2d45] mt-4 shadow-xl select-none">
             <button
-              onClick={() => setActiveTab('pipeline')}
-              className={`px-4 py-2 rounded-xl text-xs font-mono font-bold uppercase transition cursor-pointer ${
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setActiveTab('pipeline');
+              }}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-mono font-bold uppercase transition-all duration-200 cursor-pointer ${
                 activeTab === 'pipeline'
-                  ? 'bg-[#00e5ff] text-[#080c14] shadow font-extrabold'
-                  : 'text-gray-400 hover:text-white'
+                  ? 'bg-[#00e5ff] text-[#080c14] font-black shadow-lg shadow-[#00e5ff]/25 scale-[1.02]'
+                  : 'text-gray-400 hover:text-white hover:bg-white/5'
               }`}
             >
-              Pipeline Stages (01–06)
+              <Layers className="w-3.5 h-3.5" />
+              <span>Pipeline Stages (01–06)</span>
             </button>
+
             <button
-              onClick={() => setActiveTab('matrix')}
-              className={`px-4 py-2 rounded-xl text-xs font-mono font-bold uppercase transition cursor-pointer ${
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setActiveTab('matrix');
+              }}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-mono font-bold uppercase transition-all duration-200 cursor-pointer ${
                 activeTab === 'matrix'
-                  ? 'bg-[#00e5ff] text-[#080c14] shadow font-extrabold'
-                  : 'text-gray-400 hover:text-white'
+                  ? 'bg-[#00e5ff] text-[#080c14] font-black shadow-lg shadow-[#00e5ff]/25 scale-[1.02]'
+                  : 'text-gray-400 hover:text-white hover:bg-white/5'
               }`}
             >
-              Learned vs Modular Matrix
+              <GitBranch className="w-3.5 h-3.5" />
+              <span>Learned vs Modular Matrix</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setActiveTab('both');
+              }}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-mono font-bold uppercase transition-all duration-200 cursor-pointer ${
+                activeTab === 'both'
+                  ? 'bg-[#00e5ff] text-[#080c14] font-black shadow-lg shadow-[#00e5ff]/25 scale-[1.02]'
+                  : 'text-gray-400 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>View Both</span>
             </button>
           </div>
         </div>
 
         {/* Tab 1: 6 Pipeline Stages */}
-        {activeTab === 'pipeline' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {stages.map((st, idx) => {
-              const Icon = st.icon;
-              return (
-                <div
-                  key={idx}
-                  className="rounded-3xl bg-[#0c121e] border border-[#1f2d45] hover:border-[#00e5ff]/50 transition-all duration-300 p-6 sm:p-7 flex flex-col justify-between group shadow-xl relative overflow-hidden"
-                >
-                  <div className="absolute top-0 right-0 w-28 h-28 bg-[#00e5ff]/5 rounded-bl-full pointer-events-none group-hover:bg-[#00e5ff]/10 transition-colors" />
+        {showPipeline && (
+          <div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {stages.map((st, idx) => {
+                const Icon = st.icon;
+                return (
+                  <div
+                    key={idx}
+                    className="rounded-3xl bg-[#0c121e] border border-[#1f2d45] hover:border-[#00e5ff]/50 transition-all duration-300 p-6 sm:p-7 flex flex-col justify-between group shadow-xl relative overflow-hidden"
+                  >
+                    <div className="absolute top-0 right-0 w-28 h-28 bg-[#00e5ff]/5 rounded-bl-full pointer-events-none group-hover:bg-[#00e5ff]/10 transition-colors" />
 
-                  <div>
-                    {/* Header */}
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#121a2a] border border-[#1f2d45] text-[11px] font-mono font-semibold text-[#00e5ff]">
-                        <Icon className="w-3.5 h-3.5" />
-                        <span>{st.layer}</span>
-                      </div>
-                      <span className="text-xl font-mono font-black text-gray-600 group-hover:text-[#00e5ff] transition-colors">
-                        {st.num}
-                      </span>
-                    </div>
-
-                    <h3 className="text-lg font-bold text-white mb-1 group-hover:text-[#00e5ff] transition-colors">
-                      {st.title}
-                    </h3>
-
-                    <p className="text-xs font-mono text-[#00e5ff] mb-3">
-                      {st.headline}
-                    </p>
-
-                    <p className="text-xs text-gray-300 leading-relaxed mb-6">
-                      {st.description}
-                    </p>
-                  </div>
-
-                  <div>
-                    {/* Metrics Badge */}
-                    <div className="p-2.5 rounded-xl bg-[#121a2a] border border-[#1f2d45] text-xs font-mono text-emerald-400 font-bold mb-4">
-                      ⚡ {st.metrics}
-                    </div>
-
-                    {/* Tags */}
-                    <div className="flex flex-wrap gap-1.5">
-                      {st.tags.map((tag, tIdx) => (
-                        <span
-                          key={tIdx}
-                          className="px-2 py-0.5 rounded text-[10px] font-mono bg-white/5 text-gray-400 border border-white/5"
-                        >
-                          {tag}
+                    <div>
+                      {/* Header */}
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#121a2a] border border-[#1f2d45] text-[11px] font-mono font-semibold text-[#00e5ff]">
+                          <Icon className="w-3.5 h-3.5" />
+                          <span>{st.layer}</span>
+                        </div>
+                        <span className="text-xl font-mono font-black text-gray-600 group-hover:text-[#00e5ff] transition-colors">
+                          {st.num}
                         </span>
-                      ))}
+                      </div>
+
+                      <h3 className="text-lg font-bold text-white mb-1 group-hover:text-[#00e5ff] transition-colors">
+                        {st.title}
+                      </h3>
+
+                      <p className="text-xs font-mono text-[#00e5ff] mb-3">
+                        {st.headline}
+                      </p>
+
+                      <p className="text-xs text-gray-300 leading-relaxed mb-6">
+                        {st.description}
+                      </p>
+                    </div>
+
+                    <div>
+                      {/* Metrics Badge */}
+                      <div className="p-2.5 rounded-xl bg-[#121a2a] border border-[#1f2d45] text-xs font-mono text-emerald-400 font-bold mb-4">
+                        ⚡ {st.metrics}
+                      </div>
+
+                      {/* Tags */}
+                      <div className="flex flex-wrap gap-1.5">
+                        {st.tags.map((tag, tIdx) => (
+                          <span
+                            key={tIdx}
+                            className="px-2 py-0.5 rounded text-[10px] font-mono bg-white/5 text-gray-400 border border-white/5"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   </div>
+                );
+              })}
+            </div>
+
+            {/* Quick jump to Matrix when in pipeline-only view */}
+            {activeTab === 'pipeline' && (
+              <div className="mt-10 p-5 rounded-2xl bg-[#0c121e] border border-[#1f2d45] flex items-center justify-between flex-wrap gap-4 shadow-xl">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-[#00e5ff] text-xs font-mono font-bold uppercase tracking-wider">
+                    <GitBranch className="w-4 h-4" />
+                    <span>Architectural Decision Matrix</span>
+                  </div>
+                  <p className="text-xs text-gray-300">
+                    Why avoid pure end-to-end action recognition (SlowFast / Video Swin) on fixed CCTV?
+                  </p>
                 </div>
-              );
-            })}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab('matrix');
+                    const el = document.getElementById('platform');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#0693e3] to-[#00e5ff] text-[#080c14] font-mono text-xs font-black uppercase tracking-wider hover:opacity-90 transition flex items-center gap-2 cursor-pointer shadow-lg shadow-[#0693e3]/20"
+                >
+                  <span>Compare Learned vs Modular Matrix</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Separator if Both are shown */}
+        {activeTab === 'both' && (
+          <div className="my-14 flex items-center gap-4">
+            <div className="h-px bg-[#1f2d45] flex-1" />
+            <span className="text-xs font-mono uppercase tracking-widest text-[#00e5ff] px-4 py-1 rounded-full bg-[#0c121e] border border-[#1f2d45]">
+              ARCHITECTURAL TRADE-OFF MATRIX
+            </span>
+            <div className="h-px bg-[#1f2d45] flex-1" />
           </div>
         )}
 
         {/* Tab 2: Learned vs Rule-Based Comparison Matrix */}
-        {activeTab === 'matrix' && (
-          <div className="rounded-3xl bg-[#0c121e] border border-[#1f2d45] p-6 sm:p-8 shadow-2xl overflow-hidden">
+        {showMatrix && (
+          <div id="matrix" className="rounded-3xl bg-[#0c121e] border border-[#1f2d45] p-6 sm:p-8 shadow-2xl overflow-hidden scroll-mt-28">
             <div className="max-w-3xl mb-8">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#121a2a] border border-[#1f2d45] text-xs font-mono text-[#00e5ff] font-bold uppercase tracking-wider mb-3">
+                <GitBranch className="w-3.5 h-3.5" />
+                <span>Empirical Benchmark Verification</span>
+              </div>
               <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">
                 Why Hybrid Modular Beats End-to-End Blackbox Models
               </h3>
@@ -276,17 +377,34 @@ export default function PlatformStack() {
               </table>
             </div>
 
-            <div className="mt-8 p-4 rounded-2xl bg-[#121a2a] border border-[#1f2d45] flex items-center justify-between flex-wrap gap-4 text-xs font-mono text-gray-400">
-              <span>Scientific Foundation: WestCV v1.0.0 Architecture</span>
-              <a
-                href="https://github.com/AsanAshirov/WestCV"
-                target="_blank"
-                rel="noreferrer"
-                className="text-[#00e5ff] hover:underline flex items-center gap-1"
-              >
-                <span>View Full Implementation on GitHub</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </a>
+            <div className="mt-8 pt-6 border-t border-[#1f2d45] flex items-center justify-between flex-wrap gap-4 text-xs font-mono">
+              {activeTab === 'matrix' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab('pipeline');
+                    const el = document.getElementById('platform');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="px-4 py-2 rounded-xl bg-[#121a2a] border border-[#1f2d45] text-gray-300 hover:text-white text-xs font-mono font-bold uppercase hover:bg-[#182236] transition flex items-center gap-2 cursor-pointer"
+                >
+                  <RotateCcw className="w-3.5 h-3.5 text-[#00e5ff]" />
+                  <span>Return to 6 Pipeline Stages</span>
+                </button>
+              )}
+
+              <div className="flex items-center gap-4 ml-auto">
+                <span className="text-gray-400">Scientific Foundation: WestCV Architecture</span>
+                <a
+                  href="https://github.com/AsanAshirov/WestCV"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[#00e5ff] hover:underline flex items-center gap-1 font-bold"
+                >
+                  <span>View Repository on GitHub</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </a>
+              </div>
             </div>
           </div>
         )}

@@ -30,9 +30,9 @@ export default function Navbar() {
       title: 'APPROACH',
       href: '#platform',
       children: [
-        { label: 'Pipeline Architecture', href: '#platform', desc: 'Detector, Tracker, and Rule Engine' },
-        { label: 'Object Tracking', href: '#platform', desc: 'ByteTrack spatial-temporal association' },
-        { label: 'Risk Estimator', href: '#mantara', desc: 'Causal step() frame evaluation' },
+        { label: 'Pipeline Architecture (01–06)', href: '#platform', desc: 'Detector, Tracker, and Rule Engine' },
+        { label: 'Learned vs Modular Matrix', href: '#matrix', desc: 'Why hybrid modular beats 3D CNNs' },
+        { label: 'Risk Estimator (H = 5.0s)', href: '#mantara', desc: 'Causal step() frame evaluation' },
       ]
     },
     {
@@ -270,8 +270,16 @@ export default function Navbar() {
                 onClick={() => setSearchOpen(false)}
                 className="flex items-center justify-between p-2 rounded-lg hover:bg-[#182236] transition"
               >
-                <span>4-Layer Edge Architecture &amp; ByteTrack</span>
-                <span className="text-[#00e5ff]">Approach</span>
+                <span>6-Stage Pipeline &amp; Edge Architecture</span>
+                <span className="text-[#00e5ff]">Pipeline</span>
+              </a>
+              <a
+                href="#matrix"
+                onClick={() => setSearchOpen(false)}
+                className="flex items-center justify-between p-2 rounded-lg hover:bg-[#182236] transition"
+              >
+                <span>Learned vs Modular Matrix (Benchmark)</span>
+                <span className="text-[#00e5ff]">Matrix</span>
               </a>
               <a
                 href="#academic"
