@@ -38,7 +38,7 @@ function GithubIcon({ className = "w-4 h-4" }) {
 }
 
 export default function EngineeringReport() {
-  const [activeTab, setActiveTab] = useState('summary'); // 'summary' | 'ablations' | 'metrics' | 'failures'
+  const [activeTab, setActiveTab] = useState('failures'); // 'failures' | 'ablations' | 'metrics' | 'summary'
   const [selectedFailureModal, setSelectedFailureModal] = useState(null);
   const [activeCliTab, setActiveCliTab] = useState('docker');
   const [copiedCli, setCopiedCli] = useState(false);
@@ -320,14 +320,14 @@ export default function EngineeringReport() {
         {/* Tab Switcher */}
         <div className="flex items-center justify-center gap-2 mb-10 overflow-x-auto pb-2">
           <button
-            onClick={() => setActiveTab('summary')}
+            onClick={() => setActiveTab('failures')}
             className={`px-4 py-2 rounded-xl text-xs font-mono font-bold uppercase transition cursor-pointer whitespace-nowrap ${
-              activeTab === 'summary'
+              activeTab === 'failures'
                 ? 'bg-[#00e5ff] text-[#080c14] shadow font-extrabold'
                 : 'bg-[#0c121e] text-gray-400 hover:text-white border border-[#1f2d45]'
             }`}
           >
-            What Worked &amp; What Failed
+            TP vs Honest Failures Gallery ({REAL_EXAMPLES_AND_FAILURES.length})
           </button>
           <button
             onClick={() => setActiveTab('ablations')}
@@ -350,14 +350,14 @@ export default function EngineeringReport() {
             Per-Class Dev Metrics (Score A: 0.338)
           </button>
           <button
-            onClick={() => setActiveTab('failures')}
+            onClick={() => setActiveTab('summary')}
             className={`px-4 py-2 rounded-xl text-xs font-mono font-bold uppercase transition cursor-pointer whitespace-nowrap ${
-              activeTab === 'failures'
+              activeTab === 'summary'
                 ? 'bg-[#00e5ff] text-[#080c14] shadow font-extrabold'
                 : 'bg-[#0c121e] text-gray-400 hover:text-white border border-[#1f2d45]'
             }`}
           >
-            TP vs Honest Failures Gallery ({REAL_EXAMPLES_AND_FAILURES.length})
+            What Worked &amp; What Failed
           </button>
         </div>
 
