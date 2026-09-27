@@ -44,30 +44,29 @@ export default function LiveDemoSection() {
   const sampleVideos = {
     sample1: {
       id: 'sample1',
-      title: 'Cam #04: Crossroad Collision & Red Light',
-      location: 'Central Arterial Junction (1080p @ 25 FPS)',
-      src: '/accident-trimmed.mp4',
-      badge: 'Part A & Part B',
-      badgeColor: 'text-red-400 bg-red-500/10 border-red-500/30',
-      description: 'Severe high-speed broadside collision. Red-light runner breaches stop bar at 68 km/h, triggering anticipatory risk spike 2.1s before impact.',
+      title: 'Cam #01: Official C3905 Full Model Inference',
+      location: 'WestCV Intersection C3905 (1080p @ 25 FPS)',
+      src: '/ft.mp4',
+      badge: 'Official Elimination Demo',
+      badgeColor: 'text-[#00e5ff] bg-[#00e5ff]/10 border-[#00e5ff]/30',
+      description: 'Full end-to-end model pipeline inference on the official benchmark video C3905. Shows burned-in multi-class tracking, road geometry violations (stop-line, crosswalk), traffic signal states, and timeline.',
+      isRealModelVideo: true,
       events: [
-        { time: 2.4, label: 'speeding', track: 'Car #104', conf: 0.94, desc: '68 km/h in 40 km/h zone', type: 'warning' },
-        { time: 5.6, label: 'red_light', track: 'Car #104', conf: 0.98, desc: 'Breached stop-line 1.4s into red phase', type: 'danger' },
-        { time: 7.2, label: 'risk_spike', track: 'Global H=5.0s', conf: 0.91, desc: 'Anticipation Risk R(t) = 0.88, TTC = 1.9s', type: 'critical' },
-        { time: 9.1, label: 'accident', track: 'Car #104 x Sedan #89', conf: 0.96, desc: 'Severe broadside impact, IoU = 0.68', type: 'danger' },
-        { time: 11.5, label: 'obstacle', track: 'Debris #12', conf: 0.88, desc: 'Static wreckage obstructing lanes 2 & 3', type: 'warning' },
+        { time: 1.0, label: 'stopped_vehicle', track: 'White Car #08', conf: 0.98, desc: 'Stationary on carriageway > 10s outside signal queue', type: 'warning' },
+        { time: 6.0, label: 'jaywalking', track: 'Pedestrian #04', conf: 0.95, desc: 'Pedestrian stepped on carriageway outside crosswalk', type: 'danger' },
+        { time: 14.5, label: 'stop_line', track: 'White Sedan #22', conf: 0.97, desc: 'Vehicle stopped past stop line on red signal', type: 'danger' },
+        { time: 31.0, label: 'failure_to_yield', track: 'Minivan #09', conf: 0.92, desc: 'Vehicle passing through crosswalk with active pedestrian', type: 'critical' },
+        { time: 48.0, label: 'solid_line', track: 'Car #17', conf: 0.94, desc: 'Vehicle crossed continuous solid line before stop bar', type: 'warning' },
+        { time: 72.0, label: 'red_light', track: 'Taxi #31', conf: 0.99, desc: 'Breached stop-line and crossed intersection on RED signal', type: 'critical' },
+        { time: 85.0, label: 'congestion', track: 'Approach 1 Lanes', conf: 0.93, desc: 'Dense queue stationary > 20s across direction', type: 'warning' },
       ],
       getRisk: (t) => {
-        if (t < 4.0) return 0.15 + (t / 4.0) * 0.1;
-        if (t < 7.0) return 0.25 + ((t - 4.0) / 3.0) * 0.45;
-        if (t < 9.5) return 0.70 + ((t - 7.0) / 2.5) * 0.29; // Spike to 0.99
-        return Math.max(0.65, 0.99 - (t - 9.5) * 0.05);
+        if (t < 25.0) return 0.20 + (t / 25.0) * 0.15;
+        if (t < 40.0) return 0.35 + ((t - 25.0) / 15.0) * 0.45;
+        if (t < 75.0) return 0.30 + ((t - 40.0) / 35.0) * 0.55;
+        return 0.35;
       },
-      boundingBoxes: [
-        { start: 0, end: 14, x: 22, y: 35, w: 26, h: 28, label: 'Car #104', speed: '68 km/h', color: '#ff3366' },
-        { start: 3, end: 14, x: 55, y: 48, w: 24, h: 25, label: 'Sedan #89', speed: '34 km/h', color: '#00e5ff' },
-        { start: 0, end: 14, x: 12, y: 70, w: 22, h: 22, label: 'Bus #03', speed: '21 km/h', color: '#00d084' },
-      ]
+      boundingBoxes: null
     },
     sample2: {
       id: 'sample2',
@@ -240,7 +239,7 @@ export default function LiveDemoSection() {
     setIsPlaying(false);
     if (videoRef.current) {
       videoRef.current.currentTime = 0;
-      videoRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
+      videoRef.current.pause();
     }
   };
 
@@ -286,8 +285,8 @@ export default function LiveDemoSection() {
                   : 'bg-[#182236] text-gray-300 hover:text-white hover:bg-[#202d46] border border-transparent'
               }`}
             >
-              <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
-              Sample 1: Collision &amp; Red Light
+              <span className="w-2 h-2 rounded-full bg-[#00e5ff] animate-pulse" />
+              Official Demo: C3905 Full Inference
             </button>
 
             <button
@@ -486,15 +485,23 @@ export default function LiveDemoSection() {
                 </div>
               )}
 
-              {/* Center Play Button Overlay on Pause */}
+              {/* Center "Продолжить" Button Overlay on Pause */}
               {!isPlaying && (
-                <button
-                  onClick={togglePlay}
-                  className="absolute inset-0 m-auto w-16 h-16 rounded-full bg-[#0693e3]/80 hover:bg-[#0693e3] text-white flex items-center justify-center backdrop-blur-sm shadow-2xl transition hover:scale-110 z-20"
-                  aria-label="Play video"
-                >
-                  <Play className="w-7 h-7 fill-white translate-x-0.5" />
-                </button>
+                <div className="absolute inset-0 bg-black/45 backdrop-blur-[2px] flex flex-col items-center justify-center gap-3.5 z-20 transition-all duration-300">
+                  <button
+                    onClick={togglePlay}
+                    className="group inline-flex items-center gap-3 px-8 py-3.5 rounded-2xl bg-gradient-to-r from-[#00e5ff] to-[#0693e3] hover:from-[#00cce6] hover:to-[#0582ca] text-[#080c14] font-black text-sm uppercase tracking-wider shadow-2xl shadow-[#00e5ff]/40 hover:shadow-[#00e5ff]/60 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
+                    aria-label="Продолжить"
+                  >
+                    <div className="w-7 h-7 rounded-full bg-[#080c14] flex items-center justify-center text-[#00e5ff] group-hover:scale-110 transition-transform shadow">
+                      <Play className="w-3.5 h-3.5 fill-current translate-x-0.5" />
+                    </div>
+                    <span className="text-sm tracking-widest font-black text-[#080c14]">ПРОДОЛЖИТЬ</span>
+                  </button>
+                  <p className="text-xs text-gray-300 font-mono tracking-wide px-3 py-1 rounded bg-black/70 border border-white/10 backdrop-blur-sm">
+                    Нажмите «Продолжить», чтобы начать воспроизведение видео
+                  </p>
+                </div>
               )}
 
               {/* Bottom Video Controls Overlay */}
