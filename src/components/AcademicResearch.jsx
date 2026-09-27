@@ -2,23 +2,17 @@ import React, { useState } from 'react';
 import {
   Database,
   Layers,
-  SunMedium,
   AlertTriangle,
   Clock,
   Compass,
   ShieldCheck,
   Check,
-  Copy,
-  Code2,
   Sliders,
   Sparkles,
   Eye,
   Activity,
   ArrowUpRight,
   BarChart2,
-  Sun,
-  Moon,
-  CloudRain,
   Maximize2,
   X,
   ChevronRight,
@@ -33,13 +27,8 @@ export default function AcademicResearch() {
   const [selectedClassIdx, setSelectedClassIdx] = useState(0); // Default to 'failure_to_yield' (most frequent in GT)
   const [classFilter, setClassFilter] = useState('all'); // all, frequent, rare
 
-  // Lighting & Noise Stress-Test State
-  const [lightingMode, setLightingMode] = useState('night'); // day, night, rain
-  const [enableClahe, setEnableClahe] = useState(true);
-
   // SIFT + RANSAC Registration Point Inspector State
   const [homographyAnchor, setHomographyAnchor] = useState('ground'); // ground (bottom-center) vs naive (center)
-  const [copiedCode, setCopiedCode] = useState(false);
 
   // EDA Figures Modal/Active Image State
   const [activeEdaTab, setActiveEdaTab] = useState(0);
@@ -70,39 +59,6 @@ export default function AcademicResearch() {
   });
 
   const selectedClass = classDistribution[selectedClassIdx];
-
-  // Real SIFT + RANSAC Scene Registration & Reference Polygon Schema
-  const registrationSnippet = `# Real Camera Registration Pipeline (WestCV v1.0.0)
-# NOTE: camera.md was NOT provided by organizers!
-# We engineered SIFT + RANSAC matching against a canonical reference view (C3896)
-# to eliminate 50–100 px physical camera drift between day and evening recordings.
-
-class SceneRegistrator:
-    def __init__(self, ref_frame_path="ref_scene_C3896.jpg"):
-        self.sift = cv2.SIFT_create(nfeatures=5000)
-        self.ref_kp, self.ref_des = self.sift.detectAndCompute(ref_img, None)
-        
-    def compute_homography(self, frame_bgr):
-        kp, des = self.sift.detectAndCompute(frame_bgr, None)
-        matches = self.flann.knnMatch(des, self.ref_des, k=2)
-        good = [m for m, n in matches if m.distance < 0.75 * n.distance]
-        # Daytime: 4,133 inliers | Evening (C3905): 338 inliers (sufficient for RANSAC)
-        H, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
-        return H  # Affine/Homography to Canonical Scene Geometry
-
-# Canonical Scene Geometry Polygons (calibrated in CVAT on reference frame):
-CANONICAL_ZONES = {
-    "zebra_1": [(280, 890), (620, 880), (640, 940), (270, 950)],
-    "zebra_3": [(1120, 820), (1480, 815), (1510, 875), (1110, 880)],
-    "stop_line_4": [(320, 785), (780, 780)],
-    "traffic_light_head_7": [(412, 198), (426, 235)] # Pixel ROI for Red/Yellow/Green
-}`;
-
-  const handleCopyCode = () => {
-    navigator.clipboard.writeText(registrationSnippet);
-    setCopiedCode(true);
-    setTimeout(() => setCopiedCode(false), 2000);
-  };
 
   // Real EDA Plots & Charts
   const edaCharts = [
@@ -414,181 +370,6 @@ CANONICAL_ZONES = {
             <div className="mt-4 pt-3 border-t border-[#1f2d45] flex items-center justify-between text-xs font-mono text-gray-400">
               <span>SIFT Inliers (Day / Dusk):</span>
               <span className="text-[#00e5ff] font-bold">4,133 (Noon) / 338 (Dusk)</span>
-            </div>
-          </div>
-
-          {/* ─────────────────────────────────────────────────────────────
-              CARD 3 (Cols 6): Low-Lux Noise & Glare Stress-Test (C3905 43 Lux)
-          ───────────────────────────────────────────────────────────── */}
-          <div className="lg:col-span-6 rounded-3xl bg-[#0c121e] border border-[#1f2d45] p-6 sm:p-8 flex flex-col justify-between shadow-2xl relative overflow-hidden group hover:border-[#00e5ff]/40 transition duration-300">
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <div className="text-xs font-mono font-bold uppercase tracking-wider text-[#00e5ff] flex items-center gap-2">
-                  <SunMedium className="w-4 h-4 text-[#00e5ff]" />
-                  Lighting &amp; Contrast Stress Testing
-                </div>
-                <span className="text-[10px] font-mono text-gray-400 bg-white/5 px-2 py-0.5 rounded border border-white/10">
-                  C3905 Dusk Lux: 43/255
-                </span>
-              </div>
-
-              <h3 className="text-xl font-extrabold text-white mb-2">
-                Dusk Headlight Halos &amp; Low-Lux Shadows
-              </h3>
-
-              <p className="text-xs text-gray-400 leading-relaxed mb-6">
-                In recording C3905 (17:22:21), ambient light drops to 43/255 lux with bright vehicle headlights saturating the camera sensor. Test adaptive CLAHE normalization on detection recall:
-              </p>
-
-              {/* Stress Condition Selectors */}
-              <div className="grid grid-cols-3 gap-2 mb-6">
-                <button
-                  onClick={() => setLightingMode('day')}
-                  className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition ${
-                    lightingMode === 'day'
-                      ? 'bg-[#0693e3]/20 border-[#00e5ff] text-white'
-                      : 'bg-[#121a2a] border-[#1f2d45] text-gray-400 hover:text-white'
-                  }`}
-                >
-                  <Sun className="w-4 h-4 text-yellow-400" />
-                  <span className="text-xs font-bold">C3896 Midday</span>
-                  <span className="text-[10px] font-mono text-gray-500">96 Lux (Sunny)</span>
-                </button>
-
-                <button
-                  onClick={() => setLightingMode('night')}
-                  className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition ${
-                    lightingMode === 'night'
-                      ? 'bg-[#0693e3]/20 border-[#00e5ff] text-white'
-                      : 'bg-[#121a2a] border-[#1f2d45] text-gray-400 hover:text-white'
-                  }`}
-                >
-                  <Moon className="w-4 h-4 text-[#00e5ff]" />
-                  <span className="text-xs font-bold">C3905 Dusk</span>
-                  <span className="text-[10px] font-mono text-gray-500">43 Lux (Halos)</span>
-                </button>
-
-                <button
-                  onClick={() => setLightingMode('rain')}
-                  className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition ${
-                    lightingMode === 'rain'
-                      ? 'bg-[#0693e3]/20 border-[#00e5ff] text-white'
-                      : 'bg-[#121a2a] border-[#1f2d45] text-gray-400 hover:text-white'
-                  }`}
-                >
-                  <CloudRain className="w-4 h-4 text-purple-400" />
-                  <span className="text-xs font-bold">C3902 Sunset</span>
-                  <span className="text-[10px] font-mono text-gray-500">63 Lux (Shadows)</span>
-                </button>
-              </div>
-
-              {/* Simulated Sensor Viewport */}
-              <div
-                className={`relative rounded-2xl p-6 border transition-all duration-300 flex flex-col justify-between aspect-[16/9] overflow-hidden ${
-                  lightingMode === 'night'
-                    ? 'bg-[#04070d] border-blue-900/40'
-                    : lightingMode === 'day'
-                    ? 'bg-gradient-to-br from-[#1e293b] to-[#0f172a] border-yellow-500/30'
-                    : 'bg-[#0a0f1d] border-purple-900/40'
-                }`}
-              >
-                <div
-                  className={`absolute inset-0 pointer-events-none transition-opacity duration-300 ${
-                    enableClahe ? 'opacity-20' : 'opacity-70'
-                  }`}
-                  style={{
-                    background:
-                      lightingMode === 'night'
-                        ? 'radial-gradient(circle at 40% 60%, rgba(255,255,255,0.4) 0%, transparent 40%)'
-                        : 'none',
-                  }}
-                />
-
-                <div className="relative z-10 flex items-center justify-between text-xs font-mono">
-                  <span className="text-gray-300 font-bold uppercase">
-                    Sample Lux: {lightingMode === 'day' ? '96/255' : lightingMode === 'night' ? '43/255' : '63/255'}
-                  </span>
-                  <span
-                    className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                      enableClahe ? 'bg-[#00d084]/20 text-[#00d084]' : 'bg-red-500/20 text-red-400'
-                    }`}
-                  >
-                    {enableClahe ? 'CLAHE EQUALIZED' : 'RAW SATURATED'}
-                  </span>
-                </div>
-
-                <div className="relative z-10 text-center py-2">
-                  <div className="text-2xl font-extrabold text-white font-mono">
-                    {enableClahe ? '97% Person Recall' : '-18% Dark Miss Rate'}
-                  </div>
-                  <div className="text-xs text-gray-300 mt-1">
-                    {enableClahe
-                      ? 'Local adaptive histograms preserve pedestrian contrast against headlight glare'
-                      : 'Headlight halos conceal crossing pedestrian silhouettes on zebra 3'}
-                  </div>
-                </div>
-
-                {/* CLAHE Toggle */}
-                <div className="relative z-10 flex items-center justify-between pt-2 border-t border-white/10">
-                  <span className="text-xs text-gray-300 font-mono">Toggle Adaptive CLAHE</span>
-                  <button
-                    onClick={() => setEnableClahe(!enableClahe)}
-                    className={`px-3 py-1 rounded-lg text-xs font-mono font-bold transition ${
-                      enableClahe ? 'bg-[#00e5ff] text-black shadow' : 'bg-white/10 text-gray-400'
-                    }`}
-                  >
-                    {enableClahe ? 'ENABLED' : 'DISABLED'}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-4 pt-3 border-t border-[#1f2d45] text-xs font-mono text-gray-400 flex items-center justify-between">
-              <span>Driver-in-Vehicle Filter:</span>
-              <span className="text-[#00e5ff]">Eliminates 2.2%–5.6% false pedestrian boxes</span>
-            </div>
-          </div>
-
-          {/* ─────────────────────────────────────────────────────────────
-              CARD 4 (Cols 6): Registration Code & Disjoint Intervals
-          ───────────────────────────────────────────────────────────── */}
-          <div className="lg:col-span-6 rounded-3xl bg-[#0c121e] border border-[#1f2d45] p-6 sm:p-8 flex flex-col justify-between shadow-2xl relative overflow-hidden group hover:border-[#00e5ff]/40 transition duration-300">
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <div className="text-xs font-mono font-bold uppercase tracking-wider text-[#00e5ff] flex items-center gap-2">
-                  <Code2 className="w-4 h-4 text-[#00e5ff]" />
-                  SIFT Registration &amp; Geometry Engine
-                </div>
-
-                <button
-                  onClick={handleCopyCode}
-                  className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#182236] hover:bg-[#22304c] text-gray-300 hover:text-white border border-[#1f2d45] text-xs font-mono transition"
-                >
-                  {copiedCode ? <Check className="w-3.5 h-3.5 text-[#00d084]" /> : <Copy className="w-3.5 h-3.5" />}
-                  <span>{copiedCode ? 'Copied!' : 'Copy Code'}</span>
-                </button>
-              </div>
-
-              <h3 className="text-xl font-extrabold text-white mb-2">
-                Canonical Geometry Transformation
-              </h3>
-
-              <p className="text-xs text-gray-400 leading-relaxed mb-4">
-                Since <code className="text-[#00e5ff]">camera.md</code> was absent, our pipeline computes the SIFT+RANSAC homography matrix $H$ and warps scene polygons onto incoming video frames:
-              </p>
-
-              {/* Code Snippet Box */}
-              <div className="relative rounded-2xl bg-[#080c14] border border-[#1f2d45] p-4 font-mono text-[11px] text-gray-300 overflow-x-auto max-h-[220px]">
-                <pre className="text-cyan-300">{registrationSnippet}</pre>
-              </div>
-            </div>
-
-            {/* Disjoint interval explanation */}
-            <div className="mt-4 p-4 rounded-xl bg-[#121a2a] border border-[#1f2d45] flex items-start gap-3">
-              <Clock className="w-4 h-4 text-[#00e5ff] shrink-0 mt-0.5" />
-              <div className="text-xs text-gray-300">
-                <strong className="text-white font-mono">Disjoint Interval Post-Processing:</strong> Rubric penalizes overlapping predictions for the same class with instant 0.0 IoU. Our pipeline enforces strict 1D temporal NMS, merging contiguous violations before output formatting.
-              </div>
             </div>
           </div>
         </div>
