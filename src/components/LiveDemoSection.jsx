@@ -307,49 +307,86 @@ export default function LiveDemoSection() {
     setUploadError('');
     setUploadedFileName(fileName);
     setIsProcessing(true);
-    setProcessingProgress(12);
+
+    // ========================================================
+    // STAGE 1: Connecting & Uploading to ZeroGPU (0% -> 100%)
+    // ========================================================
     setProcessingStep(1);
+    setProcessingProgress(0);
 
-    // Dynamic, smooth progress ticker that never freezes at 88%
-    let simulatedProgress = 12;
-    const interval = setInterval(() => {
-      if (simulatedProgress < 40) {
-        simulatedProgress += 3;
-        setProcessingStep(1);
-      } else if (simulatedProgress < 75) {
-        simulatedProgress += 2;
-        setProcessingStep(2);
-      } else if (simulatedProgress < 94) {
-        simulatedProgress += 1;
-        setProcessingStep(3);
-      }
-      setProcessingProgress(Math.min(94, simulatedProgress));
-    }, 450);
+    let p1 = 0;
+    const ticker1 = setInterval(() => {
+      p1 = Math.min(94, p1 + Math.floor(Math.random() * 8 + 6));
+      setProcessingProgress(p1);
+    }, 140);
 
+    let client = null;
     try {
-      // 1. Connect to Hugging Face ZeroGPU Space
-      const client = await Client.connect(
+      client = await Client.connect(
         HF_SPACE_ID,
         HF_TOKEN ? { token: HF_TOKEN, hf_token: HF_TOKEN } : {}
       );
+    } catch (err) {
+      console.warn('Connect error:', err);
+    }
 
-      setProcessingStep(2);
+    clearInterval(ticker1);
+    setProcessingProgress(100);
+    // Pause so the user sees Step 1 reach 100%
+    await new Promise((r) => setTimeout(r, 320));
 
-      // 2. Predict on ZeroGPU endpoint /analyze with a 45s safety timeout
-      const fileArg = typeof fileToSend === 'string' ? fileToSend : handle_file(fileToSend);
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Inference timeout')), 45000)
-      );
+    // ========================================================
+    // STAGE 2: ZeroGPU Inference (0% -> 100%)
+    // Resets to 0% and transitions to Step 2
+    // ========================================================
+    setProcessingStep(2);
+    setProcessingProgress(0);
+    await new Promise((r) => setTimeout(r, 120));
 
-      const result = await Promise.race([
-        client.predict('/analyze', { video: fileArg }),
-        timeoutPromise,
-      ]);
+    let p2 = 0;
+    const ticker2 = setInterval(() => {
+      if (p2 < 45) p2 += Math.floor(Math.random() * 6 + 5);
+      else if (p2 < 75) p2 += Math.floor(Math.random() * 4 + 3);
+      else if (p2 < 94) p2 += 1;
+      setProcessingProgress(Math.min(94, p2));
+    }, 280);
 
-      clearInterval(interval);
-      setProcessingStep(3);
-      setProcessingProgress(96);
+    let result = null;
+    try {
+      if (client) {
+        const fileArg = typeof fileToSend === 'string' ? fileToSend : handle_file(fileToSend);
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Inference timeout')), 45000)
+        );
+        result = await Promise.race([
+          client.predict('/analyze', { video: fileArg }),
+          timeoutPromise,
+        ]);
+      }
+    } catch (err) {
+      console.warn('ZeroGPU inference error/timeout:', err);
+    }
 
+    clearInterval(ticker2);
+    setProcessingProgress(100);
+    // Pause so the user sees Step 2 reach 100%
+    await new Promise((r) => setTimeout(r, 320));
+
+    // ========================================================
+    // STAGE 3: Timeline & Playback (0% -> 100%)
+    // Resets to 0% and transitions to Step 3
+    // ========================================================
+    setProcessingStep(3);
+    setProcessingProgress(0);
+    await new Promise((r) => setTimeout(r, 120));
+
+    let p3 = 0;
+    const ticker3 = setInterval(() => {
+      p3 = Math.min(94, p3 + Math.floor(Math.random() * 14 + 8));
+      setProcessingProgress(p3);
+    }, 100);
+
+    if (result) {
       const statusText = result?.data?.[0] || '';
       const tableObj = result?.data?.[1];
       const videoObj = result?.data?.[4];
@@ -364,7 +401,6 @@ export default function LiveDemoSection() {
         setInferenceDevice('Hugging Face ZeroGPU');
       }
 
-      // Parse events table
       if (tableObj) {
         let rows = [];
         if (Array.isArray(tableObj)) {
@@ -400,7 +436,6 @@ export default function LiveDemoSection() {
         }
       }
 
-      // Parse JSON output for exact causal risk curve points
       if (jsonObj?.url) {
         try {
           const res = await fetch(jsonObj.url);
@@ -414,35 +449,25 @@ export default function LiveDemoSection() {
         }
       }
 
-      // Final video source: annotated video produced on ZeroGPU with tracks, boxes, and HUD
       const finalVideoUrl = videoObj?.url || localFallbackUrl;
       setUploadedVideoUrl(finalVideoUrl);
-      setProcessingProgress(100);
-
-      setTimeout(() => {
-        setIsProcessing(false);
-        setIsUploadModalOpen(false);
-        setActiveSource('upload');
-        setCurrentTime(0);
-        setTimeout(() => {
-          jumpTo(0);
-        }, 300);
-      }, 350);
-
-    } catch (err) {
-      clearInterval(interval);
-      console.warn('Hugging Face inference error/timeout, falling back smoothly:', err);
+    } else {
       setServerStatus('Edge pipeline executed: ZeroGPU busy/queued, fast fallback preview active.');
       setUploadedVideoUrl(localFallbackUrl);
-      setProcessingProgress(100);
-
-      setTimeout(() => {
-        setIsProcessing(false);
-        setIsUploadModalOpen(false);
-        setActiveSource('upload');
-        setCurrentTime(0);
-      }, 400);
     }
+
+    clearInterval(ticker3);
+    setProcessingProgress(100);
+    // Pause so user sees all 3 complete to 100%
+    await new Promise((r) => setTimeout(r, 450));
+
+    setIsProcessing(false);
+    setIsUploadModalOpen(false);
+    setActiveSource('upload');
+    setCurrentTime(0);
+    setTimeout(() => {
+      jumpTo(0);
+    }, 300);
   };
 
   // Client-side file validation handler
@@ -1278,86 +1303,149 @@ export default function LiveDemoSection() {
         </div>
       )}
 
-      {/* Processing Pipeline Modal with Execution Stepper */}
+      {/* Processing Pipeline Modal with Sequential 0-100% Stepper */}
       {isProcessing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
-          <div className="w-full max-w-md p-6 rounded-3xl bg-[#0c121e] border border-[#00e5ff]/50 shadow-[0_0_50px_rgba(0,229,255,0.3)]">
-            <div className="flex items-center justify-between mb-4">
+          <div className="w-full max-w-lg p-6 rounded-3xl bg-[#0c121e] border border-[#00e5ff]/50 shadow-[0_0_50px_rgba(0,229,255,0.3)]">
+            <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
                 <Cpu className="w-5 h-5 text-[#00e5ff] animate-spin" />
-                <span className="text-sm font-bold text-white uppercase tracking-wider font-mono">
-                  Hugging Face ZeroGPU Inference...
+                <span className="text-xs sm:text-sm font-bold text-white uppercase tracking-wider font-mono">
+                  {processingStep === 1 && 'Step 1/3: Connecting & Uploading'}
+                  {processingStep === 2 && 'Step 2/3: ZeroGPU Inference'}
+                  {processingStep === 3 && 'Step 3/3: Timeline & Playback'}
                 </span>
               </div>
-              <span className="font-mono text-sm text-[#00e5ff] font-bold">{processingProgress}%</span>
+              <span className="font-mono text-base text-[#00e5ff] font-bold">
+                {processingProgress}%
+              </span>
             </div>
 
-            {/* Progress Bar */}
-            <div className="w-full bg-[#182236] h-2 rounded-full overflow-hidden mb-5">
+            {/* Main Progress Bar (resets per step 0% -> 100%) */}
+            <div className="w-full bg-[#182236] h-2.5 rounded-full overflow-hidden mb-5">
               <div
-                className="bg-gradient-to-r from-[#00e5ff] via-[#0693e3] to-[#9b51e0] h-full transition-all duration-100 shadow-[0_0_12px_#00e5ff]"
+                className="bg-gradient-to-r from-[#00e5ff] via-[#0693e3] to-[#9b51e0] h-full transition-all duration-150 ease-out shadow-[0_0_12px_#00e5ff]"
                 style={{ width: `${processingProgress}%` }}
               />
             </div>
 
-            {/* 3-Step Execution Stepper */}
-            <div className="space-y-2.5">
+            {/* 3-Step Execution Stepper with Individual Status Badges */}
+            <div className="space-y-3">
               {/* Step 1 */}
-              <div className={`flex items-center gap-3 p-2.5 rounded-xl border text-xs font-mono transition ${
-                processingStep > 1
-                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
-                  : processingStep === 1
-                  ? 'bg-[#00e5ff]/15 border-[#00e5ff]/40 text-white shadow-sm'
-                  : 'bg-[#080c14] border-white/5 text-gray-500'
-              }`}>
-                <div className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] ${
+              <div
+                className={`p-3 rounded-2xl border text-xs font-mono transition-all ${
                   processingStep > 1
-                    ? 'bg-emerald-500 text-black'
-                    : 'bg-[#00e5ff] text-black animate-pulse'
-                }`}>
-                  {processingStep > 1 ? '✓' : '1'}
+                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                    : processingStep === 1
+                    ? 'bg-[#00e5ff]/15 border-[#00e5ff]/50 text-white shadow-[0_0_15px_rgba(0,229,255,0.15)]'
+                    : 'bg-[#080c14] border-white/5 text-gray-500'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div
+                      className={`w-6 h-6 rounded-full shrink-0 flex items-center justify-center font-bold text-xs ${
+                        processingStep > 1
+                          ? 'bg-emerald-500 text-black shadow-[0_0_10px_rgba(16,185,129,0.5)]'
+                          : processingStep === 1
+                          ? 'bg-[#00e5ff] text-black animate-pulse shadow-[0_0_10px_rgba(0,229,255,0.6)]'
+                          : 'bg-gray-800 text-gray-400'
+                      }`}
+                    >
+                      {processingStep > 1 ? '✓' : '1'}
+                    </div>
+                    <span className="font-semibold truncate">Connecting &amp; Uploading to ZeroGPU</span>
+                  </div>
+                  <span
+                    className={`font-mono text-xs font-bold px-2 py-0.5 rounded-md shrink-0 ${
+                      processingStep > 1
+                        ? 'bg-emerald-500/20 text-emerald-400'
+                        : processingStep === 1
+                        ? 'bg-[#00e5ff]/20 text-[#00e5ff]'
+                        : 'bg-white/5 text-gray-500'
+                    }`}
+                  >
+                    {processingStep > 1 ? '100%' : processingStep === 1 ? `${processingProgress}%` : '0%'}
+                  </span>
                 </div>
-                <span className="font-semibold">Connecting &amp; Uploading to ZeroGPU (NVIDIA RTX)...</span>
               </div>
 
               {/* Step 2 */}
-              <div className={`flex items-center gap-3 p-2.5 rounded-xl border text-xs font-mono transition ${
-                processingStep > 2
-                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
-                  : processingStep === 2
-                  ? 'bg-[#00e5ff]/15 border-[#00e5ff]/40 text-white shadow-sm'
-                  : 'bg-[#080c14] border-white/5 text-gray-500'
-              }`}>
-                <div className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] ${
+              <div
+                className={`p-3 rounded-2xl border text-xs font-mono transition-all ${
                   processingStep > 2
-                    ? 'bg-emerald-500 text-black'
+                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
                     : processingStep === 2
-                    ? 'bg-[#00e5ff] text-black animate-pulse'
-                    : 'bg-gray-800 text-gray-400'
-                }`}>
-                  {processingStep > 2 ? '✓' : '2'}
+                    ? 'bg-[#00e5ff]/15 border-[#00e5ff]/50 text-white shadow-[0_0_15px_rgba(0,229,255,0.15)]'
+                    : 'bg-[#080c14] border-white/5 text-gray-500'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div
+                      className={`w-6 h-6 rounded-full shrink-0 flex items-center justify-center font-bold text-xs ${
+                        processingStep > 2
+                          ? 'bg-emerald-500 text-black shadow-[0_0_10px_rgba(16,185,129,0.5)]'
+                          : processingStep === 2
+                          ? 'bg-[#00e5ff] text-black animate-pulse shadow-[0_0_10px_rgba(0,229,255,0.6)]'
+                          : 'bg-gray-800 text-gray-400'
+                      }`}
+                    >
+                      {processingStep > 2 ? '✓' : '2'}
+                    </div>
+                    <span className="font-semibold truncate">ZeroGPU Inference: YOLO26m + ByteTrack &amp; Risk</span>
+                  </div>
+                  <span
+                    className={`font-mono text-xs font-bold px-2 py-0.5 rounded-md shrink-0 ${
+                      processingStep > 2
+                        ? 'bg-emerald-500/20 text-emerald-400'
+                        : processingStep === 2
+                        ? 'bg-[#00e5ff]/20 text-[#00e5ff]'
+                        : 'bg-white/5 text-gray-500'
+                    }`}
+                  >
+                    {processingStep > 2 ? '100%' : processingStep === 2 ? `${processingProgress}%` : '0%'}
+                  </span>
                 </div>
-                <span className="font-semibold">ZeroGPU Inference: YOLO26m (1280px) + ByteTrack &amp; Risk</span>
               </div>
 
               {/* Step 3 */}
-              <div className={`flex items-center gap-3 p-2.5 rounded-xl border text-xs font-mono transition ${
-                processingProgress >= 100
-                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
-                  : processingStep === 3
-                  ? 'bg-[#00e5ff]/15 border-[#00e5ff]/40 text-white shadow-sm'
-                  : 'bg-[#080c14] border-white/5 text-gray-500'
-              }`}>
-                <div className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] ${
-                  processingProgress >= 100
-                    ? 'bg-emerald-500 text-black'
+              <div
+                className={`p-3 rounded-2xl border text-xs font-mono transition-all ${
+                  processingStep === 3 && processingProgress >= 100
+                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
                     : processingStep === 3
-                    ? 'bg-[#00e5ff] text-black animate-pulse'
-                    : 'bg-gray-800 text-gray-400'
-                }`}>
-                  {processingProgress >= 100 ? '✓' : '3'}
+                    ? 'bg-[#00e5ff]/15 border-[#00e5ff]/50 text-white shadow-[0_0_15px_rgba(0,229,255,0.15)]'
+                    : 'bg-[#080c14] border-white/5 text-gray-500'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div
+                      className={`w-6 h-6 rounded-full shrink-0 flex items-center justify-center font-bold text-xs ${
+                        processingStep === 3 && processingProgress >= 100
+                          ? 'bg-emerald-500 text-black shadow-[0_0_10px_rgba(16,185,129,0.5)]'
+                          : processingStep === 3
+                          ? 'bg-[#00e5ff] text-black animate-pulse shadow-[0_0_10px_rgba(0,229,255,0.6)]'
+                          : 'bg-gray-800 text-gray-400'
+                      }`}
+                    >
+                      {processingStep === 3 && processingProgress >= 100 ? '✓' : '3'}
+                    </div>
+                    <span className="font-semibold truncate">Parsing timeline, risk curve &amp; annotated video</span>
+                  </div>
+                  <span
+                    className={`font-mono text-xs font-bold px-2 py-0.5 rounded-md shrink-0 ${
+                      processingStep === 3 && processingProgress >= 100
+                        ? 'bg-emerald-500/20 text-emerald-400'
+                        : processingStep === 3
+                        ? 'bg-[#00e5ff]/20 text-[#00e5ff]'
+                        : 'bg-white/5 text-gray-500'
+                    }`}
+                  >
+                    {processingStep === 3 && processingProgress >= 100 ? '100%' : processingStep === 3 ? `${processingProgress}%` : '0%'}
+                  </span>
                 </div>
-                <span className="font-semibold">Generating timeline, risk curve &amp; annotated video playback</span>
               </div>
             </div>
           </div>
