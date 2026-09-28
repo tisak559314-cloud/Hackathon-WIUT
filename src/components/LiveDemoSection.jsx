@@ -714,20 +714,7 @@ export default function LiveDemoSection() {
                   </div>
                 )}
 
-                {/* Top-Left Watermark Badge */}
-                <div className="absolute top-5 left-5 z-20 flex flex-col gap-1 pointer-events-none">
-                  <div className="flex items-center gap-2 bg-[#080c14]/85 backdrop-blur-md px-3 py-1 rounded-lg border border-white/15 text-xs font-mono shadow-lg">
-                    <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
-                    <span className="font-bold text-white tracking-wide">
-                      {activeSource === 'upload' ? 'HF ZEROGPU CCTV' : `CCTV ${currentSample.id}`}
-                    </span>
-                    <span className="text-gray-500">|</span>
-                    <span className="text-[#00e5ff] font-semibold">{currentSample.location}</span>
-                  </div>
-                  <div className="text-[10px] font-mono text-gray-400 bg-black/70 backdrop-blur px-2.5 py-0.5 rounded-md border border-white/5 w-max">
-                    {activeSource === 'upload' ? 'MODEL: Azamaka/antigradient-demo (ZeroGPU)' : 'REGISTRATION: SIFT + RANSAC (CALIBRATED TO REF FRAME)'}
-                  </div>
-                </div>
+
 
                 {/* Top-Right Risk Indicator Pill */}
                 <div className="absolute top-5 right-5 z-20 pointer-events-none">
