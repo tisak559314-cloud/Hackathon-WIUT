@@ -80,6 +80,7 @@ export default function LiveDemoSection() {
   // Upload Modal & Pipeline State
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [uploadModalStep, setUploadModalStep] = useState('choose'); // 'choose' | 'upload'
+  const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingProgress, setProcessingProgress] = useState(0);
   const [processingStep, setProcessingStep] = useState(1); // 1: Connect & Upload, 2: ZeroGPU Detect, 3: Timeline & Playback
@@ -127,6 +128,22 @@ export default function LiveDemoSection() {
         setSampleRiskMap((prev) => ({ ...prev, C3905: data }));
       })
       .catch(() => {});
+  }, []);
+
+  // Prevent browser default behavior of opening dropped files in a new tab/window
+  useEffect(() => {
+    const handleGlobalDrag = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    window.addEventListener('dragover', handleGlobalDrag);
+    window.addEventListener('drop', handleGlobalDrag);
+
+    return () => {
+      window.removeEventListener('dragover', handleGlobalDrag);
+      window.removeEventListener('drop', handleGlobalDrag);
+    };
   }, []);
 
   // Active video configuration
@@ -490,9 +507,8 @@ export default function LiveDemoSection() {
     }, 300);
   };
 
-  // Client-side file validation handler
-  const handleFileUpload = (e) => {
-    const file = e.target.files?.[0];
+  // Client-side file validation and pipeline trigger
+  const processUploadedFile = (file) => {
     if (!file) return;
 
     // 1. Validate file extension: only .mp4 allowed
@@ -507,8 +523,49 @@ export default function LiveDemoSection() {
       return;
     }
 
+    setUploadError('');
     const objectUrl = URL.createObjectURL(file);
     executePipelineOnVideo(file, file.name, objectUrl);
+  };
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      processUploadedFile(file);
+    }
+    if (e.target) {
+      e.target.value = '';
+    }
+  };
+
+  // Drag and Drop event handlers
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDragEnter = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.currentTarget.contains(e.relatedTarget)) return;
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = e.dataTransfer?.files;
+    if (files && files.length > 0) {
+      processUploadedFile(files[0]);
+    }
   };
 
   // Test with pre-loaded demo clip (testing.mp4)
@@ -1413,7 +1470,15 @@ export default function LiveDemoSection() {
                 {/* Drag & Drop Upload Zone */}
                 <div
                   onClick={() => fileInputRef.current?.click()}
-                  className="border-2 border-dashed border-[#1f2d45] hover:border-[#00e5ff]/60 rounded-2xl p-6 text-center transition cursor-pointer bg-[#080c14]/50 hover:bg-[#080c14] group mb-4"
+                  onDragOver={handleDragOver}
+                  onDragEnter={handleDragEnter}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  className={`border-2 border-dashed rounded-2xl p-6 text-center transition-all duration-200 cursor-pointer group mb-4 ${
+                    isDragging
+                      ? 'border-[#00e5ff] bg-[#00e5ff]/20 scale-[1.02] shadow-[0_0_35px_rgba(0,229,255,0.45)] ring-2 ring-[#00e5ff]/60'
+                      : 'border-[#1f2d45] hover:border-[#00e5ff]/60 bg-[#080c14]/50 hover:bg-[#080c14]'
+                  }`}
                 >
                   <input
                     ref={fileInputRef}
@@ -1422,10 +1487,18 @@ export default function LiveDemoSection() {
                     onChange={handleFileUpload}
                     className="hidden"
                   />
-                  <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-3 text-gray-400 group-hover:text-[#00e5ff] group-hover:scale-110 transition">
+                  <div
+                    className={`w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3 transition-all duration-200 ${
+                      isDragging
+                        ? 'bg-[#00e5ff] text-black scale-125 shadow-[0_0_20px_#00e5ff]'
+                        : 'bg-white/5 border border-white/10 text-gray-400 group-hover:text-[#00e5ff] group-hover:scale-110'
+                    }`}
+                  >
                     <FileVideo className="w-6 h-6" />
                   </div>
-                  <p className="text-sm font-bold text-white mb-1">Click to select or drag &amp; drop video (.mp4)</p>
+                  <p className={`text-sm font-bold mb-1 transition-colors ${isDragging ? 'text-[#00e5ff]' : 'text-white'}`}>
+                    {isDragging ? 'Drop your .mp4 video here to start!' : 'Click to select or drag & drop video (.mp4)'}
+                  </p>
                   <p className="text-xs text-gray-500 font-mono">Format: MP4 only &bull; Size: up to 120 MB</p>
                 </div>
 
