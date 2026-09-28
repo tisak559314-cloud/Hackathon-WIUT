@@ -449,9 +449,20 @@ export default function LiveDemoSection() {
         }
       }
 
-      const finalVideoUrl = videoObj?.url || localFallbackUrl;
+      const extractVideoUrl = (v) => {
+        if (!v) return null;
+        if (typeof v === 'string') return v;
+        if (v.url) return v.url;
+        if (v.video?.url) return v.video.url;
+        if (v.path && (v.path.startsWith('http://') || v.path.startsWith('https://'))) return v.path;
+        return null;
+      };
+
+      const finalVideoUrl = extractVideoUrl(videoObj) || localFallbackUrl;
+      console.log('[ZeroGPU Pipeline] Finished inference! Setting annotated video URL:', finalVideoUrl);
       setUploadedVideoUrl(finalVideoUrl);
     } else {
+      console.warn('[ZeroGPU Pipeline] Warning: No result from ZeroGPU, using fallback URL.');
       setServerStatus('Edge pipeline executed: ZeroGPU busy/queued, fast fallback preview active.');
       setUploadedVideoUrl(localFallbackUrl);
     }
@@ -467,6 +478,11 @@ export default function LiveDemoSection() {
     setCurrentTime(0);
     setTimeout(() => {
       jumpTo(0);
+      const vid = document.getElementById('player');
+      if (vid) {
+        vid.currentTime = 0;
+        vid.play().catch(() => {});
+      }
     }, 300);
   };
 
