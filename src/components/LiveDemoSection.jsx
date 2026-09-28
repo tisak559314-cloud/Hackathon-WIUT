@@ -25,25 +25,176 @@ import {
   ExternalLink,
   ArrowLeft,
   Zap,
+  RefreshCw,
+  Hourglass,
 } from 'lucide-react';
-import { Client, handle_file } from '@gradio/client';
 import { SAMPLE_VIDEOS, DEFAULT_C3905_EVENTS } from '../data/samplesConfig';
 
+// ---------------------------------------------------------------------------------------------
+// Live upload demo: the REAL WestCV model runs on a public Hugging Face Gradio Space (ZeroGPU).
+// API: "/analyze" (one input "video": .mp4, <= 120 MB, <= 2 min) and "/analyze_sample" (no input: a 30 s
+// clip of the competition camera stored on the Space). Both return six outputs: status markdown, events
+// table, timeline plot, risk plot, annotated video, JSON file ({events, risk: {t, p}, model, timing_sec}).
+// ---------------------------------------------------------------------------------------------
 const HF_SPACE_ID = import.meta.env.VITE_HF_SPACE_ID || 'Azamaka/antigradient-demo';
-const HF_TOKEN = import.meta.env.VITE_HF_TOKEN || undefined;
+const HF_SPACE_PAGE = `https://huggingface.co/spaces/${HF_SPACE_ID}`;
+const HF_SPACE_HOST = `https://${HF_SPACE_ID.toLowerCase().replace(/[/_.]/g, '-')}.hf.space`;
+const HF_STATUS_API = `https://huggingface.co/api/spaces/${HF_SPACE_ID}`;
+// Local testing only: VITE_DEMO_SPACE_URL=http://127.0.0.1:7860/ points the client at `python app.py`.
+const SPACE_CONNECT = import.meta.env.VITE_DEMO_SPACE_URL || HF_SPACE_ID;
+const UPLOAD_MAX_MB = 120; // the Space accepts up to 120 MB (max_file_size="120mb")
+const UPLOAD_MIN_SEC = 3;
+const UPLOAD_MAX_SEC = 120;
+const WAKE_TIMEOUT_MS = 8 * 60 * 1000; // a sleeping Space loads the model again: about a minute
+const WAKE_POLL_MS = 4000;
+// Sample for visitors without a file: stored on the Space and run by name, so nothing is downloaded or
+// uploaded. A Space without that endpoint gets the site's own /testing.mp4 uploaded instead.
+const SAMPLE_ENDPOINT = '/analyze_sample';
+const SAMPLE_LABEL = 'C3905_sample_30s.mp4';
+const SAMPLE_FALLBACK = { url: '/testing.mp4', name: 'testing.mp4' };
 
-const defaultUploadEvents = [
-  { start_sec: 1.5, end_sec: 6.0, label: 'stopped_vehicle', desc: 'Vehicle stationary on carriageway', desc_ru: 'Остановка на проезжей части вне очереди', type: 'warning' },
-  { start_sec: 5.8, end_sec: 9.4, label: 'solid_line_crossing', desc: 'Vehicle crossed white dividing line', desc_ru: 'Пересечение сплошной линии разметки', type: 'warning' },
-  { start_sec: 7.4, end_sec: 11.2, label: 'failure_to_yield', desc: 'Vehicle through zebra during active pedestrian cross', desc_ru: 'Непропуск пешехода на пешеходном переходе', type: 'critical' },
-  { start_sec: 12.0, end_sec: 18.5, label: 'stop_line', desc: 'Vehicle past stop line on red signal', desc_ru: 'Заезд за стоп-линию на красный сигнал', type: 'danger' },
-];
+class DemoError extends Error {
+  constructor(message, kind = 'server') {
+    super(message);
+    this.kind = kind; // 'validation' | 'quota' | 'busy' | 'network' | 'wake' | 'server' | 'cancelled'
+  }
+}
 
-const defaultUploadBoxes = [
-  { start: 0, end: 14, x: 34, y: 44, w: 22, h: 24, label: 'Vehicle #04', speed: '54 km/h', color: '#ffaa00' },
-  { start: 0, end: 14, x: 62, y: 52, w: 20, h: 22, label: 'Van #11', speed: '42 km/h', color: '#00e5ff' },
-  { start: 2, end: 11, x: 22, y: 58, w: 12, h: 26, label: 'Pedestrian #09', speed: '4 km/h', color: '#ff3366' },
-];
+const classifyServerError = (message) => {
+  // Server messages (e.g. ZeroGPU quota) may carry HTML links: show them as plain text.
+  const text = String(message || '').replace(/<[^>]*>/g, '').trim() || 'The model server returned an error.';
+  if (/quota|zerogpu|runs limit/i.test(text)) return new DemoError(text, 'quota');
+  if (/busy|queue is full/i.test(text)) return new DemoError(text, 'busy');
+  if (/too large|exceeds|max(imum)? (allowed )?(file )?size|payload|the limit is|shorter than|only \.mp4|could not read the video|upload an \.mp4/i.test(text)) {
+    return new DemoError(text, 'validation');
+  }
+  if (/failed to fetch|networkerror|network error|connection errored|could not resolve app config|load failed|broken/i.test(text)) {
+    return new DemoError(text, 'network');
+  }
+  return new DemoError(text, 'server');
+};
+
+const ERROR_HINTS = {
+  validation: 'The server rejected this file. Fix it as described and upload again.',
+  quota: 'Hugging Face gives every visitor a limited amount of free GPU time per day. Retry (the server falls back to the CPU), or open the Space on Hugging Face.',
+  busy: 'The model server is busy with other videos. Wait a minute and retry.',
+  network: 'Could not reach the model server. Check your connection and retry.',
+  wake: 'The model server did not come up in time. It may still be starting: retry in a minute.',
+  server: 'Something went wrong on the model server. Retry, or try a shorter / re-encoded H.264 clip.',
+};
+
+const EVENT_TYPE = { red_light: 'critical', failure_to_yield: 'critical', stop_line: 'danger' };
+
+const formatMb = (bytes) => `${(bytes / 2 ** 20).toFixed(1)} MB`;
+
+// Reads the duration from the file's metadata with a hidden <video> element (null if unreadable).
+const readVideoDuration = (file) =>
+  new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const probe = document.createElement('video');
+    let settled = false;
+    const finish = (value) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      probe.removeAttribute('src');
+      probe.load();
+      URL.revokeObjectURL(url);
+      resolve(value);
+    };
+    const timer = setTimeout(() => finish(null), 10000);
+    probe.preload = 'metadata';
+    probe.muted = true;
+    probe.onloadedmetadata = () => finish(Number.isFinite(probe.duration) ? probe.duration : null);
+    probe.onerror = () => finish(null);
+    probe.src = url;
+  });
+
+// Waits until the Space is RUNNING. Requesting the Space's own domain wakes a sleeping Space;
+// the public status API reports the stage while it starts.
+const waitForSpace = async (onStatus, isAlive) => {
+  const startedAt = Date.now();
+  let lastPing = 0;
+  while (isAlive()) {
+    let stage = 'UNKNOWN';
+    try {
+      const res = await fetch(HF_STATUS_API, { cache: 'no-store' });
+      if (res.ok) stage = (await res.json())?.runtime?.stage || 'UNKNOWN';
+    } catch {
+      // The status API is only informative: fall through and try the Space itself.
+    }
+    if (stage === 'RUNNING' || stage === 'RUNNING_BUILDING' || stage === 'UNKNOWN') return;
+    if (stage === 'PAUSED') throw new DemoError('The demo Space is paused by its owner.', 'wake');
+    if (/ERROR/.test(stage)) throw new DemoError(`The demo Space reports ${stage}.`, 'wake');
+    if (Date.now() - lastPing > 30000) {
+      lastPing = Date.now();
+      fetch(HF_SPACE_HOST, { mode: 'no-cors', cache: 'no-store' }).catch(() => {});
+    }
+    const waited = Math.round((Date.now() - startedAt) / 1000);
+    const label = stage === 'SLEEPING' || stage === 'STOPPED' ? 'Waking up the model server' : 'Model server is starting';
+    onStatus(`${label} (${stage.toLowerCase().replace(/_/g, ' ')}, ${waited} s). A cold start loads the model and takes about a minute...`);
+    if (Date.now() - startedAt > WAKE_TIMEOUT_MS) {
+      throw new DemoError(`The model server is still ${stage.toLowerCase()} after ${waited} s.`, 'wake');
+    }
+    await new Promise((r) => setTimeout(r, WAKE_POLL_MS));
+  }
+};
+
+// Uploads a file to the Space's Gradio upload route, the same request @gradio/client's upload() makes, and
+// resolves with the fields of the FileData that /analyze takes. XMLHttpRequest instead of fetch: it reports
+// upload progress, the longest step on a slow connection. `xhrRef` lets Cancel abort the upload.
+const uploadWithProgress = (client, file, onProgress, xhrRef) =>
+  new Promise((resolve, reject) => {
+    const root = String(client?.config?.root || HF_SPACE_HOST).replace(/\/+$/, '');
+    const prefix = client?.api_prefix ?? client?.config?.api_prefix ?? '/gradio_api';
+    const form = new FormData();
+    form.append('files', file, file.name);
+    const xhr = new XMLHttpRequest();
+    xhrRef.current = xhr;
+    xhr.open('POST', `${root}${prefix}/upload`);
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) onProgress(e.loaded, e.total);
+    };
+    xhr.onload = () => {
+      xhrRef.current = null;
+      if (xhr.status === 413) {
+        reject(new DemoError(`The file is too large for the model server (limit ${UPLOAD_MAX_MB} MB).`, 'validation'));
+        return;
+      }
+      if (xhr.status < 200 || xhr.status >= 300) {
+        reject(classifyServerError(`Upload failed (HTTP ${xhr.status}). ${xhr.responseText.slice(0, 200)}`));
+        return;
+      }
+      let path = null;
+      try {
+        [path] = JSON.parse(xhr.responseText);
+      } catch {
+        path = null;
+      }
+      if (typeof path !== 'string') {
+        reject(new DemoError('The model server returned an unexpected upload response.', 'server'));
+        return;
+      }
+      const encoded = path.split('/').map((segment) => encodeURIComponent(segment)).join('/');
+      resolve({
+        path,
+        url: `${root}${prefix}/file=${encoded}`,
+        orig_name: file.name,
+        size: file.size,
+        mime_type: file.type || 'video/mp4',
+        is_stream: false,
+      });
+    };
+    xhr.onerror = () => {
+      xhrRef.current = null;
+      reject(new DemoError('Upload failed: the connection to the model server was lost.', 'network'));
+    };
+    xhr.onabort = () => {
+      xhrRef.current = null;
+      reject(new DemoError('Upload cancelled.', 'cancelled'));
+    };
+    xhr.send(form);
+  });
 
 const getInterpolatedRisk = (points, t) => {
   if (!points || points.length === 0) return 0.25;
@@ -87,14 +238,29 @@ export default function LiveDemoSection() {
   const [uploadError, setUploadError] = useState('');
   const [uploadedVideoUrl, setUploadedVideoUrl] = useState(null);
   const [uploadedFileName, setUploadedFileName] = useState('');
-  const [uploadedEvents, setUploadedEvents] = useState(defaultUploadEvents);
+  const [uploadedEvents, setUploadedEvents] = useState([]);
   const [uploadedRiskPoints, setUploadedRiskPoints] = useState(null);
   const [serverStatus, setServerStatus] = useState('');
   const [inferenceDevice, setInferenceDevice] = useState('');
+  const [uploadedImgsz, setUploadedImgsz] = useState(null);
+  const [processingDetail, setProcessingDetail] = useState('');
+  const [processingFileName, setProcessingFileName] = useState('');
+  const [processingError, setProcessingError] = useState(null); // DemoError
+  const [queueInfo, setQueueInfo] = useState(null); // { position, size, eta } from the Gradio queue
+  const [processingStartedAt, setProcessingStartedAt] = useState(0);
+  const [elapsedSec, setElapsedSec] = useState(0);
 
   const videoRef = useRef(null);
   const playerContainerRef = useRef(null);
   const fileInputRef = useRef(null);
+  const clientRef = useRef(null); // connected @gradio/client, reused between runs
+  const connectRef = useRef(null); // pending connection (started when the upload dialog opens)
+  const hasSampleRef = useRef(null); // does the Space expose SAMPLE_ENDPOINT (null = not checked yet)
+  const jobRef = useRef(null); // the running submission (async iterator with cancel())
+  const uploadXhrRef = useRef(null); // the running upload, for Cancel
+  const runIdRef = useRef(0); // increments on every run / cancel; stale runs stop updating the UI
+  const lastSourceRef = useRef(null); // { kind: 'file', file } | { kind: 'sample' }, for Retry
+  const mountedRef = useRef(true);
 
   // Lazy-load events and risk curve data for selected sample
   useEffect(() => {
@@ -146,6 +312,27 @@ export default function LiveDemoSection() {
     };
   }, []);
 
+  // Elapsed-time clock for the processing modal (real wall time)
+  useEffect(() => {
+    if (!isProcessing || processingError || !processingStartedAt) return undefined;
+    const tick = () => setElapsedSec(Math.round((Date.now() - processingStartedAt) / 1000));
+    tick();
+    const timer = setInterval(tick, 1000);
+    return () => clearInterval(timer);
+  }, [isProcessing, processingError, processingStartedAt]);
+
+  // Leaving the page cancels a running upload / job so it does not block the Space queue
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      runIdRef.current += 1;
+      uploadXhrRef.current?.abort();
+      jobRef.current?.cancel?.().catch(() => {});
+      clientRef.current?.close?.();
+    };
+  }, []);
+
   // Active video configuration
   const currentSample = useMemo(() => {
     if (activeSource === 'upload' && uploadedVideoUrl) {
@@ -164,9 +351,7 @@ export default function LiveDemoSection() {
           if (uploadedRiskPoints && uploadedRiskPoints.length > 0) {
             return getInterpolatedRisk(uploadedRiskPoints, t);
           }
-          if (t < 3.0) return 0.15 + (t / 3.0) * 0.18;
-          if (t < 8.0) return 0.33 + Math.sin((t - 3.0) * 0.65) * 0.48;
-          return 0.22;
+          return 0; // the Space returned no risk curve: show none rather than an invented one
         },
         boundingBoxes: null, // HF Space renders annotated bounding boxes and telemetry natively in the video
       };
@@ -320,195 +505,241 @@ export default function LiveDemoSection() {
     jumpTo(0);
   };
 
-  // Run 3-stage pipeline execution on Hugging Face ZeroGPU:
-  // Step 1: Connecting & Uploading to ZeroGPU (NVIDIA RTX PRO 6000 / A10G)
-  // Step 2: YOLO26m (imgsz 1280) + ByteTrack & Causal Risk inference
-  // Step 3: Generating timeline, risk curve & annotated video playback
-  const executePipelineOnVideo = async (fileToSend, fileName, localFallbackUrl) => {
-    setUploadError('');
-    setUploadedFileName(fileName);
-    setIsProcessing(true);
-
-    // ========================================================
-    // STAGE 1: Connecting & Uploading to ZeroGPU (0% -> 100%)
-    // ========================================================
-    setProcessingStep(1);
-    setProcessingProgress(0);
-
-    let p1 = 0;
-    const ticker1 = setInterval(() => {
-      p1 = Math.min(94, p1 + Math.floor(Math.random() * 8 + 6));
-      setProcessingProgress(p1);
-    }, 140);
-
-    let client = null;
-    try {
-      client = await Client.connect(
-        HF_SPACE_ID,
-        HF_TOKEN ? { token: HF_TOKEN, hf_token: HF_TOKEN } : {}
-      );
-    } catch (err) {
-      console.warn('Connect error:', err);
+  // One connection to the Space, shared by all runs. It starts as soon as the upload dialog opens, so a
+  // sleeping Space wakes up (and the client handshake is done) while the visitor is still choosing a file.
+  const ensureClient = () => {
+    if (clientRef.current) return Promise.resolve(clientRef.current);
+    if (!connectRef.current) {
+      connectRef.current = (async () => {
+        await waitForSpace((message) => {
+          if (mountedRef.current) setProcessingDetail(message);
+        }, () => mountedRef.current);
+        const { Client } = await import('@gradio/client');
+        // The client publishes only "data" events by default: ask for "status" too (queue, progress, errors)
+        const client = await Client.connect(SPACE_CONNECT, { events: ['data', 'status'] });
+        clientRef.current = client;
+        return client;
+      })().finally(() => {
+        connectRef.current = null;
+      });
     }
-
-    clearInterval(ticker1);
-    setProcessingProgress(100);
-    // Pause so the user sees Step 1 reach 100%
-    await new Promise((r) => setTimeout(r, 320));
-
-    // ========================================================
-    // STAGE 2: ZeroGPU Inference (0% -> 100%)
-    // Resets to 0% and transitions to Step 2
-    // ========================================================
-    setProcessingStep(2);
-    setProcessingProgress(0);
-    await new Promise((r) => setTimeout(r, 120));
-
-    let p2 = 0;
-    const ticker2 = setInterval(() => {
-      if (p2 < 45) p2 += Math.floor(Math.random() * 6 + 5);
-      else if (p2 < 75) p2 += Math.floor(Math.random() * 4 + 3);
-      else if (p2 < 94) p2 += 1;
-      setProcessingProgress(Math.min(94, p2));
-    }, 280);
-
-    let result = null;
-    try {
-      if (client) {
-        const fileArg = typeof fileToSend === 'string' ? fileToSend : handle_file(fileToSend);
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Inference timeout')), 45000)
-        );
-        result = await Promise.race([
-          client.predict('/analyze', { video: fileArg }),
-          timeoutPromise,
-        ]);
-      }
-    } catch (err) {
-      console.warn('ZeroGPU inference error/timeout:', err);
-    }
-
-    clearInterval(ticker2);
-    setProcessingProgress(100);
-    // Pause so the user sees Step 2 reach 100%
-    await new Promise((r) => setTimeout(r, 320));
-
-    // ========================================================
-    // STAGE 3: Timeline & Playback (0% -> 100%)
-    // Resets to 0% and transitions to Step 3
-    // ========================================================
-    setProcessingStep(3);
-    setProcessingProgress(0);
-    await new Promise((r) => setTimeout(r, 120));
-
-    let p3 = 0;
-    const ticker3 = setInterval(() => {
-      p3 = Math.min(94, p3 + Math.floor(Math.random() * 14 + 8));
-      setProcessingProgress(p3);
-    }, 100);
-
-    if (result) {
-      const statusText = result?.data?.[0] || '';
-      const tableObj = result?.data?.[1];
-      const videoObj = result?.data?.[4];
-      const jsonObj = result?.data?.[5];
-
-      setServerStatus(statusText);
-      if (statusText.toLowerCase().includes('gpu')) {
-        setInferenceDevice('HF ZeroGPU (NVIDIA RTX PRO 6000 / A10G)');
-      } else if (statusText.toLowerCase().includes('cpu')) {
-        setInferenceDevice('HF CPU Fallback');
-      } else {
-        setInferenceDevice('Hugging Face ZeroGPU');
-      }
-
-      if (tableObj) {
-        let rows = [];
-        if (Array.isArray(tableObj)) {
-          rows = tableObj;
-        } else if (tableObj.data && Array.isArray(tableObj.data)) {
-          rows = tableObj.data;
-        }
-
-        if (rows.length > 0) {
-          const parsedEvents = rows.map((r) => {
-            const start_sec = parseFloat(r[0]);
-            const end_sec = parseFloat(r[1]);
-            const label = String(r[2]);
-            const desc = String(r[3] || '');
-            let type = 'warning';
-            if (label === 'red_light' || label === 'failure_to_yield') {
-              type = 'critical';
-            } else if (label === 'stop_line') {
-              type = 'danger';
-            }
-            return {
-              start_sec: isNaN(start_sec) ? 0 : start_sec,
-              end_sec: isNaN(end_sec) ? 0 : end_sec,
-              label,
-              desc,
-              desc_ru: desc,
-              type,
-            };
-          });
-          setUploadedEvents(parsedEvents);
-        } else {
-          setUploadedEvents([]);
-        }
-      }
-
-      if (jsonObj?.url) {
-        try {
-          const res = await fetch(jsonObj.url);
-          const data = await res.json();
-          if (data?.risk?.t && data?.risk?.p) {
-            const points = data.risk.t.map((t, i) => [t, data.risk.p[i]]);
-            setUploadedRiskPoints(points);
-          }
-        } catch (jsonErr) {
-          console.warn('Could not parse risk json from HF:', jsonErr);
-        }
-      }
-
-      const extractVideoUrl = (v) => {
-        if (!v) return null;
-        if (typeof v === 'string') return v;
-        if (v.url) return v.url;
-        if (v.video?.url) return v.video.url;
-        if (v.path && (v.path.startsWith('http://') || v.path.startsWith('https://'))) return v.path;
-        return null;
-      };
-
-      const finalVideoUrl = extractVideoUrl(videoObj) || localFallbackUrl;
-      console.log('[ZeroGPU Pipeline] Finished inference! Setting annotated video URL:', finalVideoUrl);
-      setUploadedVideoUrl(finalVideoUrl);
-    } else {
-      console.warn('[ZeroGPU Pipeline] Warning: No result from ZeroGPU, using fallback URL.');
-      setServerStatus('Edge pipeline executed: ZeroGPU busy/queued, fast fallback preview active.');
-      setUploadedVideoUrl(localFallbackUrl);
-    }
-
-    clearInterval(ticker3);
-    setProcessingProgress(100);
-    // Pause so user sees all 3 complete to 100%
-    await new Promise((r) => setTimeout(r, 450));
-
-    setIsProcessing(false);
-    setIsUploadModalOpen(false);
-    setActiveSource('upload');
-    setCurrentTime(0);
-    setTimeout(() => {
-      jumpTo(0);
-      const vid = document.getElementById('player');
-      if (vid) {
-        vid.currentTime = 0;
-        vid.play().catch(() => {});
-      }
-    }, 300);
+    return connectRef.current;
   };
 
-  // Client-side file validation and pipeline trigger
-  const processUploadedFile = (file) => {
+  const preconnect = () => {
+    ensureClient().catch(() => {}); // a failure here is reported by the run that needs the connection
+  };
+
+  const resetClient = () => {
+    clientRef.current?.close?.();
+    clientRef.current = null; // reconnect on the next run (the Space may have restarted or been updated)
+    hasSampleRef.current = null;
+  };
+
+  const spaceHasSample = async (client) => {
+    if (hasSampleRef.current === null) {
+      try {
+        const api = await client.view_api();
+        hasSampleRef.current = Boolean(api?.named_endpoints?.[SAMPLE_ENDPOINT]);
+      } catch {
+        hasSampleRef.current = false;
+      }
+    }
+    return hasSampleRef.current;
+  };
+
+  // Runs the REAL model on the Hugging Face Space, in 3 steps with real progress:
+  // Step 1: connect (waking the Space if needed) and upload the file, or name the sample stored on the Space
+  // Step 2: the Space's queue and its own progress messages (YOLO26m + ByteTrack, scene rules, causal risk)
+  // Step 3: events, risk curve and the annotated video from the Space's outputs
+  // source: { kind: 'file', file } | { kind: 'sample' }
+  const runPipeline = async (source) => {
+    const runId = runIdRef.current + 1;
+    runIdRef.current = runId;
+    const isAlive = () => runIdRef.current === runId;
+    const label = source.kind === 'sample' ? SAMPLE_LABEL : source.file.name;
+    lastSourceRef.current = source;
+    jobRef.current = null;
+    setUploadError('');
+    setProcessingError(null);
+    setQueueInfo(null);
+    setProcessingFileName(label);
+    setProcessingStep(1);
+    setProcessingProgress(0);
+    setProcessingDetail('Connecting to the model server on Hugging Face...');
+    setProcessingStartedAt(Date.now());
+    setElapsedSec(0);
+    setIsUploadModalOpen(false);
+    setIsProcessing(true);
+
+    try {
+      // ---- Step 1: connect (0-10 %), then upload (10-100 %)
+      const client = await ensureClient();
+      if (!isAlive()) return;
+      setProcessingProgress(10);
+      const { FileData } = await import('@gradio/client');
+      let job;
+      if (source.kind === 'sample' && (await spaceHasSample(client))) {
+        if (!isAlive()) return;
+        setProcessingProgress(100);
+        setProcessingDetail('The sample clip is stored on the model server: nothing to upload.');
+        job = client.submit(SAMPLE_ENDPOINT, []);
+      } else {
+        let { file } = source;
+        if (source.kind === 'sample') {
+          setProcessingDetail('Loading the sample clip...');
+          const res = await fetch(SAMPLE_FALLBACK.url);
+          if (!res.ok) throw new DemoError(`Could not load the sample clip (HTTP ${res.status}).`, 'network');
+          file = new File([await res.blob()], SAMPLE_FALLBACK.name, { type: 'video/mp4' });
+          if (!isAlive()) return;
+        }
+        const startedAt = Date.now();
+        const uploaded = await uploadWithProgress(
+          client,
+          file,
+          (loaded, total) => {
+            if (!isAlive()) return;
+            const sec = (Date.now() - startedAt) / 1000;
+            const speed = sec > 0.5 ? loaded / sec : 0;
+            const left = speed > 0 ? Math.ceil((total - loaded) / speed) : null;
+            setProcessingProgress(Math.round(10 + 90 * (loaded / total)));
+            setProcessingDetail(
+              `Uploading ${file.name}: ${formatMb(loaded)} of ${formatMb(total)}` +
+                (speed > 0 ? ` (${formatMb(speed)}/s${left !== null ? `, ~${left} s left` : ''})` : '')
+            );
+          },
+          uploadXhrRef
+        );
+        if (!isAlive()) return;
+        setProcessingProgress(100);
+        job = client.submit('/analyze', { video: new FileData(uploaded) });
+      }
+      jobRef.current = job;
+
+      // ---- Step 2: queue and model progress, as reported by the Space
+      setProcessingStep(2);
+      setProcessingProgress(0);
+      setProcessingDetail('Joining the queue...');
+      let outputs = null;
+      for await (const msg of job) {
+        if (!isAlive()) break;
+        if (msg.type === 'data') {
+          outputs = msg.data;
+          continue;
+        }
+        if (msg.type !== 'status') continue;
+        if (msg.stage === 'error') throw classifyServerError(msg.message || msg.title);
+        if (msg.progress_data?.length) {
+          const { desc = '', progress } = msg.progress_data[0];
+          setQueueInfo(null);
+          if (typeof progress === 'number') setProcessingProgress(Math.round(100 * Math.max(0, Math.min(1, progress))));
+          if (desc) setProcessingDetail(desc);
+        } else if (typeof msg.position === 'number') {
+          setQueueInfo({ position: msg.position, size: msg.size, eta: msg.eta });
+          setProcessingDetail(
+            msg.position > 0
+              ? `Waiting in the queue: ${msg.position} video(s) ahead of yours.`
+              : 'Your video is next. Starting the model...'
+          );
+        }
+        if (msg.stage === 'complete') break;
+      }
+      if (!isAlive()) return;
+      if (!outputs) throw new DemoError('The model server finished without returning a result.', 'server');
+
+      // ---- Step 3: events, risk curve and the annotated video
+      setProcessingStep(3);
+      setProcessingProgress(30);
+      setProcessingDetail('Loading the events and the risk curve...');
+      const [statusMd, table, , , videoOut, jsonOut] = outputs;
+      const videoUrl = videoOut?.video?.url || videoOut?.url || null;
+      if (!videoUrl) throw new DemoError('The model server did not return the annotated video.', 'server');
+      let result = null;
+      if (jsonOut?.url) {
+        try {
+          const res = await fetch(jsonOut.url);
+          if (res.ok) result = await res.json();
+        } catch {
+          result = null; // events still come from the table; only the risk curve is missing
+        }
+      }
+      if (!isAlive()) return;
+
+      const rows = Array.isArray(table?.data) ? table.data : Array.isArray(table) ? table : [];
+      const events = rows
+        .map((r) => ({
+          start_sec: Number(r[0]) || 0,
+          end_sec: Number(r[1]) || 0,
+          label: String(r[2]),
+          desc: String(r[3] || ''),
+          desc_ru: String(r[3] || ''),
+          type: EVENT_TYPE[String(r[2])] || 'warning',
+        }))
+        .sort((a, b) => a.start_sec - b.start_sec);
+      const riskT = result?.risk?.t || [];
+      const riskP = result?.risk?.p || [];
+      const riskPoints = riskT
+        .map((t, i) => [Number(t), Number(riskP[i])])
+        .filter(([t, p]) => Number.isFinite(t) && Number.isFinite(p));
+      const device = String(result?.model?.device || '');
+      const onGpu = /^GPU/.test(device) || (!device && /on GPU/i.test(String(statusMd)));
+
+      setServerStatus(typeof statusMd === 'string' ? statusMd : '');
+      setInferenceDevice(onGpu ? 'HF ZeroGPU (NVIDIA RTX PRO 6000)' : 'HF CPU (ZeroGPU fallback)');
+      setUploadedImgsz(result?.model?.imgsz ?? null);
+      setUploadedEvents(events);
+      setUploadedRiskPoints(riskPoints.length ? riskPoints : null);
+      setUploadedVideoUrl(videoUrl);
+      setUploadedFileName(label);
+      setProcessingProgress(100);
+      setIsProcessing(false);
+      setActiveSource('upload');
+      setCurrentTime(0);
+      setTimeout(() => {
+        jumpTo(0);
+        document.getElementById('player')?.play().catch(() => {});
+      }, 300);
+    } catch (err) {
+      if (!isAlive() || err?.kind === 'cancelled') return;
+      resetClient();
+      setProcessingError(err instanceof DemoError ? err : classifyServerError(err?.message || String(err)));
+    } finally {
+      if (runIdRef.current === runId) jobRef.current = null;
+    }
+  };
+
+  const handleCancelProcessing = () => {
+    runIdRef.current += 1;
+    uploadXhrRef.current?.abort();
+    const job = jobRef.current;
+    jobRef.current = null;
+    if (job) {
+      job.cancel?.().catch(() => {});
+      job.return?.();
+    }
+    setIsProcessing(false);
+    setProcessingError(null);
+  };
+
+  const handleRetry = () => {
+    if (lastSourceRef.current) runPipeline(lastSourceRef.current);
+  };
+
+  const openUploadDialog = (step = 'choose') => {
+    setUploadError('');
+    setUploadModalStep(step);
+    setIsUploadModalOpen(true);
+    preconnect();
+  };
+
+  const handleChooseAnotherFile = () => {
+    setIsProcessing(false);
+    setProcessingError(null);
+    openUploadDialog('upload');
+  };
+
+  // Client-side validation (same limits as the server), so a wrong file is not uploaded just to be rejected
+  const processUploadedFile = async (file) => {
     if (!file) return;
 
     // 1. Validate file extension: only .mp4 allowed
@@ -518,14 +749,24 @@ export default function LiveDemoSection() {
     }
 
     // 2. Validate file size: maximum 120 MB
-    if (file.size > 120 * 1024 * 1024) {
-      setUploadError(`File size (${(file.size / (1024 * 1024)).toFixed(1)} MB) exceeds 120 MB limit. Please select a clip ≤ 120 MB (duration ≤ 2 min).`);
+    if (file.size > UPLOAD_MAX_MB * 2 ** 20) {
+      setUploadError(`File size (${formatMb(file.size)}) exceeds the ${UPLOAD_MAX_MB} MB limit. Please select a clip ≤ ${UPLOAD_MAX_MB} MB (duration ≤ 2 min).`);
+      return;
+    }
+
+    // 3. Validate duration: 3 s .. 2 min (null = the browser cannot read it; the server checks it then)
+    const seconds = await readVideoDuration(file);
+    if (seconds !== null && seconds > UPLOAD_MAX_SEC + 1) {
+      setUploadError(`The video is ${seconds.toFixed(0)} s long; the limit is ${UPLOAD_MAX_SEC} s (2 minutes).`);
+      return;
+    }
+    if (seconds !== null && seconds < UPLOAD_MIN_SEC) {
+      setUploadError(`The video is ${seconds.toFixed(1)} s long; please upload a clip of at least ${UPLOAD_MIN_SEC} s.`);
       return;
     }
 
     setUploadError('');
-    const objectUrl = URL.createObjectURL(file);
-    executePipelineOnVideo(file, file.name, objectUrl);
+    runPipeline({ kind: 'file', file });
   };
 
   const handleFileUpload = (e) => {
@@ -568,24 +809,8 @@ export default function LiveDemoSection() {
     }
   };
 
-  // Test with pre-loaded demo clip (testing.mp4)
-  const handleTestWithDemoClip = async () => {
-    try {
-      setUploadError('');
-      setIsProcessing(true);
-      setProcessingProgress(5);
-      setProcessingStep(1);
-
-      const res = await fetch('/testing.mp4');
-      const blob = await res.blob();
-      const file = new File([blob], 'testing.mp4', { type: 'video/mp4' });
-      const objectUrl = URL.createObjectURL(file);
-      executePipelineOnVideo(file, 'testing.mp4', objectUrl);
-    } catch (err) {
-      console.error('Demo clip fetch error:', err);
-      executePipelineOnVideo('/testing.mp4', 'testing.mp4', '/testing.mp4');
-    }
-  };
+  // Sample clip: stored on the Space and run by name (nothing to upload); see SAMPLE_ENDPOINT
+  const handleTestWithDemoClip = () => runPipeline({ kind: 'sample' });
 
   const handleResetToBenchmark = () => {
     setActiveSource('benchmark');
@@ -716,10 +941,8 @@ export default function LiveDemoSection() {
             )}
 
             <button
-              onClick={() => {
-                setUploadModalStep('choose');
-                setIsUploadModalOpen(true);
-              }}
+              onClick={() => openUploadDialog('choose')}
+              onPointerEnter={preconnect}
               className="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider text-[#080c14] bg-gradient-to-r from-[#00e5ff] via-[#0693e3] to-[#00cce6] hover:from-[#00cce6] hover:to-[#0582ca] border border-[#00e5ff]/50 shadow-[0_0_20px_rgba(0,229,255,0.35)] hover:shadow-[0_0_25px_rgba(0,229,255,0.5)] transition-all flex items-center gap-2 cursor-pointer font-sans"
             >
               <UploadCloud className="w-4 h-4 text-[#080c14]" />
@@ -762,7 +985,7 @@ export default function LiveDemoSection() {
                   </span>
                   <span className="text-gray-600 hidden md:inline">|</span>
                   <span className="text-gray-400 hidden md:inline">
-                    {activeSource === 'upload' ? (inferenceDevice ? 'ZeroGPU RTX' : 'TESLA T4 FP16') : 'TESLA T4 FP16'}
+                    {activeSource === 'upload' ? (inferenceDevice.includes('CPU') ? 'HF CPU' : 'ZeroGPU RTX') : 'TESLA T4 FP16'}
                   </span>
                 </div>
               </div>
@@ -1002,7 +1225,7 @@ export default function LiveDemoSection() {
             <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#121a2a]/80 border border-[#1f2d45] backdrop-blur-sm shadow-sm">
               <span className="w-1.5 h-1.5 rounded-full bg-[#00e5ff]" />
               <span className="text-gray-300">Detector:</span>
-              <span className="text-[#00e5ff] font-semibold">{activeSource === 'upload' ? 'YOLO26m (imgsz 1280)' : 'YOLO26m (NMS-free)'}</span>
+              <span className="text-[#00e5ff] font-semibold">{activeSource === 'upload' ? `YOLO26m${uploadedImgsz ? ` (imgsz ${uploadedImgsz})` : ''}` : 'YOLO26m (NMS-free)'}</span>
             </div>
             <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#121a2a]/80 border border-[#1f2d45] backdrop-blur-sm shadow-sm">
               <span className="w-1.5 h-1.5 rounded-full bg-[#0693e3]" />
@@ -1509,7 +1732,7 @@ export default function LiveDemoSection() {
                     onClick={handleTestWithDemoClip}
                     className="text-xs font-bold text-[#00e5ff] hover:underline cursor-pointer"
                   >
-                    Run inference on sample test clip (testing.mp4) &rarr;
+                    Run inference on our 30 s sample clip (competition camera, nothing to upload) &rarr;
                   </button>
                 </div>
 
@@ -1528,14 +1751,27 @@ export default function LiveDemoSection() {
       {/* Processing Pipeline Modal with Sequential 0-100% Stepper */}
       {isProcessing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
-          <div className="w-full max-w-lg p-6 rounded-3xl bg-[#0c121e] border border-[#00e5ff]/50 shadow-[0_0_50px_rgba(0,229,255,0.3)]">
+          <div
+            className={`w-full max-w-lg max-h-[calc(100vh-2rem)] overflow-y-auto p-6 rounded-3xl bg-[#0c121e] border ${
+              processingError
+                ? 'border-red-500/50 shadow-[0_0_50px_rgba(239,68,68,0.2)]'
+                : 'border-[#00e5ff]/50 shadow-[0_0_50px_rgba(0,229,255,0.3)]'
+            }`}
+            role="dialog"
+            aria-live="polite"
+          >
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
-                <Cpu className="w-5 h-5 text-[#00e5ff] animate-spin" />
+                {processingError ? (
+                  <AlertTriangle className="w-5 h-5 text-red-400" />
+                ) : (
+                  <Cpu className="w-5 h-5 text-[#00e5ff] animate-spin" />
+                )}
                 <span className="text-xs sm:text-sm font-bold text-white uppercase tracking-wider font-mono">
-                  {processingStep === 1 && 'Step 1/3: Connecting & Uploading'}
-                  {processingStep === 2 && 'Step 2/3: ZeroGPU Inference'}
-                  {processingStep === 3 && 'Step 3/3: Timeline & Playback'}
+                  {processingError && 'Run failed'}
+                  {!processingError && processingStep === 1 && 'Step 1/3: Connecting & Uploading'}
+                  {!processingError && processingStep === 2 && 'Step 2/3: Model Inference'}
+                  {!processingError && processingStep === 3 && 'Step 3/3: Timeline & Playback'}
                 </span>
               </div>
               <span className="font-mono text-base text-[#00e5ff] font-bold">
@@ -1546,7 +1782,11 @@ export default function LiveDemoSection() {
             {/* Main Progress Bar (resets per step 0% -> 100%) */}
             <div className="w-full bg-[#182236] h-2.5 rounded-full overflow-hidden mb-5">
               <div
-                className="bg-gradient-to-r from-[#00e5ff] via-[#0693e3] to-[#9b51e0] h-full transition-all duration-150 ease-out shadow-[0_0_12px_#00e5ff]"
+                className={`h-full transition-all duration-150 ease-out ${
+                  processingError
+                    ? 'bg-red-500'
+                    : 'bg-gradient-to-r from-[#00e5ff] via-[#0693e3] to-[#9b51e0] shadow-[0_0_12px_#00e5ff]'
+                }`}
                 style={{ width: `${processingProgress}%` }}
               />
             </div>
@@ -1669,6 +1909,84 @@ export default function LiveDemoSection() {
                   </span>
                 </div>
               </div>
+            </div>
+
+            {/* Live message from the model server: upload speed, queue position, pipeline stage */}
+            {!processingError && (
+              <div className="mt-4 p-3 rounded-xl bg-[#080c14] border border-white/5 text-[11px] font-mono text-gray-300 leading-relaxed break-words">
+                <div className="flex items-center justify-between gap-3 mb-1.5 text-gray-500">
+                  <span className="truncate" title={processingFileName}>{processingFileName}</span>
+                  <span className="shrink-0">{elapsedSec} s</span>
+                </div>
+                <span className="text-[#00e5ff] font-bold">&gt; </span>
+                {processingDetail}
+                {queueInfo && queueInfo.position > 0 && (
+                  <div className="mt-1.5 text-amber-300 flex items-center gap-1.5">
+                    <Hourglass className="w-3.5 h-3.5 shrink-0" />
+                    <span>
+                      Queue position {queueInfo.position}
+                      {queueInfo.size ? ` of ${queueInfo.size}` : ''}
+                      {queueInfo.eta ? ` · ~${Math.round(queueInfo.eta)} s estimated` : ''}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {processingError && (
+              <div className="mt-4 p-3 rounded-xl bg-red-500/10 border border-red-500/40 text-xs space-y-2">
+                <p className="text-red-300 font-semibold break-words">{processingError.message}</p>
+                <p className="text-gray-400 leading-relaxed">{ERROR_HINTS[processingError.kind] || ERROR_HINTS.server}</p>
+                {processingError.kind === 'quota' && (
+                  <a
+                    href={HF_SPACE_PAGE}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-[#00e5ff] font-bold hover:underline"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    Open the Space on Hugging Face
+                  </a>
+                )}
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="mt-5 flex flex-wrap items-center justify-end gap-2">
+              {processingError ? (
+                <>
+                  <button
+                    onClick={() => setIsProcessing(false)}
+                    className="px-3.5 py-2 rounded-xl text-xs font-mono font-bold uppercase tracking-wider text-gray-300 bg-white/5 hover:bg-white/10 border border-white/10 transition cursor-pointer"
+                  >
+                    Close
+                  </button>
+                  <button
+                    onClick={handleChooseAnotherFile}
+                    className="px-3.5 py-2 rounded-xl text-xs font-mono font-bold uppercase tracking-wider text-gray-200 bg-white/5 hover:bg-white/10 border border-white/10 transition cursor-pointer flex items-center gap-1.5"
+                  >
+                    <UploadCloud className="w-3.5 h-3.5" />
+                    Another file
+                  </button>
+                  {processingError.kind !== 'validation' && (
+                    <button
+                      onClick={handleRetry}
+                      className="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider text-[#080c14] bg-gradient-to-r from-[#00e5ff] via-[#0693e3] to-[#00cce6] border border-[#00e5ff]/50 shadow-[0_0_20px_rgba(0,229,255,0.35)] transition cursor-pointer flex items-center gap-1.5"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      Retry
+                    </button>
+                  )}
+                </>
+              ) : (
+                <button
+                  onClick={handleCancelProcessing}
+                  className="px-3.5 py-2 rounded-xl text-xs font-mono font-bold uppercase tracking-wider text-gray-300 bg-white/5 hover:bg-white/10 border border-white/10 transition cursor-pointer flex items-center gap-1.5"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  Cancel
+                </button>
+              )}
             </div>
           </div>
         </div>
