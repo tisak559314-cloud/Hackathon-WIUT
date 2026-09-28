@@ -647,7 +647,7 @@ export default function LiveDemoSection() {
             )}
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5">
+          <div className="flex items-center gap-2.5">
             {activeSource === 'upload' && (
               <button
                 onClick={handleResetToBenchmark}
@@ -657,17 +657,6 @@ export default function LiveDemoSection() {
                 <span>Reset</span>
               </button>
             )}
-
-            <a
-              href="https://huggingface.co/spaces/Azamaka/antigradient-demo"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-3.5 py-2 rounded-xl text-xs font-mono font-bold uppercase tracking-wider text-[#00e5ff] bg-[#00e5ff]/10 hover:bg-[#00e5ff]/20 border border-[#00e5ff]/40 shadow-[0_0_15px_rgba(0,229,255,0.15)] hover:shadow-[0_0_20px_rgba(0,229,255,0.35)] transition-all flex items-center gap-1.5 cursor-pointer"
-              title="Open Hugging Face ZeroGPU Space"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-              <span>Hugging Face Space</span>
-            </a>
 
             <button
               onClick={() => {
