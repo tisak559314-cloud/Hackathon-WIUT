@@ -22,6 +22,9 @@ import {
   ChevronRight,
   Clock,
   Sparkles,
+  ExternalLink,
+  ArrowLeft,
+  Zap,
 } from 'lucide-react';
 import { Client, handle_file } from '@gradio/client';
 import { SAMPLE_VIDEOS, DEFAULT_C3905_EVENTS } from '../data/samplesConfig';
@@ -76,6 +79,7 @@ export default function LiveDemoSection() {
 
   // Upload Modal & Pipeline State
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [uploadModalStep, setUploadModalStep] = useState('choose'); // 'choose' | 'upload'
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingProgress, setProcessingProgress] = useState(0);
   const [processingStep, setProcessingStep] = useState(1); // 1: Connect & Upload, 2: ZeroGPU Detect, 3: Timeline & Playback
@@ -643,7 +647,7 @@ export default function LiveDemoSection() {
             )}
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2.5">
             {activeSource === 'upload' && (
               <button
                 onClick={handleResetToBenchmark}
@@ -654,8 +658,22 @@ export default function LiveDemoSection() {
               </button>
             )}
 
+            <a
+              href="https://huggingface.co/spaces/Azamaka/antigradient-demo"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3.5 py-2 rounded-xl text-xs font-mono font-bold uppercase tracking-wider text-[#00e5ff] bg-[#00e5ff]/10 hover:bg-[#00e5ff]/20 border border-[#00e5ff]/40 shadow-[0_0_15px_rgba(0,229,255,0.15)] hover:shadow-[0_0_20px_rgba(0,229,255,0.35)] transition-all flex items-center gap-1.5 cursor-pointer"
+              title="Open Hugging Face ZeroGPU Space"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              <span>Hugging Face Space</span>
+            </a>
+
             <button
-              onClick={() => setIsUploadModalOpen(true)}
+              onClick={() => {
+                setUploadModalStep('choose');
+                setIsUploadModalOpen(true);
+              }}
               className="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider text-[#080c14] bg-gradient-to-r from-[#00e5ff] via-[#0693e3] to-[#00cce6] hover:from-[#00cce6] hover:to-[#0582ca] border border-[#00e5ff]/50 shadow-[0_0_20px_rgba(0,229,255,0.35)] hover:shadow-[0_0_25px_rgba(0,229,255,0.5)] transition-all flex items-center gap-2 cursor-pointer font-sans"
             >
               <UploadCloud className="w-4 h-4 text-[#080c14]" />
@@ -1242,77 +1260,203 @@ export default function LiveDemoSection() {
         </div>
       </div>
 
-      {/* Upload Custom Video Modal */}
+      {/* Upload Custom Video Modal with 2 Testing Options */}
       {isUploadModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-          <div className="relative w-full max-w-lg rounded-3xl bg-[#0c121e] border border-[#00e5ff]/40 p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between pb-4 border-b border-[#1f2d45] mb-5">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-[#00e5ff]/10 text-[#00e5ff] border border-[#00e5ff]/30">
-                  <UploadCloud className="w-5 h-5" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+          <div className="relative w-full max-w-xl rounded-3xl bg-[#0c121e] border border-[#00e5ff]/40 p-6 sm:p-7 shadow-[0_0_50px_rgba(0,229,255,0.25)] animate-in fade-in zoom-in-95 duration-200">
+            {uploadModalStep === 'choose' ? (
+              <div>
+                {/* Modal Header */}
+                <div className="flex items-center justify-between pb-4 border-b border-[#1f2d45] mb-5">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-[#00e5ff]/10 text-[#00e5ff] border border-[#00e5ff]/30">
+                      <Cpu className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-base sm:text-lg font-extrabold text-white tracking-tight">
+                        Выберите вариант тестирования модели
+                      </h3>
+                      <p className="text-xs text-gray-400 font-mono">
+                        Hugging Face ZeroGPU Inference • YOLO26m + ByteTrack
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setIsUploadModalOpen(false)}
+                    className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
-                <div>
-                  <h3 className="text-base font-extrabold text-white uppercase tracking-tight">
-                    Upload Custom CCTV Video
-                  </h3>
-                  <p className="text-xs text-gray-400">
-                    Live client-side validation &amp; edge pipeline processing
-                  </p>
+
+                <p className="text-xs text-gray-300 leading-relaxed mb-5">
+                  Модель развернута на GPU-сервере Hugging Face. Выберите удобный для вас способ инференса:
+                </p>
+
+                {/* 2 Options Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+                  {/* Option 1: Stay on Website */}
+                  <div
+                    onClick={() => setUploadModalStep('upload')}
+                    className="group relative p-5 rounded-2xl bg-[#080c14]/90 border border-white/10 hover:border-[#00e5ff]/70 hover:bg-[#080c14] transition-all duration-200 cursor-pointer flex flex-col justify-between shadow-lg hover:shadow-[0_0_25px_rgba(0,229,255,0.2)]"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="w-9 h-9 rounded-xl bg-white/5 group-hover:bg-[#00e5ff]/15 text-gray-300 group-hover:text-[#00e5ff] flex items-center justify-center transition border border-white/10 group-hover:border-[#00e5ff]/40">
+                          <Video className="w-5 h-5" />
+                        </div>
+                        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-white/5 text-gray-400 group-hover:text-[#00e5ff] group-hover:bg-[#00e5ff]/10 border border-white/10 group-hover:border-[#00e5ff]/20">
+                          WEB PLAYER
+                        </span>
+                      </div>
+                      <h4 className="text-sm font-bold text-white group-hover:text-[#00e5ff] transition mb-1.5">
+                        Остаться на сайте
+                      </h4>
+                      <p className="text-xs text-gray-400 leading-relaxed mb-3">
+                        Инференс запускается прямо в интерактивном HUD-плеере сайта с таймлайном и кривой риска.
+                      </p>
+                    </div>
+
+                    <div>
+                      <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-300 mb-3 font-mono flex items-start gap-1.5">
+                        <Clock className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                        <span>
+                          <strong>Время ожидания:</strong> загрузка и очередь ZeroGPU могут занять <strong>15–45 сек</strong>.
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        className="w-full py-2 px-3 rounded-xl bg-[#00e5ff]/15 group-hover:bg-[#00e5ff] text-[#00e5ff] group-hover:text-[#080c14] text-xs font-bold font-mono transition-all text-center border border-[#00e5ff]/40 flex items-center justify-center gap-1.5"
+                      >
+                        <span>Загрузить на сайт</span>
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Option 2: Test on Hugging Face */}
+                  <a
+                    href="https://huggingface.co/spaces/Azamaka/antigradient-demo"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setIsUploadModalOpen(false)}
+                    className="group relative p-5 rounded-2xl bg-gradient-to-b from-[#00e5ff]/10 to-[#080c14] border border-[#00e5ff]/40 hover:border-[#00e5ff] transition-all duration-200 cursor-pointer flex flex-col justify-between shadow-lg hover:shadow-[0_0_30px_rgba(0,229,255,0.35)]"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="w-9 h-9 rounded-xl bg-[#00e5ff]/20 text-[#00e5ff] flex items-center justify-center transition border border-[#00e5ff]/40 group-hover:scale-110">
+                          <Sparkles className="w-5 h-5" />
+                        </div>
+                        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                          RECOMMENDED
+                        </span>
+                      </div>
+                      <h4 className="text-sm font-bold text-white group-hover:text-[#00e5ff] transition mb-1.5 flex items-center gap-1.5">
+                        <span>Перейти на Hugging Face</span>
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </h4>
+                      <p className="text-xs text-gray-300 leading-relaxed mb-3">
+                        Прямой веб-интерфейс модели на сервере Hugging Face с выделенным GPU <strong>NVIDIA RTX PRO 6000</strong>.
+                      </p>
+                    </div>
+
+                    <div>
+                      <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-[11px] text-emerald-300 mb-3 font-mono flex items-start gap-1.5">
+                        <Zap className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                        <span>
+                          <strong>Быстрый инференс:</strong> прямой Gradio UI, визуальный статус очереди и прямой доступ.
+                        </span>
+                      </div>
+                      <div className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-[#00e5ff] to-[#0693e3] text-[#080c14] text-xs font-bold font-mono transition-all text-center shadow-md flex items-center justify-center gap-1.5">
+                        <span>Открыть Hugging Face</span>
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </div>
+                    </div>
+                  </a>
+                </div>
+
+                <div className="pt-2 text-center border-t border-white/5">
+                  <span className="text-xs text-gray-500 font-mono">
+                    Space ID: Azamaka/antigradient-demo • ZeroGPU Cluster
+                  </span>
                 </div>
               </div>
-              <button
-                onClick={() => setIsUploadModalOpen(false)}
-                className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+            ) : (
+              <div>
+                {/* Header with Back button */}
+                <div className="flex items-center justify-between pb-4 border-b border-[#1f2d45] mb-5">
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setUploadModalStep('choose')}
+                      className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white transition cursor-pointer flex items-center gap-1 text-xs font-mono"
+                      title="Назад к выбору"
+                    >
+                      <ArrowLeft className="w-4 h-4" />
+                      <span>Назад</span>
+                    </button>
+                    <div>
+                      <h3 className="text-base font-extrabold text-white uppercase tracking-tight">
+                        Загрузка видео на сайт
+                      </h3>
+                      <p className="text-xs text-gray-400">
+                        Инференс через ZeroGPU API прямо в плеер
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setIsUploadModalOpen(false)}
+                    className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
 
-            {/* Validation Badges (Required by Step 3 guidelines) */}
-            <div className="flex flex-wrap items-center gap-2 mb-4">
-              <div className="px-3 py-1 rounded-lg bg-[#00e5ff]/10 border border-[#00e5ff]/30 text-[11px] font-mono font-bold text-[#00e5ff] flex items-center gap-1.5">
-                <span>⏱️ Duration Limit: up to 2 min (Hackathon Rules)</span>
-              </div>
-              <div className="px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-[11px] font-mono text-gray-300 flex items-center gap-1.5">
-                <span>📦 Size Limit: up to 120 MB (.mp4)</span>
-              </div>
-            </div>
+                {/* Validation Badges */}
+                <div className="flex flex-wrap items-center gap-2 mb-4">
+                  <div className="px-3 py-1 rounded-lg bg-[#00e5ff]/10 border border-[#00e5ff]/30 text-[11px] font-mono font-bold text-[#00e5ff] flex items-center gap-1.5">
+                    <span>⏱️ Duration Limit: up to 2 min</span>
+                  </div>
+                  <div className="px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-[11px] font-mono text-gray-300 flex items-center gap-1.5">
+                    <span>📦 Size Limit: up to 120 MB (.mp4)</span>
+                  </div>
+                </div>
 
-            {/* Drag & Drop Upload Zone */}
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-[#1f2d45] hover:border-[#00e5ff]/60 rounded-2xl p-6 text-center transition cursor-pointer bg-[#080c14]/50 hover:bg-[#080c14] group mb-4"
-            >
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="video/mp4"
-                onChange={handleFileUpload}
-                className="hidden"
-              />
-              <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-3 text-gray-400 group-hover:text-[#00e5ff] group-hover:scale-110 transition">
-                <FileVideo className="w-6 h-6" />
-              </div>
-              <p className="text-sm font-bold text-white mb-1">Click to select or drag &amp; drop video (.mp4)</p>
-              <p className="text-xs text-gray-500 font-mono">Format: MP4 only &bull; Size: up to 120 MB</p>
-            </div>
+                {/* Drag & Drop Upload Zone */}
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="border-2 border-dashed border-[#1f2d45] hover:border-[#00e5ff]/60 rounded-2xl p-6 text-center transition cursor-pointer bg-[#080c14]/50 hover:bg-[#080c14] group mb-4"
+                >
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="video/mp4"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                  <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-3 text-gray-400 group-hover:text-[#00e5ff] group-hover:scale-110 transition">
+                    <FileVideo className="w-6 h-6" />
+                  </div>
+                  <p className="text-sm font-bold text-white mb-1">Нажмите для выбора или перетащите .mp4 видео</p>
+                  <p className="text-xs text-gray-500 font-mono">Формат: только MP4 &bull; Размер: до 120 МБ</p>
+                </div>
 
-            {/* Pre-Loaded Sample Quick Button (Guarantees zero-failure jury testing) */}
-            <div className="pt-2 pb-4 text-center">
-              <span className="text-xs text-gray-500">Don&apos;t have an MP4 file handy? </span>
-              <button
-                onClick={handleTestWithDemoClip}
-                className="text-xs font-bold text-[#00e5ff] hover:underline cursor-pointer"
-              >
-                Run inference on sample test clip &rarr;
-              </button>
-            </div>
+                {/* Pre-Loaded Sample Quick Button */}
+                <div className="pt-1 pb-3 text-center">
+                  <span className="text-xs text-gray-500">Нет подходящего MP4 файла? </span>
+                  <button
+                    onClick={handleTestWithDemoClip}
+                    className="text-xs font-bold text-[#00e5ff] hover:underline cursor-pointer"
+                  >
+                    Запустить тест на образце testing.mp4 &rarr;
+                  </button>
+                </div>
 
-            {uploadError && (
-              <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/40 text-red-400 text-xs flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 shrink-0" />
-                <span>{uploadError}</span>
+                {uploadError && (
+                  <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/40 text-red-400 text-xs flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 shrink-0" />
+                    <span>{uploadError}</span>
+                  </div>
+                )}
               </div>
             )}
           </div>
