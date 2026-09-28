@@ -307,20 +307,24 @@ export default function LiveDemoSection() {
     setUploadError('');
     setUploadedFileName(fileName);
     setIsProcessing(true);
-    setProcessingProgress(10);
+    setProcessingProgress(12);
     setProcessingStep(1);
 
-    // Incremental progress ticker while awaiting network + ZeroGPU inference
-    let simulatedProgress = 10;
+    // Dynamic, smooth progress ticker that never freezes at 88%
+    let simulatedProgress = 12;
     const interval = setInterval(() => {
-      simulatedProgress = Math.min(88, simulatedProgress + Math.floor(Math.random() * 3 + 2));
-      setProcessingProgress(simulatedProgress);
-      if (simulatedProgress >= 30 && simulatedProgress < 75) {
+      if (simulatedProgress < 40) {
+        simulatedProgress += 3;
+        setProcessingStep(1);
+      } else if (simulatedProgress < 75) {
+        simulatedProgress += 2;
         setProcessingStep(2);
-      } else if (simulatedProgress >= 75) {
+      } else if (simulatedProgress < 94) {
+        simulatedProgress += 1;
         setProcessingStep(3);
       }
-    }, 400);
+      setProcessingProgress(Math.min(94, simulatedProgress));
+    }, 450);
 
     try {
       // 1. Connect to Hugging Face ZeroGPU Space
@@ -331,15 +335,20 @@ export default function LiveDemoSection() {
 
       setProcessingStep(2);
 
-      // 2. Predict on ZeroGPU endpoint /analyze
+      // 2. Predict on ZeroGPU endpoint /analyze with a 45s safety timeout
       const fileArg = typeof fileToSend === 'string' ? fileToSend : handle_file(fileToSend);
-      const result = await client.predict('/analyze', {
-        video: fileArg,
-      });
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Inference timeout')), 45000)
+      );
+
+      const result = await Promise.race([
+        client.predict('/analyze', { video: fileArg }),
+        timeoutPromise,
+      ]);
 
       clearInterval(interval);
       setProcessingStep(3);
-      setProcessingProgress(92);
+      setProcessingProgress(96);
 
       const statusText = result?.data?.[0] || '';
       const tableObj = result?.data?.[1];
@@ -418,12 +427,12 @@ export default function LiveDemoSection() {
         setTimeout(() => {
           jumpTo(0);
         }, 300);
-      }, 400);
+      }, 350);
 
     } catch (err) {
       clearInterval(interval);
-      console.warn('Hugging Face inference error, falling back to local edge preview:', err);
-      setServerStatus('HF ZeroGPU standby / queued. Displaying client-side edge preview pipeline.');
+      console.warn('Hugging Face inference error/timeout, falling back smoothly:', err);
+      setServerStatus('Edge pipeline executed: ZeroGPU busy/queued, fast fallback preview active.');
       setUploadedVideoUrl(localFallbackUrl);
       setProcessingProgress(100);
 
@@ -432,7 +441,7 @@ export default function LiveDemoSection() {
         setIsUploadModalOpen(false);
         setActiveSource('upload');
         setCurrentTime(0);
-      }, 500);
+      }, 400);
     }
   };
 
