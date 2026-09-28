@@ -328,10 +328,9 @@ export default function LiveDemoSection() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // 1. Validate file extension: .mp4 or .mov
-    const fileName = file.name.toLowerCase();
-    if (!fileName.endsWith('.mp4') && !fileName.endsWith('.mov')) {
-      setUploadError('Invalid file format. Please upload an MP4 (.mp4) or QuickTime (.mov) video file.');
+    // 1. Validate file extension: only .mp4 allowed
+    if (!file.name.toLowerCase().endsWith('.mp4')) {
+      setUploadError('Invalid file format. Please upload an MP4 (.mp4) video file.');
       return;
     }
 
@@ -480,7 +479,7 @@ export default function LiveDemoSection() {
               className="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider text-[#080c14] bg-gradient-to-r from-[#00e5ff] via-[#0693e3] to-[#00cce6] hover:from-[#00cce6] hover:to-[#0582ca] border border-[#00e5ff]/50 shadow-[0_0_20px_rgba(0,229,255,0.35)] hover:shadow-[0_0_25px_rgba(0,229,255,0.5)] transition-all flex items-center gap-2 cursor-pointer font-sans"
             >
               <UploadCloud className="w-4 h-4 text-[#080c14]" />
-              <span>Upload Custom CCTV Video (.mp4, .mov)</span>
+              <span>Upload Custom CCTV Video (.mp4)</span>
             </button>
           </div>
         </div>
@@ -1059,7 +1058,7 @@ export default function LiveDemoSection() {
                 <span>⏱️ Duration Limit: up to 2 min (Hackathon Rules)</span>
               </div>
               <div className="px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-[11px] font-mono text-gray-300 flex items-center gap-1.5">
-                <span>📦 Size Limit: up to 120 MB (.mp4, .mov)</span>
+                <span>📦 Size Limit: up to 120 MB (.mp4)</span>
               </div>
             </div>
 
@@ -1071,20 +1070,20 @@ export default function LiveDemoSection() {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="video/mp4,video/quicktime,.mp4,.mov"
+                accept="video/mp4"
                 onChange={handleFileUpload}
                 className="hidden"
               />
               <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-3 text-gray-400 group-hover:text-[#00e5ff] group-hover:scale-110 transition">
                 <FileVideo className="w-6 h-6" />
               </div>
-              <p className="text-sm font-bold text-white mb-1">Click to select or drag &amp; drop video (.mp4, .mov)</p>
-              <p className="text-xs text-gray-500 font-mono">Format: MP4 or MOV &bull; Size: up to 120 MB</p>
+              <p className="text-sm font-bold text-white mb-1">Click to select or drag &amp; drop video (.mp4)</p>
+              <p className="text-xs text-gray-500 font-mono">Format: MP4 only &bull; Size: up to 120 MB</p>
             </div>
 
             {/* Pre-Loaded Sample Quick Button (Guarantees zero-failure jury testing) */}
             <div className="pt-2 pb-4 text-center">
-              <span className="text-xs text-gray-500">Don&apos;t have an MP4 or MOV file handy? </span>
+              <span className="text-xs text-gray-500">Don&apos;t have an MP4 file handy? </span>
               <button
                 onClick={handleTestWithDemoClip}
                 className="text-xs font-bold text-[#00e5ff] hover:underline cursor-pointer"
