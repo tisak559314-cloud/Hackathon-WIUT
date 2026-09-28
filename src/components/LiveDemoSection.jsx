@@ -457,7 +457,7 @@ export default function LiveDemoSection() {
     executePipelineOnVideo(file, file.name, objectUrl);
   };
 
-  // Test with pre-loaded demo clip (guarantees zero-failure jury testing without local files)
+  // Test with pre-loaded demo clip (testing.mp4)
   const handleTestWithDemoClip = async () => {
     try {
       setUploadError('');
@@ -465,14 +465,14 @@ export default function LiveDemoSection() {
       setProcessingProgress(5);
       setProcessingStep(1);
 
-      const res = await fetch('/predictive-safety-part1.mp4');
+      const res = await fetch('/testing.mp4');
       const blob = await res.blob();
-      const file = new File([blob], 'demo_night_cctv.mp4', { type: 'video/mp4' });
+      const file = new File([blob], 'testing.mp4', { type: 'video/mp4' });
       const objectUrl = URL.createObjectURL(file);
-      executePipelineOnVideo(file, 'demo_night_cctv.mp4', objectUrl);
+      executePipelineOnVideo(file, 'testing.mp4', objectUrl);
     } catch (err) {
       console.error('Demo clip fetch error:', err);
-      executePipelineOnVideo('/predictive-safety-part1.mp4', 'demo_night_cctv.mp4', '/predictive-safety-part1.mp4');
+      executePipelineOnVideo('/testing.mp4', 'testing.mp4', '/testing.mp4');
     }
   };
 
