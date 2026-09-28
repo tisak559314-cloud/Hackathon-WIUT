@@ -22,25 +22,189 @@ import {
   ChevronRight,
   Clock,
   Sparkles,
+  RefreshCw,
+  ExternalLink,
+  Download,
+  Info,
+  Server,
+  Hourglass,
 } from 'lucide-react';
-import { Client, handle_file } from '@gradio/client';
 import { SAMPLE_VIDEOS, DEFAULT_C3905_EVENTS } from '../data/samplesConfig';
 
-const HF_SPACE_ID = import.meta.env.VITE_HF_SPACE_ID || 'Azamaka/antigradient-demo';
-const HF_TOKEN = import.meta.env.VITE_HF_TOKEN || undefined;
+// ---------------------------------------------------------------------------------------------
+// Live upload demo: the REAL WestCV model runs on a public Hugging Face Gradio Space.
+// API contract (final/ANTIGRADIENT_site_kit/demo/DEPLOY.txt): endpoint "/analyze", one input
+// "video" (.mp4, <= 120 MB, <= 2 min), six outputs: status markdown, events table, timeline plot,
+// risk plot, annotated video, JSON file ({events: [[start, end, label]], risk: {t, p}, ...}).
+// ---------------------------------------------------------------------------------------------
+const HF_SPACE_ID = 'Azamaka/antigradient-demo';
+const HF_SPACE_PAGE = `https://huggingface.co/spaces/${HF_SPACE_ID}`;
+const HF_SPACE_HOST = 'https://azamaka-antigradient-demo.hf.space';
+const HF_STATUS_API = `https://huggingface.co/api/spaces/${HF_SPACE_ID}`;
+const UPLOAD_MAX_MB = 120; // the Space accepts up to 120 MB (max_file_size="120mb")
+const UPLOAD_MAX_SEC = 120;
+const UPLOAD_MIN_SEC = 3;
+const WAKE_TIMEOUT_MS = 8 * 60 * 1000; // a sleeping Space re-installs nothing, but loads the model again
+const WAKE_POLL_MS = 4000;
+// Raw 30 s clip of the competition camera (C3905, 56-86 s, 720p H.264, 7 MB) for visitors without a file.
+// The Space finds stopped_vehicle, failure_to_yield, jaywalking and stop_line on it.
+const SAMPLE_CLIP = { url: '/videos/demo-sample-C3905-30s.mp4', name: 'C3905_sample_30s.mp4', sizeMb: 7 };
 
-const defaultUploadEvents = [
-  { start_sec: 1.5, end_sec: 6.0, label: 'stopped_vehicle', desc: 'Vehicle stationary on carriageway', desc_ru: 'Остановка на проезжей части вне очереди', type: 'warning' },
-  { start_sec: 5.8, end_sec: 9.4, label: 'solid_line_crossing', desc: 'Vehicle crossed white dividing line', desc_ru: 'Пересечение сплошной линии разметки', type: 'warning' },
-  { start_sec: 7.4, end_sec: 11.2, label: 'failure_to_yield', desc: 'Vehicle through zebra during active pedestrian cross', desc_ru: 'Непропуск пешехода на пешеходном переходе', type: 'critical' },
-  { start_sec: 12.0, end_sec: 18.5, label: 'stop_line', desc: 'Vehicle past stop line on red signal', desc_ru: 'Заезд за стоп-линию на красный сигнал', type: 'danger' },
+// Classes the demo can return, with the same wording as the Space (app.py DESCRIPTION).
+const UPLOAD_EVENT_INFO = {
+  red_light: { type: 'danger', desc: 'A vehicle crosses stop line 4 after its signal head has turned red' },
+  stopped_vehicle: { type: 'warning', desc: 'A vehicle stands still on the carriageway for 10 s or more, not queued at a signal' },
+  jaywalking: { type: 'danger', desc: 'A pedestrian is on the carriageway outside a zebra crossing' },
+  failure_to_yield: { type: 'critical', desc: 'A vehicle drives through a zebra crossing while a pedestrian is on it' },
+  stop_line: { type: 'danger', desc: 'A vehicle waits on red with its front past stop line 4' },
+  congestion: { type: 'warning', desc: 'Many vehicles (8 or more) stand still on the carriageway at once for 30 s or more' },
+  solid_line_crossing: { type: 'warning', desc: 'A moving vehicle drives over the solid divider line of approach 4' },
+};
+
+const PIPELINE_STEPS = [
+  'Connecting to the model server (Hugging Face)',
+  'Uploading video & waiting in the queue',
+  'Detection, tracking & scene rules (YOLO26m + ByteTrack)',
+  'Rendering annotated video & risk curve R(t)',
 ];
 
-const defaultUploadBoxes = [
-  { start: 0, end: 14, x: 34, y: 44, w: 22, h: 24, label: 'Vehicle #04', speed: '54 km/h', color: '#ffaa00' },
-  { start: 0, end: 14, x: 62, y: 52, w: 20, h: 22, label: 'Van #11', speed: '42 km/h', color: '#00e5ff' },
-  { start: 2, end: 11, x: 22, y: 58, w: 12, h: 26, label: 'Pedestrian #09', speed: '4 km/h', color: '#ff3366' },
-];
+class DemoError extends Error {
+  constructor(message, kind = 'server') {
+    super(message);
+    this.kind = kind; // 'validation' | 'quota' | 'busy' | 'network' | 'wake' | 'server'
+  }
+}
+
+const classifyServerError = (message) => {
+  // Server messages (e.g. ZeroGPU quota) may carry HTML links: show them as plain text.
+  const text = String(message || '').replace(/<[^>]*>/g, '').trim() || 'The model server returned an error.';
+  // ZeroGPU wording varies: "exceeded your GPU quota", "exceeded your ZeroGPU runs limit", ...
+  if (/quota|zerogpu|runs limit/i.test(text)) return new DemoError(text, 'quota');
+  if (/busy|queue is full/i.test(text)) return new DemoError(text, 'busy');
+  if (/too large|exceeds|max(imum)? (allowed )?(file )?size|payload/i.test(text)) return new DemoError(text, 'validation');
+  if (/failed to fetch|networkerror|network error|connection errored|could not resolve app config|load failed|broken/i.test(text)) {
+    return new DemoError(text, 'network');
+  }
+  return new DemoError(text, 'server');
+};
+
+const ERROR_HINTS = {
+  validation: 'The server rejected this file. Fix it as described and upload again.',
+  quota: 'Hugging Face gives every visitor a limited amount of free GPU time per day. Try a shorter clip, try again later, or run the Space directly on Hugging Face while logged in (your own quota).',
+  busy: 'The model server is busy with other videos. Wait a minute and retry.',
+  network: 'Could not reach the model server. Check your connection and retry.',
+  wake: 'The model server did not come up in time. It may still be starting: retry in a minute.',
+  server: 'Something went wrong on the model server. Retry, or try a shorter / re-encoded H.264 clip.',
+};
+
+// Reads the duration from the file's metadata with a hidden <video> element (null if unreadable).
+const readVideoDuration = (file) =>
+  new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const probe = document.createElement('video');
+    let settled = false;
+    const finish = (value) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      probe.removeAttribute('src');
+      probe.load();
+      URL.revokeObjectURL(url);
+      resolve(value);
+    };
+    const timer = setTimeout(() => finish(null), 10000);
+    probe.preload = 'metadata';
+    probe.muted = true;
+    probe.onloadedmetadata = () => finish(Number.isFinite(probe.duration) ? probe.duration : null);
+    probe.onerror = () => finish(null);
+    probe.src = url;
+  });
+
+// Causal lookup: the last risk value computed at or before t (what the model knew at time t).
+const getCausalRisk = (points, t) => {
+  if (!points || points.length === 0 || t < points[0][0]) return 0;
+  let low = 0;
+  let high = points.length - 1;
+  while (low < high) {
+    const mid = (low + high + 1) >> 1;
+    if (points[mid][0] <= t) low = mid;
+    else high = mid - 1;
+  }
+  return points[low][1];
+};
+
+const toUploadEvents = (triples) =>
+  (triples || [])
+    .filter((ev) => Array.isArray(ev) && ev.length >= 3)
+    .map(([start, end, label]) => ({
+      start_sec: Number(start),
+      end_sec: Number(end),
+      label: String(label),
+      desc: UPLOAD_EVENT_INFO[label]?.desc || String(label),
+      type: UPLOAD_EVENT_INFO[label]?.type || 'info',
+    }))
+    .sort((a, b) => a.start_sec - b.start_sec);
+
+// Minimal renderer for the Space's status markdown (paragraphs, **bold**, `code`); no raw HTML.
+const renderStatusMarkdown = (md) =>
+  String(md || '')
+    .split(/\n{2,}/)
+    .filter((para) => para.trim())
+    .map((para, pIdx) => (
+      <p key={pIdx} className="text-xs sm:text-sm text-gray-300 leading-relaxed">
+        {para.split(/(\*\*[^*]+\*\*|`[^`]+`)/g).map((chunk, cIdx) => {
+          if (chunk.startsWith('**') && chunk.endsWith('**')) {
+            return <strong key={cIdx} className="text-white font-bold">{chunk.slice(2, -2)}</strong>;
+          }
+          if (chunk.startsWith('`') && chunk.endsWith('`')) {
+            return (
+              <code key={cIdx} className="px-1.5 py-0.5 rounded bg-white/10 text-[#00e5ff] font-mono text-[11px]">
+                {chunk.slice(1, -1)}
+              </code>
+            );
+          }
+          return <React.Fragment key={cIdx}>{chunk}</React.Fragment>;
+        })}
+      </p>
+    ));
+
+// Waits until the Space is RUNNING. Requesting the Space's own domain wakes a sleeping Space;
+// the public status API reports the stage while it starts.
+const waitForSpace = async (onStatus, isAlive) => {
+  const startedAt = Date.now();
+  let lastPing = 0;
+  while (isAlive()) {
+    let stage = 'UNKNOWN';
+    let hardware = null;
+    try {
+      const res = await fetch(HF_STATUS_API, { cache: 'no-store' });
+      if (res.ok) {
+        const info = await res.json();
+        stage = info?.runtime?.stage || 'UNKNOWN';
+        hardware = info?.runtime?.hardware?.current || info?.runtime?.hardware?.requested || null;
+      }
+    } catch {
+      // The status API is only informative: fall through and try the Space itself.
+    }
+    if (stage === 'RUNNING' || stage === 'RUNNING_BUILDING' || stage === 'UNKNOWN') {
+      onStatus('Model server is running. Connecting...', hardware);
+      return;
+    }
+    if (stage === 'PAUSED') throw new DemoError('The demo Space is paused by its owner.', 'wake');
+    if (/ERROR/.test(stage)) throw new DemoError(`The demo Space reports ${stage}.`, 'wake');
+    if (Date.now() - lastPing > 30000) {
+      lastPing = Date.now();
+      fetch(HF_SPACE_HOST, { mode: 'no-cors', cache: 'no-store' }).catch(() => {});
+    }
+    const waited = Math.round((Date.now() - startedAt) / 1000);
+    const label = stage === 'SLEEPING' || stage === 'STOPPED' ? 'Waking up the model server' : 'Model server is starting';
+    onStatus(`${label} (${stage.toLowerCase().replace(/_/g, ' ')}, ${waited} s). A cold start loads the model and takes about a minute...`, hardware);
+    if (Date.now() - startedAt > WAKE_TIMEOUT_MS) {
+      throw new DemoError(`The model server is still ${stage.toLowerCase()} after ${waited} s.`, 'wake');
+    }
+    await new Promise((r) => setTimeout(r, WAKE_POLL_MS));
+  }
+};
 
 const getInterpolatedRisk = (points, t) => {
   if (!points || points.length === 0) return 0.25;
@@ -74,22 +238,31 @@ export default function LiveDemoSection() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [activeResultsTab, setActiveResultsTab] = useState('risk_curve'); // 'risk_curve' | 'timeline' | 'metrics'
 
-  // Upload Modal & Pipeline State
+  // Upload Modal & real Hugging Face pipeline state
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingProgress, setProcessingProgress] = useState(0);
-  const [processingStep, setProcessingStep] = useState(1); // 1: Connect & Upload, 2: ZeroGPU Detect, 3: Timeline & Playback
+  const [processingStep, setProcessingStep] = useState(1); // 1: connect, 2: upload/queue, 3: model, 4: render
+  const [processingDetail, setProcessingDetail] = useState('');
+  const [queueInfo, setQueueInfo] = useState(null); // { position, size, eta } from the Gradio queue
+  const [processingError, setProcessingError] = useState(null); // DemoError
+  const [processingStartedAt, setProcessingStartedAt] = useState(0);
+  const [elapsedSec, setElapsedSec] = useState(0);
+  const [spaceHardware, setSpaceHardware] = useState(null);
   const [uploadError, setUploadError] = useState('');
-  const [uploadedVideoUrl, setUploadedVideoUrl] = useState(null);
   const [uploadedFileName, setUploadedFileName] = useState('');
-  const [uploadedEvents, setUploadedEvents] = useState(defaultUploadEvents);
-  const [uploadedRiskPoints, setUploadedRiskPoints] = useState(null);
-  const [serverStatus, setServerStatus] = useState('');
-  const [inferenceDevice, setInferenceDevice] = useState('');
+  const [processingFileName, setProcessingFileName] = useState('');
+  const [uploadResult, setUploadResult] = useState(null);
 
   const videoRef = useRef(null);
   const playerContainerRef = useRef(null);
   const fileInputRef = useRef(null);
+  const clientRef = useRef(null); // connected @gradio/client, reused between runs
+  const jobRef = useRef(null); // the running submission (async iterator with cancel())
+  const runIdRef = useRef(0); // increments on every run / cancel; stale runs stop updating the UI
+  const lastFileRef = useRef(null); // for "Retry"
 
   // Lazy-load events and risk curve data for selected sample
   useEffect(() => {
@@ -125,29 +298,34 @@ export default function LiveDemoSection() {
       .catch(() => {});
   }, []);
 
+  // Elapsed-time clock for the processing modal (real wall time, not a simulated progress)
+  useEffect(() => {
+    if (!isProcessing || processingError || !processingStartedAt) return undefined;
+    const tick = () => setElapsedSec(Math.round((Date.now() - processingStartedAt) / 1000));
+    tick();
+    const timer = setInterval(tick, 1000);
+    return () => clearInterval(timer);
+  }, [isProcessing, processingError, processingStartedAt]);
+
+  // Leaving the page cancels a running job so it does not block the Space queue.
+  useEffect(
+    () => () => {
+      runIdRef.current += 1;
+      jobRef.current?.cancel?.().catch(() => {});
+      clientRef.current?.close?.();
+    },
+    []
+  );
+
   // Active video configuration
   const currentSample = useMemo(() => {
-    if (activeSource === 'upload' && uploadedVideoUrl) {
+    if (activeSource === 'upload' && uploadResult) {
       return {
         id: 'uploaded',
-        title: uploadedFileName || 'Custom Uploaded CCTV Video',
-        location: inferenceDevice || 'Hugging Face ZeroGPU (NVIDIA A10G/RTX)',
-        src: uploadedVideoUrl,
-        badge: inferenceDevice ? 'ZeroGPU Cloud Inference' : 'Custom Edge Inference',
-        badgeColor: 'text-[#00e5ff] bg-[#00e5ff]/10 border-[#00e5ff]/30',
-        description: serverStatus
-          ? serverStatus.replace(/\*\*/g, '')
-          : 'Edge pipeline executed on uploaded video: YOLO26m (NMS-free) object localization, ByteTrack trajectory Kalman filtering, and causal Part B risk anticipation.',
-        events: uploadedEvents,
-        getRisk: (t) => {
-          if (uploadedRiskPoints && uploadedRiskPoints.length > 0) {
-            return getInterpolatedRisk(uploadedRiskPoints, t);
-          }
-          if (t < 3.0) return 0.15 + (t / 3.0) * 0.18;
-          if (t < 8.0) return 0.33 + Math.sin((t - 3.0) * 0.65) * 0.48;
-          return 0.22;
-        },
-        boundingBoxes: null, // HF Space renders annotated bounding boxes and telemetry natively in the video
+        src: uploadResult.videoUrl,
+        events: uploadResult.events,
+        riskPoints: uploadResult.riskPoints,
+        getRisk: (t) => getCausalRisk(uploadResult.riskPoints, t),
       };
     }
 
@@ -165,9 +343,8 @@ export default function LiveDemoSection() {
         }
         return 0.25;
       },
-      boundingBoxes: null,
     };
-  }, [activeSource, uploadedVideoUrl, uploadedFileName, uploadedEvents, uploadedRiskPoints, serverStatus, inferenceDevice, selectedSampleId, sampleEventsMap, sampleRiskMap]);
+  }, [activeSource, uploadResult, selectedSampleId, sampleEventsMap, sampleRiskMap]);
 
   const handleTimeUpdate = () => {
     if (videoRef.current) {
@@ -271,7 +448,7 @@ export default function LiveDemoSection() {
         return;
       }
 
-      if (isUploadModalOpen) return;
+      if (isUploadModalOpen || isProcessing) return;
       if (document.body.style.overflow === 'hidden') return;
 
       // Space: Toggle Play/Pause
@@ -293,194 +470,246 @@ export default function LiveDemoSection() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isUploadModalOpen]);
+  }, [isUploadModalOpen, isProcessing]);
 
   const restartVideo = () => {
     jumpTo(0);
   };
 
-  // Run 3-stage pipeline execution on Hugging Face ZeroGPU:
-  // Step 1: Connecting & Uploading to ZeroGPU (NVIDIA RTX PRO 6000 / A10G)
-  // Step 2: YOLO26m (imgsz 1280) + ByteTrack & Causal Risk inference
-  // Step 3: Generating timeline, risk curve & annotated video playback
-  const executePipelineOnVideo = async (fileToSend, fileName, localFallbackUrl) => {
+  // Runs the REAL model on the Hugging Face Space: wake it if needed, upload, then follow the
+  // Gradio queue / progress messages until the outputs arrive.
+  const runRealPipeline = async (file) => {
+    const runId = runIdRef.current + 1;
+    runIdRef.current = runId;
+    const isAlive = () => runIdRef.current === runId;
+    lastFileRef.current = file;
+    jobRef.current = null;
+    setProcessingFileName(file.name);
     setUploadError('');
-    setUploadedFileName(fileName);
-    setIsProcessing(true);
-    setProcessingProgress(10);
+    setProcessingError(null);
+    setQueueInfo(null);
     setProcessingStep(1);
-
-    // Incremental progress ticker while awaiting network + ZeroGPU inference
-    let simulatedProgress = 10;
-    const interval = setInterval(() => {
-      simulatedProgress = Math.min(88, simulatedProgress + Math.floor(Math.random() * 3 + 2));
-      setProcessingProgress(simulatedProgress);
-      if (simulatedProgress >= 30 && simulatedProgress < 75) {
-        setProcessingStep(2);
-      } else if (simulatedProgress >= 75) {
-        setProcessingStep(3);
-      }
-    }, 400);
+    setProcessingProgress(0);
+    setProcessingDetail('Checking the model server on Hugging Face...');
+    setProcessingStartedAt(Date.now());
+    setElapsedSec(0);
+    setIsUploadModalOpen(false);
+    setIsProcessing(true);
 
     try {
-      // 1. Connect to Hugging Face ZeroGPU Space
-      const client = await Client.connect(
-        HF_SPACE_ID,
-        HF_TOKEN ? { token: HF_TOKEN, hf_token: HF_TOKEN } : {}
-      );
+      await waitForSpace((message, hardware) => {
+        if (!isAlive()) return;
+        setProcessingDetail(message);
+        if (hardware) setSpaceHardware(hardware);
+      }, isAlive);
+      if (!isAlive()) return;
+
+      const { Client, handle_file } = await import('@gradio/client');
+      if (!clientRef.current) {
+        // The client publishes only "data" events by default: ask for "status" too (queue, progress, errors)
+        clientRef.current = await Client.connect(HF_SPACE_ID, { events: ['data', 'status'] });
+      }
+      if (!isAlive()) return;
 
       setProcessingStep(2);
+      setProcessingProgress(4);
+      setProcessingDetail(`Uploading ${file.name} (${(file.size / 2 ** 20).toFixed(1)} MB) to the model server...`);
+      const job = clientRef.current.submit('/analyze', { video: handle_file(file) });
+      jobRef.current = job;
 
-      // 2. Predict on ZeroGPU endpoint /analyze
-      const fileArg = typeof fileToSend === 'string' ? fileToSend : handle_file(fileToSend);
-      const result = await client.predict('/analyze', {
-        video: fileArg,
-      });
-
-      clearInterval(interval);
-      setProcessingStep(3);
-      setProcessingProgress(92);
-
-      const statusText = result?.data?.[0] || '';
-      const tableObj = result?.data?.[1];
-      const videoObj = result?.data?.[4];
-      const jsonObj = result?.data?.[5];
-
-      setServerStatus(statusText);
-      if (statusText.toLowerCase().includes('gpu')) {
-        setInferenceDevice('HF ZeroGPU (NVIDIA RTX PRO 6000 / A10G)');
-      } else if (statusText.toLowerCase().includes('cpu')) {
-        setInferenceDevice('HF CPU Fallback');
-      } else {
-        setInferenceDevice('Hugging Face ZeroGPU');
-      }
-
-      // Parse events table
-      if (tableObj) {
-        let rows = [];
-        if (Array.isArray(tableObj)) {
-          rows = tableObj;
-        } else if (tableObj.data && Array.isArray(tableObj.data)) {
-          rows = tableObj.data;
+      let outputs = null;
+      for await (const msg of job) {
+        if (!isAlive()) break;
+        if (msg.type === 'data') {
+          outputs = msg.data;
+          continue;
         }
-
-        if (rows.length > 0) {
-          const parsedEvents = rows.map((r) => {
-            const start_sec = parseFloat(r[0]);
-            const end_sec = parseFloat(r[1]);
-            const label = String(r[2]);
-            const desc = String(r[3] || '');
-            let type = 'warning';
-            if (label === 'red_light' || label === 'failure_to_yield') {
-              type = 'critical';
-            } else if (label === 'stop_line') {
-              type = 'danger';
-            }
-            return {
-              start_sec: isNaN(start_sec) ? 0 : start_sec,
-              end_sec: isNaN(end_sec) ? 0 : end_sec,
-              label,
-              desc,
-              desc_ru: desc,
-              type,
-            };
-          });
-          setUploadedEvents(parsedEvents);
-        } else {
-          setUploadedEvents([]);
-        }
-      }
-
-      // Parse JSON output for exact causal risk curve points
-      if (jsonObj?.url) {
-        try {
-          const res = await fetch(jsonObj.url);
-          const data = await res.json();
-          if (data?.risk?.t && data?.risk?.p) {
-            const points = data.risk.t.map((t, i) => [t, data.risk.p[i]]);
-            setUploadedRiskPoints(points);
+        if (msg.type !== 'status') continue;
+        if (msg.stage === 'error') {
+          const error = classifyServerError(msg.message || msg.title);
+          if (error.kind === 'server' && /the limit is|shorter than|only \.mp4|could not read the video|upload an \.mp4/i.test(error.message)) {
+            error.kind = 'validation';
           }
-        } catch (jsonErr) {
-          console.warn('Could not parse risk json from HF:', jsonErr);
+          throw error;
+        }
+        if (msg.progress_data?.length) {
+          const { desc = '', progress } = msg.progress_data[0];
+          setQueueInfo(null);
+          // "Waiting for a GPU (ZeroGPU)" is still queueing; "1/4".."3/4" model; "4/4"/"Done" rendering
+          setProcessingStep(/^waiting/i.test(desc || '') ? 2 : /^(4\/4|Done)/.test(desc || '') ? 4 : 3);
+          if (typeof progress === 'number') {
+            setProcessingProgress(Math.round(10 + 88 * Math.max(0, Math.min(1, progress))));
+          }
+          if (desc) setProcessingDetail(desc);
+        } else if (typeof msg.position === 'number') {
+          setProcessingProgress((p) => Math.max(p, 8));
+          setQueueInfo({ position: msg.position, size: msg.size, eta: msg.eta });
+          setProcessingDetail(
+            msg.position > 0
+              ? `Waiting in the queue: ${msg.position} video(s) ahead of yours.`
+              : 'Upload complete. Starting the model...'
+          );
+        }
+        if (msg.stage === 'complete') break;
+      }
+      if (!isAlive()) return;
+      if (!outputs) throw new DemoError('The model server finished without returning a result.', 'server');
+
+      // Outputs: status markdown, events table, timeline plot, risk plot, annotated video, JSON file
+      const [statusMd, table, , , videoOut, jsonOut] = outputs;
+      const videoUrl = videoOut?.video?.url || videoOut?.url || null;
+      if (!videoUrl) throw new DemoError('The model server did not return the annotated video.', 'server');
+      setProcessingStep(4);
+      setProcessingProgress(99);
+      setProcessingDetail('Loading the events and the risk curve...');
+
+      let result = null;
+      if (jsonOut?.url) {
+        try {
+          const res = await fetch(jsonOut.url);
+          if (res.ok) result = await res.json();
+        } catch {
+          result = null; // fall back to the events table below
         }
       }
+      if (!isAlive()) return;
 
-      // Final video source: annotated video produced on ZeroGPU with tracks, boxes, and HUD
-      const finalVideoUrl = videoObj?.url || localFallbackUrl;
-      setUploadedVideoUrl(finalVideoUrl);
+      const riskT = result?.risk?.t || [];
+      const riskP = result?.risk?.p || [];
+      const riskPoints = riskT
+        .map((t, i) => [Number(t), Number(riskP[i])])
+        .filter(([t, p]) => Number.isFinite(t) && Number.isFinite(p));
+      const events = toUploadEvents(
+        Array.isArray(result?.events) ? result.events : (table?.data || []).map((row) => [row[0], row[1], row[2]])
+      );
+      const timing = result?.timing_sec || {};
+
+      setUploadResult({
+        videoUrl,
+        jsonUrl: jsonOut?.url || null,
+        statusMd: typeof statusMd === 'string' ? statusMd : '',
+        events,
+        riskPoints,
+        hasRisk: riskPoints.length > 0,
+        sceneRegistered: result ? Boolean(result.scene_registered) : null,
+        inliers: timing.pipeline?.inliers ?? null,
+        classesAvailable: Array.isArray(result?.classes_available) ? result.classes_available : null,
+        device: result?.model?.device || 'Space',
+        detector: result?.model?.detector || 'yolo26m.pt',
+        imgsz: result?.model?.imgsz ?? null,
+        clipSec: result?.duration_sec ?? null,
+        totalSec: timing.total_with_rendering ?? null,
+        modelSec: timing.model ?? null,
+        source: result ? `${result.width}×${result.height} @ ${Number(result.fps).toFixed(2)} fps` : null,
+      });
+      setUploadedFileName(file.name);
       setProcessingProgress(100);
-
+      setIsProcessing(false);
+      setActiveSource('upload');
+      setCurrentTime(0);
       setTimeout(() => {
-        setIsProcessing(false);
-        setIsUploadModalOpen(false);
-        setActiveSource('upload');
-        setCurrentTime(0);
-        setTimeout(() => {
-          jumpTo(0);
-        }, 300);
-      }, 400);
-
+        jumpTo(0);
+      }, 300);
     } catch (err) {
-      clearInterval(interval);
-      console.warn('Hugging Face inference error, falling back to local edge preview:', err);
-      setServerStatus('HF ZeroGPU standby / queued. Displaying client-side edge preview pipeline.');
-      setUploadedVideoUrl(localFallbackUrl);
-      setProcessingProgress(100);
-
-      setTimeout(() => {
-        setIsProcessing(false);
-        setIsUploadModalOpen(false);
-        setActiveSource('upload');
-        setCurrentTime(0);
-      }, 500);
+      if (!isAlive()) return;
+      clientRef.current?.close?.();
+      clientRef.current = null; // reconnect on retry (the Space may have restarted)
+      setProcessingError(err instanceof DemoError ? err : classifyServerError(err?.message || String(err)));
+    } finally {
+      if (runIdRef.current === runId) jobRef.current = null;
     }
   };
 
-  // Client-side file validation handler
+  const handleCancelProcessing = () => {
+    runIdRef.current += 1;
+    const job = jobRef.current;
+    jobRef.current = null;
+    if (job) {
+      job.cancel?.().catch(() => {});
+      job.return?.();
+    }
+    setIsProcessing(false);
+    setProcessingError(null);
+  };
+
+  const handleRetry = () => {
+    if (lastFileRef.current) runRealPipeline(lastFileRef.current);
+  };
+
+  const handleChooseAnotherFile = () => {
+    setIsProcessing(false);
+    setProcessingError(null);
+    setUploadError('');
+    setIsUploadModalOpen(true);
+  };
+
+  // Client-side validation (same limits as the server): .mp4, <= 120 MB, 3 s .. 2 min
+  const validateAndRun = async (file) => {
+    if (!file || isValidating) return;
+    setUploadError('');
+
+    if (!/\.mp4$/i.test(file.name)) {
+      setUploadError(`Only .mp4 files are accepted (got "${file.name}").`);
+      return;
+    }
+
+    const sizeMb = file.size / 2 ** 20;
+    if (sizeMb > UPLOAD_MAX_MB) {
+      setUploadError(
+        `The file is ${sizeMb.toFixed(1)} MB; the limit is ${UPLOAD_MAX_MB} MB. Re-encode it first, e.g. ffmpeg -i in.mp4 -t 120 -vf scale=1280:-2 -c:v libx264 -crf 23 -an out.mp4`
+      );
+      return;
+    }
+
+    setIsValidating(true);
+    const seconds = await readVideoDuration(file);
+    setIsValidating(false);
+    // null = the browser cannot read this file's metadata (e.g. an unusual codec): the server checks it.
+    if (seconds !== null && seconds > UPLOAD_MAX_SEC + 1) {
+      setUploadError(
+        `The video is ${seconds.toFixed(0)} s long; the limit is ${UPLOAD_MAX_SEC} s (2 minutes). Cut it, e.g. ffmpeg -i in.mp4 -t 120 -c copy out.mp4`
+      );
+      return;
+    }
+    if (seconds !== null && seconds < UPLOAD_MIN_SEC) {
+      setUploadError(`The video is ${seconds.toFixed(1)} s long; please upload a clip of at least ${UPLOAD_MIN_SEC} s.`);
+      return;
+    }
+
+    runRealPipeline(file);
+  };
+
+  // Runs the same real pipeline on our raw sample clip (fetched from the site, then uploaded to the Space)
+  const handleRunSampleClip = async () => {
+    if (isValidating) return;
+    setUploadError('');
+    setIsValidating(true);
+    try {
+      const res = await fetch(SAMPLE_CLIP.url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const blob = await res.blob();
+      runRealPipeline(new File([blob], SAMPLE_CLIP.name, { type: 'video/mp4' }));
+    } catch (err) {
+      setUploadError(`Could not load the sample clip (${err?.message || err}). Upload your own .mp4 instead.`);
+    } finally {
+      setIsValidating(false);
+    }
+  };
+
   const handleFileUpload = (e) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-
-    // 1. Validate file extension: only .mp4 allowed
-    if (!file.name.toLowerCase().endsWith('.mp4')) {
-      setUploadError('Invalid file format. Please upload an MP4 (.mp4) video file.');
-      return;
-    }
-
-    // 2. Validate file size: maximum 120 MB
-    if (file.size > 120 * 1024 * 1024) {
-      setUploadError(`File size (${(file.size / (1024 * 1024)).toFixed(1)} MB) exceeds 120 MB limit. Please select a clip ≤ 120 MB (duration ≤ 2 min).`);
-      return;
-    }
-
-    const objectUrl = URL.createObjectURL(file);
-    executePipelineOnVideo(file, file.name, objectUrl);
+    e.target.value = ''; // allow picking the same file again
+    validateAndRun(file);
   };
 
-  // Test with pre-loaded demo clip (testing.mp4)
-  const handleTestWithDemoClip = async () => {
-    try {
-      setUploadError('');
-      setIsProcessing(true);
-      setProcessingProgress(5);
-      setProcessingStep(1);
-
-      const res = await fetch('/testing.mp4');
-      const blob = await res.blob();
-      const file = new File([blob], 'testing.mp4', { type: 'video/mp4' });
-      const objectUrl = URL.createObjectURL(file);
-      executePipelineOnVideo(file, 'testing.mp4', objectUrl);
-    } catch (err) {
-      console.error('Demo clip fetch error:', err);
-      executePipelineOnVideo('/testing.mp4', 'testing.mp4', '/testing.mp4');
-    }
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    validateAndRun(e.dataTransfer?.files?.[0]);
   };
 
   const handleResetToBenchmark = () => {
     setActiveSource('benchmark');
-    setUploadedRiskPoints(null);
-    setServerStatus('');
-    setInferenceDevice('');
     jumpTo(0);
     const video = document.getElementById("player");
     if (video) video.pause();
@@ -492,28 +721,36 @@ export default function LiveDemoSection() {
 
   // SVG Risk Curve Path generation (X: 0s to duration, Y: 0.0 to 1.0)
   const riskCurveData = useMemo(() => {
-    const numPoints = 80;
     const totalSec = duration || 90;
-    const points = [];
-    for (let i = 0; i <= numPoints; i++) {
-      const t = (i / numPoints) * totalSec;
-      const r = Math.max(0, Math.min(1.0, currentSample.getRisk(t)));
-      points.push({ t, r });
-    }
-
     // SVG coordinate space: width 640, height 120, plot area: x in [50, 620], y in [15, 95]
     const xMin = 50;
     const xMax = 620;
     const yTop = 15;
     const yBottom = 95;
+    const toX = (t) => xMin + (Math.max(0, Math.min(totalSec, t)) / totalSec) * (xMax - xMin);
+    const toY = (r) => yBottom - Math.max(0, Math.min(1.0, r)) * (yBottom - yTop);
 
-    const pathD = points
-      .map((p, idx) => {
-        const x = xMin + (p.t / totalSec) * (xMax - xMin);
-        const y = yBottom - p.r * (yBottom - yTop);
-        return `${idx === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`;
-      })
-      .join(' ');
+    let pathD;
+    if (currentSample.riskPoints) {
+      // Uploaded clip: draw every returned sample as a causal step curve (value holds until the next one)
+      const pts = currentSample.riskPoints.filter(([t]) => t <= totalSec);
+      const segments = [`M ${toX(0).toFixed(1)} ${toY(0).toFixed(1)}`];
+      pts.forEach(([t, r]) => {
+        segments.push(`H ${toX(t).toFixed(1)}`, `V ${toY(r).toFixed(1)}`);
+      });
+      segments.push(`H ${xMax}`);
+      pathD = segments.join(' ');
+    } else {
+      const numPoints = 80;
+      const points = [];
+      for (let i = 0; i <= numPoints; i++) {
+        const t = (i / numPoints) * totalSec;
+        points.push({ t, r: currentSample.getRisk(t) });
+      }
+      pathD = points
+        .map((p, idx) => `${idx === 0 ? 'M' : 'L'} ${toX(p.t).toFixed(1)} ${toY(p.r).toFixed(1)}`)
+        .join(' ');
+    }
 
     const areaD = `${pathD} L ${xMax} ${yBottom} L ${xMin} ${yBottom} Z`;
 
@@ -585,11 +822,26 @@ export default function LiveDemoSection() {
               );
             })}
 
-            {activeSource === 'upload' && (
-              <div className="px-3 py-1.5 rounded-xl text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 bg-[#9b51e0]/15 text-[#c084fc] border border-[#9b51e0]/40 shadow-[0_0_15px_rgba(155,81,224,0.2)]">
+            {uploadResult && (
+              <button
+                onClick={() => {
+                  if (activeSource === 'upload') return;
+                  setActiveSource('upload');
+                  setCurrentTime(0);
+                  setIsPlaying(false);
+                }}
+                title={uploadedFileName}
+                className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 border transition cursor-pointer whitespace-nowrap ${
+                  activeSource === 'upload'
+                    ? 'bg-[#9b51e0]/15 text-[#c084fc] border-[#9b51e0]/40 shadow-[0_0_15px_rgba(155,81,224,0.2)]'
+                    : 'bg-white/5 text-gray-400 border-white/5 hover:bg-white/10 hover:text-white'
+                }`}
+              >
                 <FileVideo className="w-3.5 h-3.5" />
-                <span>Custom: {uploadedFileName.slice(0, 14)}...</span>
-              </div>
+                <span>
+                  Your clip: {uploadedFileName.length > 16 ? `${uploadedFileName.slice(0, 14)}...` : uploadedFileName}
+                </span>
+              </button>
             )}
           </div>
 
@@ -605,13 +857,29 @@ export default function LiveDemoSection() {
             )}
 
             <button
-              onClick={() => setIsUploadModalOpen(true)}
+              onClick={() => {
+                setUploadError('');
+                setIsUploadModalOpen(true);
+              }}
               className="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider text-[#080c14] bg-gradient-to-r from-[#00e5ff] via-[#0693e3] to-[#00cce6] hover:from-[#00cce6] hover:to-[#0582ca] border border-[#00e5ff]/50 shadow-[0_0_20px_rgba(0,229,255,0.35)] hover:shadow-[0_0_25px_rgba(0,229,255,0.5)] transition-all flex items-center gap-2 cursor-pointer font-sans"
             >
               <UploadCloud className="w-4 h-4 text-[#080c14]" />
               <span>Upload Custom CCTV Video (.mp4)</span>
             </button>
           </div>
+        </div>
+
+        {/* Honest note next to the upload button: what runs, where, and the limits */}
+        <div className="max-w-5xl mx-auto -mt-3 mb-6 px-1 flex items-start gap-2 text-[11px] sm:text-xs text-gray-400 leading-relaxed">
+          <Info className="w-3.5 h-3.5 mt-0.5 shrink-0 text-[#00e5ff]" />
+          <p>
+            Upload runs our <span className="text-gray-200 font-semibold">real model</span> (YOLO26m + ByteTrack + scene rules + causal TTC risk) on a{' '}
+            <a href={HF_SPACE_PAGE} target="_blank" rel="noopener noreferrer" className="text-[#00e5ff] hover:underline">
+              Hugging Face Space
+            </a>
+            . Limits: .mp4, ≤ {UPLOAD_MAX_MB} MB, ≤ 2 min; 20–40 s clips recommended. The rules are calibrated to the competition camera: on other cameras only{' '}
+            <code className="text-[#00e5ff]">stopped_vehicle</code> and <code className="text-[#00e5ff]">congestion</code> can fire (detections and risk still work).
+          </p>
         </div>
 
         {/* Main Video Viewport / Console */}
@@ -630,27 +898,39 @@ export default function LiveDemoSection() {
                   <span className="w-3 h-3 rounded-full bg-[#ffbd2e]/90 border border-[#dea123] shadow-[0_0_6px_rgba(255,189,46,0.6)]" />
                   <span className="w-3 h-3 rounded-full bg-[#27c93f]/90 border border-[#1aab29] shadow-[0_0_6px_rgba(39,201,63,0.6)]" />
                   <span className="ml-2 text-[11px] font-mono font-medium text-gray-400 hidden sm:inline">
-                    {activeSource === 'upload' ? `HF_ZEROGPU_${uploadedFileName.slice(0, 16).toUpperCase()}` : 'C3905_INFERENCE_PIPELINE.SESSION'}
+                    {activeSource === 'upload' ? `USER_INFERENCE_${uploadedFileName.slice(0, 16).toUpperCase()}` : 'C3905_INFERENCE_PIPELINE.SESSION'}
                   </span>
                 </div>
 
                 {/* Center Badge / Active Engine */}
                 <div className="flex items-center gap-2 px-3 py-0.5 rounded-full bg-[#121a2a] border border-[#00e5ff]/20 text-[10px] font-mono text-[#00e5ff]">
                   <Terminal className="w-3 h-3" />
-                  <span>{activeSource === 'upload' && inferenceDevice ? `${inferenceDevice}` : 'YOLO26m (NMS-Free) + ByteTrack'}</span>
+                  <span>YOLO26m (NMS-Free) + ByteTrack</span>
                 </div>
 
                 {/* Right Engine Status */}
-                <div className="flex items-center gap-2 font-mono text-[11px]">
-                  <span className="inline-flex items-center gap-1.5 text-emerald-400">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    <span className="font-bold">LIVE REC</span>
-                  </span>
-                  <span className="text-gray-600 hidden md:inline">|</span>
-                  <span className="text-gray-400 hidden md:inline">
-                    {activeSource === 'upload' ? (inferenceDevice ? 'ZeroGPU RTX' : 'TESLA T4 FP16') : 'TESLA T4 FP16'}
-                  </span>
-                </div>
+                {activeSource === 'upload' && uploadResult ? (
+                  <div className="flex items-center gap-2 font-mono text-[11px]">
+                    <span
+                      className={`inline-flex items-center gap-1.5 font-bold ${isCriticalRisk ? 'text-red-400 animate-pulse' : 'text-[#00e5ff]'}`}
+                      title="Causal risk at the current playback time (alarm at 0.50)"
+                    >
+                      <ShieldAlert className="w-3.5 h-3.5" />
+                      <span>R(t) {(currentRisk * 100).toFixed(0)}%</span>
+                    </span>
+                    <span className="text-gray-600 hidden md:inline">|</span>
+                    <span className="text-gray-400 hidden md:inline uppercase">HF SPACE · {uploadResult.device}</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 font-mono text-[11px]">
+                    <span className="inline-flex items-center gap-1.5 text-emerald-400">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                      <span className="font-bold">LIVE REC</span>
+                    </span>
+                    <span className="text-gray-600 hidden md:inline">|</span>
+                    <span className="text-gray-400 hidden md:inline">TESLA T4 FP16</span>
+                  </div>
+                )}
               </div>
 
               {/* Video Screen Container */}
@@ -671,7 +951,7 @@ export default function LiveDemoSection() {
                   id="player"
                   ref={videoRef}
                   src={currentSample.src}
-                  className={`w-full h-full ${isFullscreen ? 'object-contain' : 'object-cover'}`}
+                  className={`w-full h-full ${isFullscreen || activeSource === 'upload' ? 'object-contain' : 'object-cover'}`}
                   playsInline
                   muted={isMuted}
                   loop
@@ -683,63 +963,36 @@ export default function LiveDemoSection() {
                   onDoubleClick={toggleFullscreen}
                 />
 
-                {/* Dynamic Bounding Box Overlay for Custom Uploaded Videos */}
-                {currentSample.boundingBoxes && (
-                  <div className="absolute inset-0 pointer-events-none z-10">
-                    {currentSample.boundingBoxes
-                      .filter((box) => currentTime >= box.start && currentTime <= box.end)
-                      .map((box, bIdx) => (
-                        <div
-                          key={bIdx}
-                          className="absolute border-2 transition-all duration-100 rounded"
-                          style={{
-                            left: `${box.x}%`,
-                            top: `${box.y}%`,
-                            width: `${box.w}%`,
-                            height: `${box.h}%`,
-                            borderColor: box.color,
-                            backgroundColor: `${box.color}15`,
-                            boxShadow: `0 0 14px ${box.color}50`,
-                          }}
-                        >
-                          <div
-                            className="absolute -top-6 left-0 px-2 py-0.5 rounded text-[10px] font-mono font-bold text-black flex items-center gap-1.5 whitespace-nowrap shadow"
-                            style={{ backgroundColor: box.color }}
-                          >
-                            <span>{box.label}</span>
-                            <span className="opacity-90">{box.speed}</span>
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                )}
-
-
-
-                {/* Top-Right Risk Indicator Pill */}
-                <div className="absolute top-5 right-5 z-20 pointer-events-none">
-                  <div
-                    className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl border backdrop-blur-md transition-all duration-300 shadow-lg ${
-                      isCriticalRisk
-                        ? 'bg-red-500/30 border-red-500 text-red-200 shadow-[0_0_15px_rgba(239,68,68,0.5)] animate-pulse'
-                        : 'bg-[#080c14]/85 border-[#00e5ff]/30 text-gray-200'
-                    }`}
-                  >
-                    <ShieldAlert
-                      className={`w-4 h-4 ${isCriticalRisk ? 'text-red-400' : 'text-[#00e5ff]'}`}
-                    />
-                    <div className="text-xs font-mono">
-                      <span className="font-bold uppercase tracking-wider text-gray-400">Risk R(t): </span>
-                      <span
-                        className={`font-black ${
-                          isCriticalRisk ? 'text-red-300' : 'text-[#00e5ff]'
+                {/* Benchmark HUD badges. An uploaded clip comes back with the model's own HUD burned
+                    into the frame (boxes, time, risk bar, active events), so nothing is drawn over it. */}
+                {activeSource !== 'upload' && (
+                  <>
+                    {/* Top-Right Risk Indicator Pill */}
+                    <div className="absolute top-5 right-5 z-20 pointer-events-none">
+                      <div
+                        className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl border backdrop-blur-md transition-all duration-300 shadow-lg ${
+                          isCriticalRisk
+                            ? 'bg-red-500/30 border-red-500 text-red-200 shadow-[0_0_15px_rgba(239,68,68,0.5)] animate-pulse'
+                            : 'bg-[#080c14]/85 border-[#00e5ff]/30 text-gray-200'
                         }`}
                       >
-                        {(currentRisk * 100).toFixed(0)}%
-                      </span>
+                        <ShieldAlert
+                          className={`w-4 h-4 ${isCriticalRisk ? 'text-red-400' : 'text-[#00e5ff]'}`}
+                        />
+                        <div className="text-xs font-mono">
+                          <span className="font-bold uppercase tracking-wider text-gray-400">Risk R(t): </span>
+                          <span
+                            className={`font-black ${
+                              isCriticalRisk ? 'text-red-300' : 'text-[#00e5ff]'
+                            }`}
+                          >
+                            {(currentRisk * 100).toFixed(0)}%
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
+                  </>
+                )}
 
                 {/* Center "RESUME" Button Overlay on Pause */}
                 {!isPlaying && (
@@ -850,9 +1103,20 @@ export default function LiveDemoSection() {
                     </div>
 
                     <div className="flex items-center gap-3">
-                      <span className="text-[11px] text-gray-400 font-mono hidden sm:inline bg-black/40 px-2.5 py-1 rounded-md border border-white/5">
-                        <span className="text-emerald-400 font-bold">25.0 FPS</span> <span className="text-gray-600">|</span> 28.4ms
-                      </span>
+                      {activeSource === 'upload' && uploadResult ? (
+                        <span className="text-[11px] text-gray-400 font-mono hidden sm:inline bg-black/40 px-2.5 py-1 rounded-md border border-white/5">
+                          <span className="text-emerald-400 font-bold">{uploadResult.events.length} EVENTS</span>
+                          {uploadResult.totalSec != null && (
+                            <>
+                              {' '}<span className="text-gray-600">|</span> processed in {uploadResult.totalSec.toFixed(0)} s
+                            </>
+                          )}
+                        </span>
+                      ) : (
+                        <span className="text-[11px] text-gray-400 font-mono hidden sm:inline bg-black/40 px-2.5 py-1 rounded-md border border-white/5">
+                          <span className="text-emerald-400 font-bold">25.0 FPS</span> <span className="text-gray-600">|</span> 28.4ms
+                        </span>
+                      )}
                       <button
                         onClick={(e) => {
                           e.currentTarget.blur();
@@ -888,60 +1152,98 @@ export default function LiveDemoSection() {
             <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#121a2a]/80 border border-[#1f2d45] backdrop-blur-sm shadow-sm">
               <span className="w-1.5 h-1.5 rounded-full bg-[#00e5ff]" />
               <span className="text-gray-300">Detector:</span>
-              <span className="text-[#00e5ff] font-semibold">{activeSource === 'upload' ? 'YOLO26m (imgsz 1280)' : 'YOLO26m (NMS-free)'}</span>
+              <span className="text-[#00e5ff] font-semibold">YOLO26m (NMS-free)</span>
             </div>
             <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#121a2a]/80 border border-[#1f2d45] backdrop-blur-sm shadow-sm">
               <span className="w-1.5 h-1.5 rounded-full bg-[#0693e3]" />
               <span className="text-gray-300">Tracker:</span>
-              <span className="text-white font-semibold">ByteTrack (Online)</span>
+              <span className="text-white font-semibold">ByteTrack</span>
             </div>
             <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#121a2a]/80 border border-[#1f2d45] backdrop-blur-sm shadow-sm">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
               <span className="text-gray-300">Target GPU:</span>
-              <span className="text-emerald-400 font-semibold">{activeSource === 'upload' ? (inferenceDevice || 'ZeroGPU RTX 6000') : 'Tesla T4 (<5 GB VRAM)'}</span>
+              <span className="text-emerald-400 font-semibold">Tesla T4 (&lt;5 GB VRAM)</span>
             </div>
           </div>
 
-          {/* Hugging Face ZeroGPU Live Execution Banner */}
-          {activeSource === 'upload' && serverStatus && (
-            <div className="mt-8 rounded-2xl bg-[#080c14]/90 border border-[#00e5ff]/40 p-4 shadow-[0_0_30px_rgba(0,229,255,0.15)] flex flex-col md:flex-row items-start md:items-center justify-between gap-4 backdrop-blur-md">
-              <div className="flex items-start gap-3.5">
-                <div className="p-2.5 rounded-xl bg-[#00e5ff]/10 text-[#00e5ff] border border-[#00e5ff]/30 shrink-0 mt-0.5 shadow-[0_0_12px_rgba(0,229,255,0.2)]">
-                  <Sparkles className="w-5 h-5 text-[#00e5ff]" />
-                </div>
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-mono text-xs font-bold text-white uppercase tracking-wider">
-                      Hugging Face ZeroGPU Execution
-                    </span>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-bold">
-                      INFERENCE COMPLETE
-                    </span>
-                    <span className="text-[10px] font-mono text-[#00e5ff] bg-[#00e5ff]/10 px-2 py-0.5 rounded border border-[#00e5ff]/20">
-                      Azamaka/antigradient-demo
-                    </span>
+          {/* Model server report for an uploaded clip (the Space's own status text + run facts) */}
+          {activeSource === 'upload' && uploadResult && (
+            <div className="mt-8 rounded-3xl bg-[#0e1626]/90 border border-[#9b51e0]/30 p-4 sm:p-6 shadow-2xl backdrop-blur-md">
+              <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-[#1f2d45]">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="p-2 rounded-xl bg-[#9b51e0]/10 text-[#c084fc] border border-[#9b51e0]/30 shrink-0">
+                    <Server className="w-5 h-5" />
                   </div>
-                  <p className="text-xs text-gray-300 font-mono leading-relaxed">
-                    {serverStatus.replace(/\*\*/g, '')}
-                  </p>
+                  <div className="min-w-0">
+                    <h3 className="text-base sm:text-lg font-extrabold text-white uppercase tracking-tight">Model Server Report</h3>
+                    <p className="text-xs text-gray-400 truncate" title={uploadedFileName}>
+                      {uploadedFileName}
+                      {uploadResult.source ? ` • ${uploadResult.source}` : ''}
+                    </p>
+                  </div>
                 </div>
+                {uploadResult.sceneRegistered === true && (
+                  <span className="px-3 py-1 rounded-lg text-[11px] font-mono font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    Competition camera recognised{uploadResult.inliers ? ` (${uploadResult.inliers} inliers)` : ''}
+                    {uploadResult.classesAvailable ? `: ${uploadResult.classesAvailable.length} classes active` : ''}
+                  </span>
+                )}
+                {uploadResult.sceneRegistered === false && (
+                  <span className="px-3 py-1 rounded-lg text-[11px] font-mono font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30 flex items-center gap-1.5">
+                    <AlertTriangle className="w-3.5 h-3.5" />
+                    Unknown camera: only stopped_vehicle &amp; congestion
+                  </span>
+                )}
               </div>
-              <div className="flex items-center gap-2 shrink-0">
+
+              <div className="pt-4 space-y-2">{renderStatusMarkdown(uploadResult.statusMd)}</div>
+              {!uploadResult.hasRisk && (
+                <p className="mt-2 text-xs text-amber-300">The risk curve could not be loaded for this run; the events come from the server&apos;s table.</p>
+              )}
+
+              <div className="mt-4 flex flex-wrap items-center gap-2 text-[11px] font-mono">
+                <span className="px-2.5 py-1 rounded-lg bg-[#080c14] border border-[#1f2d45] text-gray-300">
+                  Detector: <span className="text-[#00e5ff] font-bold">{uploadResult.detector}{uploadResult.imgsz ? ` @ ${uploadResult.imgsz}px` : ''}</span>
+                </span>
+                <span className="px-2.5 py-1 rounded-lg bg-[#080c14] border border-[#1f2d45] text-gray-300">
+                  Device: <span className="text-white font-bold">{uploadResult.device}</span>
+                </span>
+                {uploadResult.jsonUrl && (
+                  <a
+                    href={uploadResult.jsonUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-2.5 py-1 rounded-lg bg-[#00e5ff]/10 hover:bg-[#00e5ff]/20 border border-[#00e5ff]/30 text-[#00e5ff] font-bold flex items-center gap-1.5 transition"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    Raw JSON
+                  </a>
+                )}
                 <a
-                  href="https://huggingface.co/spaces/Azamaka/antigradient-demo"
+                  href={uploadResult.videoUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-mono text-gray-300 hover:text-white border border-white/10 transition flex items-center gap-1.5"
+                  className="px-2.5 py-1 rounded-lg bg-[#00e5ff]/10 hover:bg-[#00e5ff]/20 border border-[#00e5ff]/30 text-[#00e5ff] font-bold flex items-center gap-1.5 transition"
                 >
-                  <span>Open Space</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
+                  <FileVideo className="w-3.5 h-3.5" />
+                  Annotated MP4
+                </a>
+                <a
+                  href={HF_SPACE_PAGE}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 font-bold flex items-center gap-1.5 transition"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  Space on Hugging Face
                 </a>
               </div>
             </div>
           )}
 
           {/* Interactive Results Deck: Risk Curve & Detected Events Timeline */}
-          <div className="mt-8 rounded-3xl bg-[#0e1626]/90 border border-[#1f2d45] p-6 shadow-2xl backdrop-blur-md">
+          <div className="mt-12 rounded-3xl bg-[#0e1626]/90 border border-[#1f2d45] p-6 shadow-2xl backdrop-blur-md">
             {/* Deck Header & Tabs */}
             <div className="flex flex-wrap items-center justify-between gap-4 pb-5 border-b border-[#1f2d45]">
               <div className="flex items-center gap-3">
@@ -1039,7 +1341,8 @@ export default function LiveDemoSection() {
                         <stop offset="50%" stopColor="#0693e3" stopOpacity="0.2" />
                         <stop offset="100%" stopColor="#00e5ff" stopOpacity="0.0" />
                       </linearGradient>
-                      <linearGradient id="riskStrokeGrad" x1="0" y1="0" x2="1" y2="0">
+                      {/* userSpaceOnUse: a flat curve (all-zero risk) has a zero-height bbox and would not render with bbox units */}
+                      <linearGradient id="riskStrokeGrad" gradientUnits="userSpaceOnUse" x1="50" y1="0" x2="620" y2="0">
                         <stop offset="0%" stopColor="#00e5ff" />
                         <stop offset="45%" stopColor="#ffaa00" />
                         <stop offset="100%" stopColor="#ef4444" />
@@ -1104,67 +1407,110 @@ export default function LiveDemoSection() {
                   <span className="text-[#00e5ff]">Click card to jumpTo(time)</span>
                 </div>
 
-                {currentSample.events.length === 0 ? (
-                  <div className="p-8 rounded-2xl bg-[#080c14] border border-[#1f2d45] text-center space-y-2">
-                    <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto" />
-                    <h4 className="text-sm font-bold text-white uppercase font-mono">No Traffic Violations Detected</h4>
-                    <p className="text-xs text-gray-400 max-w-md mx-auto">
-                      The video was evaluated by the ZeroGPU pipeline with zero safety infractions. The continuous Part B causal risk anticipation curve remains actively monitored above in the Risk Curve tab.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-80 overflow-y-auto pr-1">
-                    {currentSample.events.map((ev, idx) => (
-                      <div
-                        key={idx}
-                        onClick={() => jumpTo(ev.start_sec)}
-                        className="p-3.5 rounded-2xl bg-[#080c14] border border-[#1f2d45] hover:border-[#00e5ff]/50 transition-all cursor-pointer group flex items-start justify-between gap-3 shadow-sm hover:shadow-[0_0_15px_rgba(0,229,255,0.15)]"
-                      >
-                        <div className="space-y-1.5">
-                          {/* [start_sec, end_sec, label] explicit format */}
-                          <div className="flex items-center gap-2">
-                            <span className="font-mono text-xs font-bold text-white bg-white/10 px-2.5 py-0.5 rounded border border-white/10">
-                              [{ev.start_sec.toFixed(1)}s – {ev.end_sec.toFixed(1)}s]
-                            </span>
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider ${
-                              ev.type === 'critical'
-                                ? 'bg-red-500/20 text-red-400 border border-red-500/40'
-                                : ev.type === 'danger'
-                                ? 'bg-orange-500/20 text-orange-400 border border-orange-500/40'
-                                : ev.type === 'warning'
-                                ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/40'
-                                : 'bg-[#00e5ff]/20 text-[#00e5ff] border border-[#00e5ff]/40'
-                            }`}>
-                              {ev.label}
-                            </span>
-                          </div>
-
-                          <div className="text-xs font-mono text-gray-400">
-                            Duration: <span className="text-gray-200 font-semibold">{((ev.end_sec - ev.start_sec)).toFixed(1)}s</span> &bull; Output: <span className="text-[#00e5ff] font-bold">[start, end, label]</span>
-                          </div>
-
-                          <p className="text-xs text-gray-300 leading-snug">{ev.desc || ev.desc_ru}</p>
-                        </div>
-
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            jumpTo(ev.start_sec);
-                          }}
-                          className="px-2.5 py-1.5 rounded-xl bg-[#00e5ff]/10 hover:bg-[#00e5ff]/20 text-[#00e5ff] text-[11px] font-mono font-bold border border-[#00e5ff]/30 flex items-center gap-1 shrink-0 group-hover:scale-105 transition cursor-pointer"
-                        >
-                          <span>Jump</span>
-                          <ChevronRight className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    ))}
+                {currentSample.events.length === 0 && (
+                  <div className="p-4 rounded-2xl bg-[#080c14] border border-[#1f2d45] text-xs text-gray-400 flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>
+                      The model found no events in this clip.
+                      {activeSource === 'upload' && uploadResult?.sceneRegistered === false &&
+                        ' The camera was not recognised, so only stopped_vehicle and congestion could fire.'}
+                    </span>
                   </div>
                 )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-80 overflow-y-auto pr-1">
+                  {currentSample.events.map((ev, idx) => (
+                    <div
+                      key={idx}
+                      onClick={() => jumpTo(ev.start_sec)}
+                      className="p-3.5 rounded-2xl bg-[#080c14] border border-[#1f2d45] hover:border-[#00e5ff]/50 transition-all cursor-pointer group flex items-start justify-between gap-3 shadow-sm hover:shadow-[0_0_15px_rgba(0,229,255,0.15)]"
+                    >
+                      <div className="space-y-1.5">
+                        {/* [start_sec, end_sec, label] explicit format */}
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-xs font-bold text-white bg-white/10 px-2.5 py-0.5 rounded border border-white/10">
+                            [{ev.start_sec.toFixed(1)}s – {ev.end_sec.toFixed(1)}s]
+                          </span>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider ${
+                            ev.type === 'critical'
+                              ? 'bg-red-500/20 text-red-400 border border-red-500/40'
+                              : ev.type === 'danger'
+                              ? 'bg-orange-500/20 text-orange-400 border border-orange-500/40'
+                              : ev.type === 'warning'
+                              ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/40'
+                              : 'bg-[#00e5ff]/20 text-[#00e5ff] border border-[#00e5ff]/40'
+                          }`}>
+                            {ev.label}
+                          </span>
+                        </div>
+
+                        <div className="text-xs font-mono text-gray-400">
+                          Duration: <span className="text-gray-200 font-semibold">{((ev.end_sec - ev.start_sec)).toFixed(1)}s</span> &bull; Output: <span className="text-[#00e5ff] font-bold">[start, end, label]</span>
+                        </div>
+
+                        <p className="text-xs text-gray-300 leading-snug">{ev.desc || ev.desc_ru}</p>
+                      </div>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          jumpTo(ev.start_sec);
+                        }}
+                        className="px-2.5 py-1.5 rounded-xl bg-[#00e5ff]/10 hover:bg-[#00e5ff]/20 text-[#00e5ff] text-[11px] font-mono font-bold border border-[#00e5ff]/30 flex items-center gap-1 shrink-0 group-hover:scale-105 transition cursor-pointer"
+                      >
+                        <span>Jump</span>
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Tab 3 for an uploaded clip: the facts of this run on the Hugging Face Space */}
+            {activeResultsTab === 'metrics' && activeSource === 'upload' && uploadResult && (
+              <div className="pt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="p-4 rounded-2xl bg-[#080c14] border border-[#1f2d45]">
+                  <div className="text-xs font-mono text-gray-400 mb-1">RUN TIME (TOTAL)</div>
+                  <div className="text-2xl font-black font-mono text-[#00e5ff]">
+                    {uploadResult.totalSec != null ? `${uploadResult.totalSec.toFixed(0)} s` : '—'}
+                  </div>
+                  <div className="text-[11px] text-gray-400 font-mono mt-1">
+                    {uploadResult.totalSec != null && uploadResult.clipSec
+                      ? `${(uploadResult.totalSec / uploadResult.clipSec).toFixed(1)}× the ${uploadResult.clipSec.toFixed(1)} s clip`
+                      : 'incl. rendering'}
+                  </div>
+                </div>
+                <div className="p-4 rounded-2xl bg-[#080c14] border border-[#1f2d45]">
+                  <div className="text-xs font-mono text-gray-400 mb-1">MODEL (PART A + B)</div>
+                  <div className="text-2xl font-black font-mono text-white">
+                    {uploadResult.modelSec != null ? `${uploadResult.modelSec.toFixed(0)} s` : '—'}
+                  </div>
+                  <div className="text-[11px] text-gray-400 font-mono mt-1 truncate">{uploadResult.device}</div>
+                </div>
+                <div className="p-4 rounded-2xl bg-[#080c14] border border-[#1f2d45]">
+                  <div className="text-xs font-mono text-gray-400 mb-1">EVENTS FOUND</div>
+                  <div className="text-2xl font-black font-mono text-[#0693e3]">{uploadResult.events.length}</div>
+                  <div className="text-[11px] text-gray-400 font-mono mt-1">
+                    {uploadResult.sceneRegistered === false ? 'unknown camera: 2 classes' : 'Part A rules'}
+                  </div>
+                </div>
+                <div className="p-4 rounded-2xl bg-[#080c14] border border-[#1f2d45]">
+                  <div className="text-xs font-mono text-gray-400 mb-1">PEAK RISK R(t)</div>
+                  <div className="text-2xl font-black font-mono text-[#9b51e0]">
+                    {uploadResult.hasRisk ? Math.max(...uploadResult.riskPoints.map(([, p]) => p)).toFixed(2) : '—'}
+                  </div>
+                  <div className="text-[11px] text-gray-400 font-mono mt-1">
+                    {uploadResult.hasRisk
+                      ? `${uploadResult.riskPoints.filter(([, p]) => p >= 0.5).length} alarm samples (τ = 0.50)`
+                      : 'not available'}
+                  </div>
+                </div>
               </div>
             )}
 
             {/* Tab 3: Edge Execution Metrics */}
-            {activeResultsTab === 'metrics' && (
+            {activeResultsTab === 'metrics' && activeSource !== 'upload' && (
               <div className="pt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div className="p-4 rounded-2xl bg-[#080c14] border border-[#1f2d45]">
                   <div className="text-xs font-mono text-gray-400 mb-1">T4 RUNTIME RATIO</div>
@@ -1195,9 +1541,9 @@ export default function LiveDemoSection() {
       {/* Upload Custom Video Modal */}
       {isUploadModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-          <div className="relative w-full max-w-lg rounded-3xl bg-[#0c121e] border border-[#00e5ff]/40 p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+          <div className="relative w-full max-w-lg max-h-[calc(100vh-2rem)] overflow-y-auto rounded-3xl bg-[#0c121e] border border-[#00e5ff]/40 p-5 sm:p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
             {/* Modal Header */}
-            <div className="flex items-center justify-between pb-4 border-b border-[#1f2d45] mb-5">
+            <div className="flex items-center justify-between gap-3 pb-4 border-b border-[#1f2d45] mb-5">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-xl bg-[#00e5ff]/10 text-[#00e5ff] border border-[#00e5ff]/30">
                   <UploadCloud className="w-5 h-5" />
@@ -1207,149 +1553,283 @@ export default function LiveDemoSection() {
                     Upload Custom CCTV Video
                   </h3>
                   <p className="text-xs text-gray-400">
-                    Live client-side validation &amp; edge pipeline processing
+                    Our real model runs on it on Hugging Face
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setIsUploadModalOpen(false)}
                 className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition cursor-pointer"
+                aria-label="Close"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Validation Badges (Required by Step 3 guidelines) */}
+            {/* Limits: checked here first, and again by the server */}
             <div className="flex flex-wrap items-center gap-2 mb-4">
               <div className="px-3 py-1 rounded-lg bg-[#00e5ff]/10 border border-[#00e5ff]/30 text-[11px] font-mono font-bold text-[#00e5ff] flex items-center gap-1.5">
-                <span>⏱️ Duration Limit: up to 2 min (Hackathon Rules)</span>
+                <span>⏱️ Duration: {UPLOAD_MIN_SEC} s – 2 min (20–40 s recommended)</span>
               </div>
               <div className="px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-[11px] font-mono text-gray-300 flex items-center gap-1.5">
-                <span>📦 Size Limit: up to 120 MB (.mp4)</span>
+                <span>📦 Size: up to {UPLOAD_MAX_MB} MB (.mp4)</span>
               </div>
             </div>
 
             {/* Drag & Drop Upload Zone */}
             <div
-              onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-[#1f2d45] hover:border-[#00e5ff]/60 rounded-2xl p-6 text-center transition cursor-pointer bg-[#080c14]/50 hover:bg-[#080c14] group mb-4"
+              role="button"
+              tabIndex={0}
+              onClick={() => !isValidating && fileInputRef.current?.click()}
+              onKeyDown={(e) => {
+                if ((e.key === 'Enter' || e.key === ' ') && !isValidating) {
+                  e.preventDefault();
+                  fileInputRef.current?.click();
+                }
+              }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setIsDragOver(true);
+              }}
+              onDragLeave={() => setIsDragOver(false)}
+              onDrop={handleDrop}
+              className={`border-2 border-dashed rounded-2xl p-6 text-center transition cursor-pointer group mb-4 ${
+                isDragOver
+                  ? 'border-[#00e5ff] bg-[#00e5ff]/10'
+                  : 'border-[#1f2d45] hover:border-[#00e5ff]/60 bg-[#080c14]/50 hover:bg-[#080c14]'
+              }`}
             >
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="video/mp4"
+                accept="video/mp4,.mp4"
                 onChange={handleFileUpload}
                 className="hidden"
               />
               <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-3 text-gray-400 group-hover:text-[#00e5ff] group-hover:scale-110 transition">
-                <FileVideo className="w-6 h-6" />
+                {isValidating ? <RefreshCw className="w-6 h-6 animate-spin text-[#00e5ff]" /> : <FileVideo className="w-6 h-6" />}
               </div>
-              <p className="text-sm font-bold text-white mb-1">Click to select or drag &amp; drop video (.mp4)</p>
-              <p className="text-xs text-gray-500 font-mono">Format: MP4 only &bull; Size: up to 120 MB</p>
+              <p className="text-sm font-bold text-white mb-1">
+                {isValidating ? 'Checking the video...' : 'Click to select or drag & drop video (.mp4)'}
+              </p>
+              <p className="text-xs text-gray-500 font-mono">
+                Format: MP4 only &bull; Size: up to {UPLOAD_MAX_MB} MB &bull; Length: up to 2 min
+              </p>
             </div>
 
-            {/* Pre-Loaded Sample Quick Button (Guarantees zero-failure jury testing) */}
-            <div className="pt-2 pb-4 text-center">
-              <span className="text-xs text-gray-500">Don&apos;t have an MP4 file handy? </span>
+            {/* No file at hand: run the real model on a raw clip of the competition camera */}
+            <div className="-mt-1 mb-4 text-center">
+              <span className="text-xs text-gray-500">No .mp4 at hand? </span>
               <button
-                onClick={handleTestWithDemoClip}
-                className="text-xs font-bold text-[#00e5ff] hover:underline cursor-pointer"
+                onClick={handleRunSampleClip}
+                disabled={isValidating}
+                className="text-xs font-bold text-[#00e5ff] hover:underline cursor-pointer disabled:opacity-50 disabled:cursor-wait"
               >
-                Run inference on sample test clip &rarr;
+                Run the model on our 30 s sample clip (C3905, {SAMPLE_CLIP.sizeMb} MB) &rarr;
               </button>
             </div>
 
+            {/* What happens to the file (honest) */}
+            <div className="mb-4 p-3.5 rounded-xl bg-[#080c14] border border-[#1f2d45] text-[11px] sm:text-xs text-gray-400 space-y-2 leading-relaxed">
+              <p className="flex items-start gap-2">
+                <Cpu className="w-3.5 h-3.5 mt-0.5 shrink-0 text-[#00e5ff]" />
+                <span>
+                  The video is sent to our{' '}
+                  <a href={HF_SPACE_PAGE} target="_blank" rel="noopener noreferrer" className="text-[#00e5ff] hover:underline">
+                    Hugging Face Space
+                  </a>{' '}
+                  and processed by the <span className="text-gray-200 font-semibold">real model</span>: YOLO26m + ByteTrack + scene
+                  rules (Part A) and the causal TTC risk (Part B). You get the events, the risk curve and an annotated video with
+                  the model&apos;s own boxes.
+                </span>
+              </p>
+              <p className="flex items-start gap-2">
+                <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0 text-amber-400" />
+                <span>
+                  The rules are calibrated to the competition camera. On other cameras only{' '}
+                  <code className="text-[#00e5ff]">stopped_vehicle</code> and <code className="text-[#00e5ff]">congestion</code> can
+                  fire; detections and the risk curve still work.
+                </span>
+              </p>
+              <p className="flex items-start gap-2">
+                <Clock className="w-3.5 h-3.5 mt-0.5 shrink-0 text-gray-400" />
+                <span>
+                  If the server is asleep, waking it up takes about a minute. One video is processed at a time; others wait in a
+                  queue.
+                </span>
+              </p>
+            </div>
+
             {uploadError && (
-              <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/40 text-red-400 text-xs flex items-center gap-2">
+              <div className="mb-2 p-3 rounded-xl bg-red-500/10 border border-red-500/40 text-red-400 text-xs flex items-start gap-2">
                 <AlertTriangle className="w-4 h-4 shrink-0" />
-                <span>{uploadError}</span>
+                <span className="break-words min-w-0">{uploadError}</span>
               </div>
             )}
           </div>
         </div>
       )}
 
-      {/* Processing Pipeline Modal with Execution Stepper */}
+      {/* Processing modal: real connection, queue and progress messages from the Space */}
       {isProcessing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
-          <div className="w-full max-w-md p-6 rounded-3xl bg-[#0c121e] border border-[#00e5ff]/50 shadow-[0_0_50px_rgba(0,229,255,0.3)]">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <Cpu className="w-5 h-5 text-[#00e5ff] animate-spin" />
-                <span className="text-sm font-bold text-white uppercase tracking-wider font-mono">
-                  Hugging Face ZeroGPU Inference...
+          <div
+            className={`w-full max-w-md max-h-[calc(100vh-2rem)] overflow-y-auto p-5 sm:p-6 rounded-3xl bg-[#0c121e] border ${
+              processingError
+                ? 'border-red-500/50 shadow-[0_0_50px_rgba(239,68,68,0.2)]'
+                : 'border-[#00e5ff]/50 shadow-[0_0_50px_rgba(0,229,255,0.3)]'
+            }`}
+            role="dialog"
+            aria-live="polite"
+          >
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <div className="flex items-center gap-3 min-w-0">
+                {processingError ? (
+                  <AlertTriangle className="w-5 h-5 text-red-400 shrink-0" />
+                ) : (
+                  <Cpu className="w-5 h-5 text-[#00e5ff] animate-spin shrink-0" />
+                )}
+                <span className="text-sm font-bold text-white uppercase tracking-wider font-mono truncate">
+                  {processingError ? 'Run failed' : 'Running our model...'}
                 </span>
               </div>
-              <span className="font-mono text-sm text-[#00e5ff] font-bold">{processingProgress}%</span>
+              <span className={`font-mono text-sm font-bold ${processingError ? 'text-red-400' : 'text-[#00e5ff]'}`}>
+                {processingProgress}%
+              </span>
             </div>
 
-            {/* Progress Bar */}
-            <div className="w-full bg-[#182236] h-2 rounded-full overflow-hidden mb-5">
+            {/* Progress Bar (driven by the server's progress messages) */}
+            <div className="w-full bg-[#182236] h-2 rounded-full overflow-hidden mb-2">
               <div
-                className="bg-gradient-to-r from-[#00e5ff] via-[#0693e3] to-[#9b51e0] h-full transition-all duration-100 shadow-[0_0_12px_#00e5ff]"
+                className={`h-full transition-all duration-500 ${
+                  processingError
+                    ? 'bg-red-500'
+                    : 'bg-gradient-to-r from-[#00e5ff] via-[#0693e3] to-[#9b51e0] shadow-[0_0_12px_#00e5ff]'
+                }`}
                 style={{ width: `${processingProgress}%` }}
               />
             </div>
+            <div className="flex items-center justify-between gap-3 mb-4 text-[11px] font-mono text-gray-500">
+              <span className="truncate" title={processingFileName}>
+                {processingFileName}
+              </span>
+              <span className="shrink-0">
+                {elapsedSec} s
+                {spaceHardware ? ` · ${/^zero/.test(spaceHardware) ? 'ZeroGPU' : spaceHardware.replace(/-/g, ' ')}` : ''}
+              </span>
+            </div>
 
-            {/* 3-Step Execution Stepper */}
+            {/* Execution Stepper */}
             <div className="space-y-2.5">
-              {/* Step 1 */}
-              <div className={`flex items-center gap-3 p-2.5 rounded-xl border text-xs font-mono transition ${
-                processingStep > 1
-                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
-                  : processingStep === 1
-                  ? 'bg-[#00e5ff]/15 border-[#00e5ff]/40 text-white shadow-sm'
-                  : 'bg-[#080c14] border-white/5 text-gray-500'
-              }`}>
-                <div className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] ${
-                  processingStep > 1
-                    ? 'bg-emerald-500 text-black'
-                    : 'bg-[#00e5ff] text-black animate-pulse'
-                }`}>
-                  {processingStep > 1 ? '✓' : '1'}
-                </div>
-                <span className="font-semibold">Connecting &amp; Uploading to ZeroGPU (NVIDIA RTX)...</span>
-              </div>
+              {PIPELINE_STEPS.map((label, idx) => {
+                const n = idx + 1;
+                const done = n < processingStep || processingProgress >= 100;
+                const active = n === processingStep && !done;
+                const failed = active && Boolean(processingError);
+                return (
+                  <div
+                    key={label}
+                    className={`flex items-center gap-3 p-2.5 rounded-xl border text-xs font-mono transition ${
+                      failed
+                        ? 'bg-red-500/10 border-red-500/40 text-red-200'
+                        : done
+                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                        : active
+                        ? 'bg-[#00e5ff]/15 border-[#00e5ff]/40 text-white shadow-sm'
+                        : 'bg-[#080c14] border-white/5 text-gray-500'
+                    }`}
+                  >
+                    <div
+                      className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] shrink-0 ${
+                        failed
+                          ? 'bg-red-500 text-black'
+                          : done
+                          ? 'bg-emerald-500 text-black'
+                          : active
+                          ? 'bg-[#00e5ff] text-black animate-pulse'
+                          : 'bg-gray-800 text-gray-400'
+                      }`}
+                    >
+                      {failed ? '!' : done ? '✓' : n}
+                    </div>
+                    <span className="font-semibold">{label}</span>
+                  </div>
+                );
+              })}
+            </div>
 
-              {/* Step 2 */}
-              <div className={`flex items-center gap-3 p-2.5 rounded-xl border text-xs font-mono transition ${
-                processingStep > 2
-                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
-                  : processingStep === 2
-                  ? 'bg-[#00e5ff]/15 border-[#00e5ff]/40 text-white shadow-sm'
-                  : 'bg-[#080c14] border-white/5 text-gray-500'
-              }`}>
-                <div className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] ${
-                  processingStep > 2
-                    ? 'bg-emerald-500 text-black'
-                    : processingStep === 2
-                    ? 'bg-[#00e5ff] text-black animate-pulse'
-                    : 'bg-gray-800 text-gray-400'
-                }`}>
-                  {processingStep > 2 ? '✓' : '2'}
-                </div>
-                <span className="font-semibold">ZeroGPU Inference: YOLO26m (1280px) + ByteTrack &amp; Risk</span>
+            {/* Live message from the server */}
+            {!processingError && (
+              <div className="mt-4 p-3 rounded-xl bg-[#080c14] border border-white/5 text-[11px] font-mono text-gray-300 leading-relaxed break-words">
+                <span className="text-[#00e5ff] font-bold">&gt; </span>
+                {processingDetail}
+                {queueInfo && queueInfo.position > 0 && (
+                  <div className="mt-1.5 text-amber-300 flex items-center gap-1.5">
+                    <Hourglass className="w-3.5 h-3.5 shrink-0" />
+                    <span>
+                      Queue position {queueInfo.position}
+                      {queueInfo.size ? ` of ${queueInfo.size}` : ''}
+                      {queueInfo.eta ? ` · ~${Math.round(queueInfo.eta)} s estimated` : ''}
+                    </span>
+                  </div>
+                )}
               </div>
+            )}
 
-              {/* Step 3 */}
-              <div className={`flex items-center gap-3 p-2.5 rounded-xl border text-xs font-mono transition ${
-                processingProgress >= 100
-                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
-                  : processingStep === 3
-                  ? 'bg-[#00e5ff]/15 border-[#00e5ff]/40 text-white shadow-sm'
-                  : 'bg-[#080c14] border-white/5 text-gray-500'
-              }`}>
-                <div className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] ${
-                  processingProgress >= 100
-                    ? 'bg-emerald-500 text-black'
-                    : processingStep === 3
-                    ? 'bg-[#00e5ff] text-black animate-pulse'
-                    : 'bg-gray-800 text-gray-400'
-                }`}>
-                  {processingProgress >= 100 ? '✓' : '3'}
-                </div>
-                <span className="font-semibold">Generating timeline, risk curve &amp; annotated video playback</span>
+            {processingError && (
+              <div className="mt-4 p-3 rounded-xl bg-red-500/10 border border-red-500/40 text-xs space-y-2">
+                <p className="text-red-300 font-semibold break-words">{processingError.message}</p>
+                <p className="text-gray-400 leading-relaxed">{ERROR_HINTS[processingError.kind] || ERROR_HINTS.server}</p>
+                {processingError.kind === 'quota' && (
+                  <a
+                    href={HF_SPACE_PAGE}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-[#00e5ff] font-bold hover:underline"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    Open the Space on Hugging Face
+                  </a>
+                )}
               </div>
+            )}
+
+            {/* Actions */}
+            <div className="mt-5 flex flex-wrap items-center justify-end gap-2">
+              {processingError ? (
+                <>
+                  <button
+                    onClick={() => setIsProcessing(false)}
+                    className="px-3.5 py-2 rounded-xl text-xs font-mono font-bold uppercase tracking-wider text-gray-300 bg-white/5 hover:bg-white/10 border border-white/10 transition cursor-pointer"
+                  >
+                    Close
+                  </button>
+                  <button
+                    onClick={handleChooseAnotherFile}
+                    className="px-3.5 py-2 rounded-xl text-xs font-mono font-bold uppercase tracking-wider text-gray-200 bg-white/5 hover:bg-white/10 border border-white/10 transition cursor-pointer flex items-center gap-1.5"
+                  >
+                    <UploadCloud className="w-3.5 h-3.5" />
+                    Another file
+                  </button>
+                  {processingError.kind !== 'validation' && (
+                    <button
+                      onClick={handleRetry}
+                      className="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider text-[#080c14] bg-gradient-to-r from-[#00e5ff] via-[#0693e3] to-[#00cce6] border border-[#00e5ff]/50 shadow-[0_0_20px_rgba(0,229,255,0.35)] transition cursor-pointer flex items-center gap-1.5"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      Retry
+                    </button>
+                  )}
+                </>
+              ) : (
+                <button
+                  onClick={handleCancelProcessing}
+                  className="px-3.5 py-2 rounded-xl text-xs font-mono font-bold uppercase tracking-wider text-gray-300 bg-white/5 hover:bg-white/10 border border-white/10 transition cursor-pointer flex items-center gap-1.5"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  Cancel
+                </button>
+              )}
             </div>
           </div>
         </div>
