@@ -321,7 +321,7 @@ export default function LiveDemoSection() {
   };
 
   // Run 3-stage pipeline execution on Hugging Face ZeroGPU:
-  // Step 1: Connecting & Uploading to ZeroGPU (NVIDIA RTX PRO 6000 / A10G)
+  // Step 1: Connecting & Uploading to ZeroGPU (real progress)
   // Step 2: YOLO26m (imgsz 1280) + ByteTrack & Causal Risk inference
   // Step 3: Generating timeline, risk curve & annotated video playback
   const executePipelineOnVideo = async (fileToSend, fileName, localFallbackUrl) => {
@@ -335,25 +335,69 @@ export default function LiveDemoSection() {
     setProcessingStep(1);
     setProcessingProgress(0);
 
-    let p1 = 0;
-    const ticker1 = setInterval(() => {
-      p1 = Math.min(94, p1 + Math.floor(Math.random() * 8 + 6));
-      setProcessingProgress(p1);
-    }, 140);
-
     let client = null;
-    try {
-      client = await Client.connect(
-        HF_SPACE_ID,
-        HF_TOKEN ? { token: HF_TOKEN, hf_token: HF_TOKEN } : {}
-      );
-    } catch (err) {
+    let preUploadedPath = null;
+
+    // Connect to Space in parallel
+    const connectPromise = Client.connect(
+      HF_SPACE_ID,
+      HF_TOKEN ? { token: HF_TOKEN, hf_token: HF_TOKEN } : {}
+    ).catch((err) => {
       console.warn('Connect error:', err);
+      return null;
+    });
+
+    if (fileToSend instanceof File || fileToSend instanceof Blob) {
+      // Real byte-by-byte upload progress via XMLHttpRequest
+      const uploadPromise = new Promise((resolve) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', 'https://azamaka-antigradient-demo.hf.space/gradio_api/upload', true);
+        if (HF_TOKEN) {
+          xhr.setRequestHeader('Authorization', `Bearer ${HF_TOKEN}`);
+        }
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable && e.total > 0) {
+            const pct = Math.min(99, Math.round((e.loaded / e.total) * 100));
+            setProcessingProgress(pct);
+          }
+        };
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const res = JSON.parse(xhr.responseText);
+              if (Array.isArray(res) && res.length > 0) {
+                resolve(res[0]);
+                return;
+              }
+            } catch {}
+          }
+          resolve(null);
+        };
+        xhr.onerror = () => resolve(null);
+        xhr.ontimeout = () => resolve(null);
+        xhr.timeout = 180000; // 3 min
+
+        const formData = new FormData();
+        formData.append('files', fileToSend, fileName || 'video.mp4');
+        xhr.send(formData);
+      });
+
+      const [c, uplPath] = await Promise.all([connectPromise, uploadPromise]);
+      client = c;
+      preUploadedPath = uplPath;
+    } else {
+      // Demo clip or string URL: smooth simulated connection progress
+      let p1 = 0;
+      const ticker1 = setInterval(() => {
+        p1 += Math.max(1, (98 - p1) * 0.15);
+        setProcessingProgress(Math.min(98, Math.round(p1)));
+      }, 100);
+      client = await connectPromise;
+      clearInterval(ticker1);
     }
 
-    clearInterval(ticker1);
     setProcessingProgress(100);
-    // Pause so the user sees Step 1 reach 100%
+    // Pause so user sees Step 1 reach 100%
     await new Promise((r) => setTimeout(r, 320));
 
     // ========================================================
@@ -365,19 +409,29 @@ export default function LiveDemoSection() {
     await new Promise((r) => setTimeout(r, 120));
 
     let p2 = 0;
+    // Asymptotic smooth easing that dynamically advances and NEVER freezes at 94%
     const ticker2 = setInterval(() => {
-      if (p2 < 45) p2 += Math.floor(Math.random() * 6 + 5);
-      else if (p2 < 75) p2 += Math.floor(Math.random() * 4 + 3);
-      else if (p2 < 94) p2 += 1;
-      setProcessingProgress(Math.min(94, p2));
-    }, 280);
+      p2 += Math.max(0.35, (98 - p2) * 0.045);
+      setProcessingProgress(Math.min(98, Math.round(p2)));
+    }, 250);
 
     let result = null;
     try {
       if (client) {
-        const fileArg = typeof fileToSend === 'string' ? fileToSend : handle_file(fileToSend);
+        let fileArg;
+        if (preUploadedPath) {
+          fileArg = {
+            path: preUploadedPath,
+            url: `https://azamaka-antigradient-demo.hf.space/gradio_api/file=${preUploadedPath}`,
+            orig_name: fileName || 'video.mp4',
+            meta: { _type: 'gradio.FileData' },
+          };
+        } else {
+          fileArg = typeof fileToSend === 'string' ? fileToSend : handle_file(fileToSend);
+        }
+
         const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Inference timeout')), 45000)
+          setTimeout(() => reject(new Error('Inference timeout (120s)')), 120000)
         );
         result = await Promise.race([
           client.predict('/analyze', { video: fileArg }),
@@ -403,9 +457,9 @@ export default function LiveDemoSection() {
 
     let p3 = 0;
     const ticker3 = setInterval(() => {
-      p3 = Math.min(94, p3 + Math.floor(Math.random() * 14 + 8));
-      setProcessingProgress(p3);
-    }, 100);
+      p3 += Math.max(2, (98 - p3) * 0.25);
+      setProcessingProgress(Math.min(98, Math.round(p3)));
+    }, 80);
 
     if (result) {
       const statusText = result?.data?.[0] || '';
