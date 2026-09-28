@@ -1263,7 +1263,7 @@ export default function LiveDemoSection() {
                     </div>
                     <div>
                       <h3 className="text-base sm:text-lg font-extrabold text-white tracking-tight">
-                        Выберите вариант тестирования модели
+                        Select Model Testing Mode
                       </h3>
                       <p className="text-xs text-gray-400 font-mono">
                         Hugging Face ZeroGPU Inference • YOLO26m + ByteTrack
@@ -1279,7 +1279,7 @@ export default function LiveDemoSection() {
                 </div>
 
                 <p className="text-xs text-gray-300 leading-relaxed mb-5">
-                  Модель развернута на GPU-сервере Hugging Face. Выберите удобный для вас способ инференса:
+                  The model is deployed on the Hugging Face GPU cluster. Select your preferred inference method:
                 </p>
 
                 {/* 2 Options Cards */}
@@ -1299,10 +1299,10 @@ export default function LiveDemoSection() {
                         </span>
                       </div>
                       <h4 className="text-sm font-bold text-white group-hover:text-[#00e5ff] transition mb-1.5">
-                        Остаться на сайте
+                        Stay on Website
                       </h4>
                       <p className="text-xs text-gray-400 leading-relaxed mb-3">
-                        Инференс запускается прямо в интерактивном HUD-плеере сайта с таймлайном и кривой риска.
+                        Runs inference directly inside this interactive HUD player with real-time telemetry, timeline, and risk curve.
                       </p>
                     </div>
 
@@ -1310,14 +1310,14 @@ export default function LiveDemoSection() {
                       <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-300 mb-3 font-mono flex items-start gap-1.5">
                         <Clock className="w-3.5 h-3.5 shrink-0 mt-0.5" />
                         <span>
-                          <strong>Время ожидания:</strong> загрузка и очередь ZeroGPU могут занять <strong>15–45 сек</strong>.
+                          <strong>Queue Wait Time:</strong> video transfer and ZeroGPU queue may take <strong>15–45 sec</strong>.
                         </span>
                       </div>
                       <button
                         type="button"
                         className="w-full py-2 px-3 rounded-xl bg-[#00e5ff]/15 group-hover:bg-[#00e5ff] text-[#00e5ff] group-hover:text-[#080c14] text-xs font-bold font-mono transition-all text-center border border-[#00e5ff]/40 flex items-center justify-center gap-1.5"
                       >
-                        <span>Загрузить на сайт</span>
+                        <span>Upload to Website</span>
                         <ChevronRight className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -1341,11 +1341,11 @@ export default function LiveDemoSection() {
                         </span>
                       </div>
                       <h4 className="text-sm font-bold text-white group-hover:text-[#00e5ff] transition mb-1.5 flex items-center gap-1.5">
-                        <span>Перейти на Hugging Face</span>
+                        <span>Open Hugging Face Space</span>
                         <ExternalLink className="w-3.5 h-3.5" />
                       </h4>
                       <p className="text-xs text-gray-300 leading-relaxed mb-3">
-                        Прямой веб-интерфейс модели на сервере Hugging Face с выделенным GPU <strong>NVIDIA RTX PRO 6000</strong>.
+                        Direct web interface on Hugging Face powered by a dedicated <strong>NVIDIA RTX PRO 6000</strong> GPU.
                       </p>
                     </div>
 
@@ -1353,11 +1353,11 @@ export default function LiveDemoSection() {
                       <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-[11px] text-emerald-300 mb-3 font-mono flex items-start gap-1.5">
                         <Zap className="w-3.5 h-3.5 shrink-0 mt-0.5" />
                         <span>
-                          <strong>Быстрый инференс:</strong> прямой Gradio UI, визуальный статус очереди и прямой доступ.
+                          <strong>Fast ZeroGPU:</strong> native Gradio UI, live queue tracker, and instant JSON download.
                         </span>
                       </div>
                       <div className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-[#00e5ff] to-[#0693e3] text-[#080c14] text-xs font-bold font-mono transition-all text-center shadow-md flex items-center justify-center gap-1.5">
-                        <span>Открыть Hugging Face</span>
+                        <span>Open Hugging Face</span>
                         <ExternalLink className="w-3.5 h-3.5" />
                       </div>
                     </div>
@@ -1378,17 +1378,17 @@ export default function LiveDemoSection() {
                     <button
                       onClick={() => setUploadModalStep('choose')}
                       className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white transition cursor-pointer flex items-center gap-1 text-xs font-mono"
-                      title="Назад к выбору"
+                      title="Back to options"
                     >
                       <ArrowLeft className="w-4 h-4" />
-                      <span>Назад</span>
+                      <span>Back</span>
                     </button>
                     <div>
                       <h3 className="text-base font-extrabold text-white uppercase tracking-tight">
-                        Загрузка видео на сайт
+                        Upload CCTV Video to Website
                       </h3>
                       <p className="text-xs text-gray-400">
-                        Инференс через ZeroGPU API прямо в плеер
+                        ZeroGPU remote inference with embedded video telemetry
                       </p>
                     </div>
                   </div>
@@ -1403,7 +1403,7 @@ export default function LiveDemoSection() {
                 {/* Validation Badges */}
                 <div className="flex flex-wrap items-center gap-2 mb-4">
                   <div className="px-3 py-1 rounded-lg bg-[#00e5ff]/10 border border-[#00e5ff]/30 text-[11px] font-mono font-bold text-[#00e5ff] flex items-center gap-1.5">
-                    <span>⏱️ Duration Limit: up to 2 min</span>
+                    <span>⏱️ Duration Limit: up to 2 min (Hackathon Rules)</span>
                   </div>
                   <div className="px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-[11px] font-mono text-gray-300 flex items-center gap-1.5">
                     <span>📦 Size Limit: up to 120 MB (.mp4)</span>
@@ -1425,18 +1425,18 @@ export default function LiveDemoSection() {
                   <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-3 text-gray-400 group-hover:text-[#00e5ff] group-hover:scale-110 transition">
                     <FileVideo className="w-6 h-6" />
                   </div>
-                  <p className="text-sm font-bold text-white mb-1">Нажмите для выбора или перетащите .mp4 видео</p>
-                  <p className="text-xs text-gray-500 font-mono">Формат: только MP4 &bull; Размер: до 120 МБ</p>
+                  <p className="text-sm font-bold text-white mb-1">Click to select or drag &amp; drop video (.mp4)</p>
+                  <p className="text-xs text-gray-500 font-mono">Format: MP4 only &bull; Size: up to 120 MB</p>
                 </div>
 
                 {/* Pre-Loaded Sample Quick Button */}
                 <div className="pt-1 pb-3 text-center">
-                  <span className="text-xs text-gray-500">Нет подходящего MP4 файла? </span>
+                  <span className="text-xs text-gray-500">Don&apos;t have an MP4 file handy? </span>
                   <button
                     onClick={handleTestWithDemoClip}
                     className="text-xs font-bold text-[#00e5ff] hover:underline cursor-pointer"
                   >
-                    Запустить тест на образце testing.mp4 &rarr;
+                    Run inference on sample test clip (testing.mp4) &rarr;
                   </button>
                 </div>
 
