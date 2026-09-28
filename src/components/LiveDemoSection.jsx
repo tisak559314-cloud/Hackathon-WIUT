@@ -909,32 +909,6 @@ export default function LiveDemoSection() {
                   </div>
                 </div>
 
-                {/* Center "RESUME" Button Overlay on Pause */}
-                {!isPlaying && (
-                  <div className="absolute inset-0 bg-black/50 backdrop-blur-[3px] flex flex-col items-center justify-center gap-4 z-20 transition-all duration-300">
-                    <button
-                      onClick={(e) => {
-                        e.currentTarget.blur();
-                        togglePlay();
-                      }}
-                      className="group inline-flex items-center gap-3.5 px-8 py-4 rounded-2xl bg-gradient-to-r from-[#00e5ff] via-[#0693e3] to-[#00cce6] hover:from-[#00cce6] hover:to-[#0582ca] text-[#080c14] font-black text-sm uppercase tracking-wider shadow-[0_0_35px_rgba(0,229,255,0.45)] hover:shadow-[0_0_50px_rgba(0,229,255,0.7)] hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer border border-white/30"
-                      aria-label="Resume playback"
-                    >
-                      <div className="w-8 h-8 rounded-full bg-[#080c14] flex items-center justify-center text-[#00e5ff] group-hover:scale-110 transition-transform shadow-inner">
-                        <Play className="w-4 h-4 fill-current translate-x-0.5" />
-                      </div>
-                      <span className="text-base tracking-widest font-black text-[#080c14]">RESUME PLAYBACK</span>
-                    </button>
-                    <p className="text-xs text-gray-300 font-mono tracking-wide px-4 py-1.5 rounded-full bg-black/80 border border-white/10 backdrop-blur-md shadow-lg flex items-center gap-2">
-                      <span>Press</span>
-                      <kbd className="px-2 py-0.5 rounded bg-white/20 text-[#00e5ff] font-bold border border-white/20 shadow">SPACE</kbd>
-                      <span>to play &bull;</span>
-                      <kbd className="px-2 py-0.5 rounded bg-white/20 text-[#00e5ff] font-bold border border-white/20 shadow">F</kbd>
-                      <span>for fullscreen</span>
-                    </p>
-                  </div>
-                )}
-
                 {/* Floating Glassmorphic Video Controls at Bottom */}
                 <div className="absolute bottom-3 inset-x-3 sm:inset-x-4 bg-[#080c14]/90 backdrop-blur-xl border border-white/15 rounded-2xl p-3 sm:p-4 flex flex-col gap-2.5 z-20 shadow-2xl">
                   {/* Scrubbable Progress Bar */}
