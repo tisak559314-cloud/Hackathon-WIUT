@@ -85,6 +85,7 @@ export default function LiveDemoSection() {
   const [processingProgress, setProcessingProgress] = useState(0);
   const [processingStep, setProcessingStep] = useState(1); // 1: Connect & Upload, 2: ZeroGPU Detect, 3: Timeline & Playback
   const [uploadError, setUploadError] = useState('');
+  const [compressingStatus, setCompressingStatus] = useState('');
   const [uploadedVideoUrl, setUploadedVideoUrl] = useState(null);
   const [uploadedFileName, setUploadedFileName] = useState('');
   const [uploadedEvents, setUploadedEvents] = useState(defaultUploadEvents);
@@ -320,6 +321,156 @@ export default function LiveDemoSection() {
     jumpTo(0);
   };
 
+  // Fast client-side 4K -> 1080p downscaler to avoid uploading massive 4K files over the internet
+  const downscaleVideoIf4K = async (file, onStatusUpdate) => {
+    return new Promise((resolve) => {
+      if (!file || !(file instanceof Blob)) {
+        resolve(file);
+        return;
+      }
+
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      video.muted = true;
+      video.playsInline = true;
+      const tempUrl = URL.createObjectURL(file);
+      video.src = tempUrl;
+
+      const cleanup = () => {
+        try {
+          URL.revokeObjectURL(tempUrl);
+          video.remove();
+        } catch {}
+      };
+
+      const safeguardTimer = setTimeout(() => {
+        cleanup();
+        resolve(file);
+      }, 15000);
+
+      video.onloadedmetadata = async () => {
+        clearTimeout(safeguardTimer);
+        const w = video.videoWidth || 0;
+        const h = video.videoHeight || 0;
+        const dur = video.duration || 1;
+
+        // If already <= 1080p and reasonably sized (<= 30 MB), keep original
+        if (w <= 1920 && h <= 1080 && file.size <= 30 * 1024 * 1024) {
+          cleanup();
+          resolve(file);
+          return;
+        }
+
+        console.log(`[4K Downscale] Detected large/4K video (${w}x${h}, ${(file.size / (1024 * 1024)).toFixed(1)} MB). Downscaling in browser...`);
+        if (onStatusUpdate) onStatusUpdate(`Downscaling 4K (${w}x${h}) to 1080p...`);
+
+        const supportedTypes = [
+          'video/mp4;codecs=avc1',
+          'video/mp4',
+          'video/webm;codecs=vp9',
+          'video/webm;codecs=vp8',
+          'video/webm',
+        ];
+        const mime = supportedTypes.find((t) => typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t));
+
+        if (!mime) {
+          console.warn('[4K Downscale] MediaRecorder not supported, proceeding with original.');
+          cleanup();
+          resolve(file);
+          return;
+        }
+
+        const scale = Math.min(1.0, 1920 / w);
+        const targetW = Math.round((w * scale) / 2) * 2;
+        const targetH = Math.round((h * scale) / 2) * 2;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = targetW;
+        canvas.height = targetH;
+        const ctx = canvas.getContext('2d');
+
+        let stream;
+        try {
+          stream = canvas.captureStream ? canvas.captureStream(30) : null;
+        } catch {
+          cleanup();
+          resolve(file);
+          return;
+        }
+
+        if (!stream) {
+          cleanup();
+          resolve(file);
+          return;
+        }
+
+        const chunks = [];
+        let recorder;
+        try {
+          recorder = new MediaRecorder(stream, {
+            mimeType: mime,
+            videoBitsPerSecond: 3_500_000,
+          });
+        } catch {
+          cleanup();
+          resolve(file);
+          return;
+        }
+
+        recorder.ondataavailable = (e) => {
+          if (e.data && e.data.size > 0) chunks.push(e.data);
+        };
+
+        recorder.onstop = () => {
+          cleanup();
+          const base = file.name.replace(/\.[^/.]+$/, '');
+          const outBlob = new Blob(chunks, { type: mime });
+          const compressedFile = new File([outBlob], `${base}_1080p.mp4`, { type: 'video/mp4' });
+          console.log(`[4K Downscale] Completed: ${(file.size / (1024 * 1024)).toFixed(1)} MB -> ${(compressedFile.size / (1024 * 1024)).toFixed(1)} MB`);
+          resolve(compressedFile);
+        };
+
+        recorder.onerror = () => {
+          cleanup();
+          resolve(file);
+        };
+
+        recorder.start(100);
+        video.currentTime = 0;
+        video.playbackRate = 2.5;
+
+        let animId;
+        const render = () => {
+          if (video.paused || video.ended) {
+            if (recorder.state === 'recording') recorder.stop();
+            return;
+          }
+          ctx.drawImage(video, 0, 0, targetW, targetH);
+          animId = requestAnimationFrame(render);
+        };
+
+        video.onended = () => {
+          cancelAnimationFrame(animId);
+          if (recorder.state === 'recording') recorder.stop();
+        };
+
+        try {
+          await video.play();
+          animId = requestAnimationFrame(render);
+        } catch {
+          cancelAnimationFrame(animId);
+          if (recorder.state === 'recording') recorder.stop();
+        }
+      };
+
+      video.onerror = () => {
+        clearTimeout(safeguardTimer);
+        cleanup();
+        resolve(file);
+      };
+    });
+  };
+
   // Run 3-stage pipeline execution on Hugging Face ZeroGPU:
   // Step 1: Connecting & Uploading to ZeroGPU (real progress)
   // Step 2: YOLO26m (imgsz 1280) + ByteTrack & Causal Risk inference
@@ -431,7 +582,7 @@ export default function LiveDemoSection() {
         }
 
         const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Inference timeout (120s)')), 120000)
+          setTimeout(() => reject(new Error('Inference timeout (300s)')), 300000)
         );
         result = await Promise.race([
           client.predict('/analyze', { video: fileArg }),
@@ -529,16 +680,24 @@ export default function LiveDemoSection() {
         if (typeof v === 'string') return v;
         if (v.url) return v.url;
         if (v.video?.url) return v.video.url;
-        if (v.path && (v.path.startsWith('http://') || v.path.startsWith('https://'))) return v.path;
+        if (v.path) {
+          if (v.path.startsWith('http://') || v.path.startsWith('https://')) return v.path;
+          return `https://azamaka-antigradient-demo.hf.space/gradio_api/file=${v.path}`;
+        }
         return null;
       };
 
-      const finalVideoUrl = extractVideoUrl(videoObj) || localFallbackUrl;
-      console.log('[ZeroGPU Pipeline] Finished inference! Setting annotated video URL:', finalVideoUrl);
-      setUploadedVideoUrl(finalVideoUrl);
+      const finalVideoUrl = extractVideoUrl(videoObj);
+      if (finalVideoUrl) {
+        console.log('[ZeroGPU Pipeline] Finished inference! Setting annotated video URL:', finalVideoUrl);
+        setUploadedVideoUrl(finalVideoUrl);
+      } else {
+        console.warn('[ZeroGPU Pipeline] Warning: Could not extract annotated video URL, using fallback.');
+        setUploadedVideoUrl(localFallbackUrl);
+      }
     } else {
-      console.warn('[ZeroGPU Pipeline] Warning: No result from ZeroGPU, using fallback URL.');
-      setServerStatus('Edge pipeline executed: ZeroGPU busy/queued, fast fallback preview active.');
+      console.warn('[ZeroGPU Pipeline] Warning: No result from ZeroGPU.');
+      setServerStatus('ZeroGPU was unable to complete the analysis. Please try again or test directly on Hugging Face.');
       setUploadedVideoUrl(localFallbackUrl);
     }
 
@@ -562,24 +721,42 @@ export default function LiveDemoSection() {
   };
 
   // Client-side file validation and pipeline trigger
-  const processUploadedFile = (file) => {
+  const processUploadedFile = async (file) => {
     if (!file) return;
 
-    // 1. Validate file extension: only .mp4 allowed
-    if (!file.name.toLowerCase().endsWith('.mp4')) {
-      setUploadError('Invalid file format. Please upload an MP4 (.mp4) video file.');
+    // 1. Validate file extension (.mp4, .mov, .webm, .avi, .mkv)
+    const validExtensions = ['.mp4', '.mov', '.webm', '.avi', '.mkv'];
+    const lowerName = file.name.toLowerCase();
+    const hasValidExt = validExtensions.some((ext) => lowerName.endsWith(ext));
+
+    if (!hasValidExt) {
+      setUploadError('Invalid file format. Please upload a video file (.mp4, .mov, .webm).');
       return;
     }
 
-    // 2. Validate file size: maximum 120 MB
-    if (file.size > 120 * 1024 * 1024) {
-      setUploadError(`File size (${(file.size / (1024 * 1024)).toFixed(1)} MB) exceeds 120 MB limit. Please select a clip ≤ 120 MB (duration ≤ 2 min).`);
+    // 2. Validate file size: maximum 250 MB
+    if (file.size > 250 * 1024 * 1024) {
+      setUploadError(`File size (${(file.size / (1024 * 1024)).toFixed(1)} MB) exceeds 250 MB limit. Please select a clip ≤ 250 MB (duration ≤ 2 min).`);
       return;
     }
 
     setUploadError('');
-    const objectUrl = URL.createObjectURL(file);
-    executePipelineOnVideo(file, file.name, objectUrl);
+    setIsProcessing(true);
+    setProcessingStep(1);
+    setProcessingProgress(5);
+
+    let fileToExecute = file;
+    try {
+      fileToExecute = await downscaleVideoIf4K(file, (statusText) => {
+        setCompressingStatus(statusText);
+      });
+    } catch (err) {
+      console.warn('Downscaling error, proceeding with original:', err);
+    }
+    setCompressingStatus('');
+
+    const objectUrl = URL.createObjectURL(fileToExecute);
+    executePipelineOnVideo(fileToExecute, fileToExecute.name, objectUrl);
   };
 
   const handleFileUpload = (e) => {
@@ -1491,7 +1668,7 @@ export default function LiveDemoSection() {
                     <span>⏱️ Duration Limit: up to 2 min (Hackathon Rules)</span>
                   </div>
                   <div className="px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-[11px] font-mono text-gray-300 flex items-center gap-1.5">
-                    <span>📦 Size Limit: up to 120 MB (.mp4)</span>
+                    <span>📦 Size Limit: up to 250 MB (Auto-downscales 4K)</span>
                   </div>
                 </div>
 
@@ -1511,7 +1688,7 @@ export default function LiveDemoSection() {
                   <input
                     ref={fileInputRef}
                     type="file"
-                    accept="video/mp4"
+                    accept="video/mp4,video/quicktime,video/webm,video/*"
                     onChange={handleFileUpload}
                     className="hidden"
                   />
@@ -1525,9 +1702,9 @@ export default function LiveDemoSection() {
                     <FileVideo className="w-6 h-6" />
                   </div>
                   <p className={`text-sm font-bold mb-1 transition-colors ${isDragging ? 'text-[#00e5ff]' : 'text-white'}`}>
-                    {isDragging ? 'Drop your .mp4 video here to start!' : 'Click to select or drag & drop video (.mp4)'}
+                    {isDragging ? 'Drop your video here to start!' : 'Click to select or drag & drop video'}
                   </p>
-                  <p className="text-xs text-gray-500 font-mono">Format: MP4 only &bull; Size: up to 120 MB</p>
+                  <p className="text-xs text-gray-500 font-mono">Format: .mp4, .mov, .webm &bull; 4K, 1080p, 720p (up to 250 MB)</p>
                 </div>
 
                 {/* Pre-Loaded Sample Quick Button */}
@@ -1561,7 +1738,7 @@ export default function LiveDemoSection() {
               <div className="flex items-center gap-3">
                 <Cpu className="w-5 h-5 text-[#00e5ff] animate-spin" />
                 <span className="text-xs sm:text-sm font-bold text-white uppercase tracking-wider font-mono">
-                  {processingStep === 1 && 'Step 1/3: Connecting & Uploading'}
+                  {processingStep === 1 && (compressingStatus ? 'Step 1/3: 4K Optimization & Upload' : 'Step 1/3: Connecting & Uploading')}
                   {processingStep === 2 && 'Step 2/3: ZeroGPU Inference'}
                   {processingStep === 3 && 'Step 3/3: Timeline & Playback'}
                 </span>
@@ -1604,7 +1781,9 @@ export default function LiveDemoSection() {
                     >
                       {processingStep > 1 ? '✓' : '1'}
                     </div>
-                    <span className="font-semibold truncate">Connecting &amp; Uploading to ZeroGPU</span>
+                    <span className="font-semibold truncate">
+                      {compressingStatus || 'Connecting & Uploading to ZeroGPU'}
+                    </span>
                   </div>
                   <span
                     className={`font-mono text-xs font-bold px-2 py-0.5 rounded-md shrink-0 ${
